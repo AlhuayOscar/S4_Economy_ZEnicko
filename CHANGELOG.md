@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.2] - 2026-02-17
+
+## Patch: Boot Sequence Skip
+
+- Added left-click skip for the boot animation (`[LMB] Skip`) so players can enter faster.
+- Added safe boot timer cleanup to avoid duplicate transitions while skipping/closing.
+- Preserved existing behavior:
+  - `Esc` still shuts down the computer.
+  - Boot sounds still play normally when not skipped.
+
 ## [1.1.1] - 2026-02-17
 
 ## Patch: Non-disruptive Shop Sync

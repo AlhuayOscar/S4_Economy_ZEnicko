@@ -40,6 +40,8 @@ function S4_Booting_Sequence:new(player, ComObj)
     o.borderColor = {r=1, g=1, b=1, a=1}
     o.moveWithMouse = true
     o:setWantKeyEvents(true)
+    o.BootingUpdateHandler = nil
+    o.BootSequenceFinished = false
     return o
 end
 
@@ -63,6 +65,9 @@ function S4_Booting_Sequence:render()
     local Eh = self:getHeight() - UI_Font_Height - 10
     if self.Step1 or self.Step2 then
         self:drawText("[Esc] Shutdown", Ew, Eh, 1, 1, 1, 0.8, UI_Font)
+        local SkipText = "[LMB] Skip"
+        local SkipX = Ew - getTextManager():MeasureStringX(UI_Font, SkipText) - 20
+        self:drawText(SkipText, SkipX, Eh, 1, 1, 1, 0.8, UI_Font)
     end
 
     if self.Step1 then
@@ -112,21 +117,47 @@ function S4_Booting_Sequence:isKeyConsumed(key)
     return key == Keyboard.KEY_ESCAPE
 end
 
+function S4_Booting_Sequence:stopBootingTimer()
+    if self.BootingUpdateHandler then
+        Events.OnTick.Remove(self.BootingUpdateHandler)
+        self.BootingUpdateHandler = nil
+    end
+end
+
+function S4_Booting_Sequence:skipBootSequence()
+    if self.BootSequenceFinished then return end
+    self:stopBootingTimer()
+    self.Step1 = false
+    self.Step1n1 = false
+    self.Step1n2 = false
+    self.Step1n3 = false
+    self.Step2 = false
+    self:PasswordCheck()
+end
+
+function S4_Booting_Sequence:onMouseDown(x, y)
+    if not self.BootSequenceFinished then
+        self:skipBootSequence()
+        return true
+    end
+end
+
 function S4_Booting_Sequence:BootingSequence()
     local UpdataCount = 0
     self.UICheck = true
+    self.BootSequenceFinished = false
     local ComData = self.ComObj:getModData()
     local function BootingUpdate()
         UpdataCount = UpdataCount + 1
         if not self.UICheck then 
-            Events.OnTick.Remove(BootingUpdate)
+            self:stopBootingTimer()
             return
         end
         local Second = PerformanceSettings.getLockFPS()
         if UpdataCount == Second * 0.5 then
             if ComData and ComData.ComPower then
                 self:PasswordCheck()
-                Events.OnTick.Remove(BootingUpdate)
+                return
             else
                 getSoundManager():playUISound("S4_Beep")
                 return
@@ -158,7 +189,7 @@ function S4_Booting_Sequence:BootingSequence()
             self.Step2 = true
             return
         elseif UpdataCount == Second * 20 then
-            Events.OnTick.Remove(BootingUpdate)
+            self:stopBootingTimer()
             self.Step2 = false
 
             -- Go to computer password confirmation function
@@ -166,10 +197,20 @@ function S4_Booting_Sequence:BootingSequence()
         end
     end
     -- if Check computer power else Go to computer password check function
+    self.BootingUpdateHandler = BootingUpdate
     Events.OnTick.Add(BootingUpdate)
 end
 
 function S4_Booting_Sequence:PasswordCheck()
+    if self.BootSequenceFinished then return end
+    self.BootSequenceFinished = true
+    self:stopBootingTimer()
+    self.Step1 = false
+    self.Step1n1 = false
+    self.Step1n2 = false
+    self.Step1n3 = false
+    self.Step2 = false
+
     self.borderColor = { r = 0, g = 0, b = 0, a = 1 }
     self.backgroundColor = {r=0/255, g=128/255, b=128/255, a=1}
 
@@ -202,6 +243,7 @@ end
 function S4_Booting_Sequence:close()
     S4_Booting_Sequence.instance = nil
     self.UICheck = false
+    self:stopBootingTimer()
     ISPanel.close(self)
     self:removeFromUIManager()
 end

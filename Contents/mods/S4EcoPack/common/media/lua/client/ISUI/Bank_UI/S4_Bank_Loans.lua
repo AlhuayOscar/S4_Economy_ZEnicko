@@ -19,6 +19,8 @@ function S4_Bank_Loans:new(BankUI, x, y, width, height)
     o.loans = {}
     o.lastViewedRate = 0
     o.refreshTimer = 0
+    o.currentPage = 1
+    o.maxPerPage = 4
     return o
 end
 
@@ -143,20 +145,47 @@ function S4_Bank_Loans:createChildren()
     self.activeLabel = ISLabel:new(rightX, y, S4_UI.FH_S, "Active Loans:", 0.9, 0.9, 0.9, 1, UIFont.Small, true)
     self:addChild(self.activeLabel)
     
-    self.listPanel = ISPanel:new(rightX, y + 25, leftW, self:getHeight() - y - 35)
+    self.listPanel = ISPanel:new(rightX, y + 25, leftW, self:getHeight() - y - 65)
     self.listPanel.backgroundColor.a = 0
     self.listPanel.borderColor.a = 0.3
     self.listPanel:initialise()
     self:addChild(self.listPanel)
 
+    -- Pagination Buttons
+    local pagW = 60
+    local pagH = 20
+    local pagY = self:getHeight() - 35
+    self.prevBtn = ISButton:new(rightX, pagY, pagW, pagH, "< Prev", self, function() 
+        self.currentPage = math.max(1, self.currentPage - 1)
+        self:updateLoanListUI()
+    end)
+    self.prevBtn:initialise()
+    self:addChild(self.prevBtn)
+
+    self.pageLabel = ISLabel:new(rightX + pagW + 10, pagY, 14, "1/1", 1, 1, 1, 1, UIFont.Small, true)
+    self:addChild(self.pageLabel)
+
+    self.nextBtn = ISButton:new(rightX + leftW - pagW, pagY, pagW, pagH, "Next >", self, function() 
+        self.currentPage = self.currentPage + 1
+        self:updateLoanListUI()
+    end)
+    self.nextBtn:initialise()
+    self:addChild(self.nextBtn)
+
     self:onLenderChange()
+    self:updateLoanListUI()
+end
+
+-- Force an immediate data re-fetch from local ModData
+function S4_Bank_Loans:refreshAndDraw()
+    self:refreshLoans()
     self:updateLoanListUI()
 end
 
 function S4_Bank_Loans:updateLoanListUI()
     if not self.listPanel then return end
     
-    -- Robust way to clear Lua children
+    -- Clear current view
     if self.listPanel.children then
         for k,v in pairs(self.listPanel.children) do
             self.listPanel:removeChild(v)
@@ -164,47 +193,69 @@ function S4_Bank_Loans:updateLoanListUI()
         self.listPanel.children = {}
     end
     
-    local py = 5
-    local itemH = 65
     local UserName = self.player:getUsername()
     local LoanModData = ModData.get("S4_LoanData")
-    local found = false
+    local activeLoans = {}
     
     if LoanModData and LoanModData[UserName] then
         for i, loan in pairs(LoanModData[UserName]) do
             if loan.Status == "Active" then
-                found = true
-                local itemBody = ISPanel:new(5, py, self.listPanel:getWidth() - 10, itemH)
-                itemBody.backgroundColor = {r=0.1, g=0.1, b=0.1, a=0.4}
-                itemBody.borderColor = {r=0.5, g=0.5, b=0.5, a=0.5}
-                itemBody:initialise()
-                self.listPanel:addChild(itemBody)
-                
-                local lx = 5
-                local ly = 5
-                local nameLabel = ISLabel:new(lx, ly, 14, loan.Lender, 1, 1, 1, 1, UIFont.Small, true)
-                itemBody:addChild(nameLabel)
-                ly = ly + 16
-                
-                local status = string.format("Repaid: $ %s / $ %s", S4_UI.getNumCommas(loan.Repaid or 0), S4_UI.getNumCommas(loan.TotalToPay))
-                local statusLabel = ISLabel:new(lx, ly, 14, status, 0.8, 0.8, 0.8, 1, UIFont.Small, true)
-                itemBody:addChild(statusLabel)
-                ly = ly + 16
-                
-                local cardLabel = ISLabel:new(lx, ly, 14, "Card: " .. loan.CardNum, 0.6, 0.6, 0.6, 1, UIFont.Small, true)
-                itemBody:addChild(cardLabel)
-                
-                local btnW = 70
-                local btnH = 20
-                local repayBtn = ISButton:new(itemBody:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, "Repay", self, function() self:onRepayLoan(i, loan) end)
-                repayBtn:initialise()
-                repayBtn.backgroundColor = {r=0.4, g=0.2, b=0.2, a=0.8}
-                itemBody:addChild(repayBtn)
-                
-                py = py + itemH + 5
-                if py + itemH > self.listPanel:getHeight() then break end
+                table.insert(activeLoans, {index = i, data = loan})
             end
         end
+    end
+
+    local totalPages = math.ceil(#activeLoans / self.maxPerPage)
+    if totalPages < 1 then totalPages = 1 end
+    if self.currentPage > totalPages then self.currentPage = totalPages end
+    
+    self.pageLabel:setName(string.format("%d / %d", self.currentPage, totalPages))
+    
+    local startIdx = (self.currentPage - 1) * self.maxPerPage + 1
+    local endIdx = math.min(startIdx + self.maxPerPage - 1, #activeLoans)
+    
+    local py = 5
+    local itemH = 65
+    local found = false
+    
+    for i = startIdx, endIdx do
+        local entry = activeLoans[i]
+        local loan = entry.data
+        found = true
+        
+        local itemBody = ISPanel:new(5, py, self.listPanel:getWidth() - 10, itemH)
+        itemBody.backgroundColor = {r=0.1, g=0.1, b=0.1, a=0.4}
+        itemBody.borderColor = {r=0.5, g=0.5, b=0.5, a=0.3}
+        itemBody:initialise()
+        self.listPanel:addChild(itemBody)
+        
+        local lx = 5
+        local ly = 3
+        local nameLabel = ISLabel:new(lx, ly, 14, loan.Lender, 1, 1, 0, 1, UIFont.Small, true)
+        itemBody:addChild(nameLabel)
+        
+        -- Date & Deadline
+        local deadlineText = string.format("Date: %s (%d Days)", loan.Timestamp or "N/A", loan.Deadline or 0)
+        local dateLabel = ISLabel:new(lx + 100, ly, 14, deadlineText, 0.5, 0.8, 1, 1, UIFont.Small, true)
+        itemBody:addChild(dateLabel)
+        ly = ly + 16
+        
+        local status = string.format("Debt: $ %s / $ %s", S4_UI.getNumCommas(loan.Repaid or 0), S4_UI.getNumCommas(loan.TotalToPay))
+        local statusLabel = ISLabel:new(lx, ly, 14, status, 0.8, 0.8, 0.8, 1, UIFont.Small, true)
+        itemBody:addChild(statusLabel)
+        ly = ly + 16
+        
+        local cardLabel = ISLabel:new(lx, ly, 14, "Owner Card: " .. (loan.CardNum or "???"), 0.6, 0.6, 0.6, 1, UIFont.Small, true)
+        itemBody:addChild(cardLabel)
+        
+        local btnW = 70
+        local btnH = 20
+        local repayBtn = ISButton:new(itemBody:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, "Repay", self, function() self:onRepayLoan(entry.index, loan) end)
+        repayBtn:initialise()
+        repayBtn.backgroundColor = {r=0.2, g=0.4, b=0.2, a=0.8}
+        itemBody:addChild(repayBtn)
+        
+        py = py + itemH + 5
     end
 
     if not found then
@@ -263,7 +314,10 @@ function S4_Bank_Loans:onAcceptLoan()
     })
 
     self.ComUI:AddMsgBox("Loan Approved", nil, string.format("$ %s has been deposited into card %s.", S4_UI.getNumCommas(amount), cardNum))
-    self.refreshTimer = 30
+    
+    -- Snappier refresh
+    self.refreshTimer = 2
+    self:updateLoanListUI() -- Quick local redraw
 end
 
 function S4_Bank_Loans:update()
@@ -276,37 +330,46 @@ function S4_Bank_Loans:update()
     end
 end
 
-function S4_Bank_Loans:onRepayLoan(index, loan)
+function S4_Bank_Loans:onRepayLoan(index, loan, isDebug)
     local cardNum = self.BankUI.IEUI.ComUI.CardNumber
-    if not cardNum then return end
+    if not cardNum and not isDebug then 
+        self.ComUI:AddMsgBox("No Card", nil, "Please insert a card to repay the loan.")
+        return 
+    end
     
     local amountToRepay = loan.TotalToPay - (loan.Repaid or 0)
     local timestamp = S4_Utils.getLogTime()
     local displayTime = S4_Utils.getLogTimeMin(timestamp)
 
+    -- Pass isDebug to the server so it knows to skip balance checks
     sendClientCommand("S4ED", "RepayLoan", {
-        cardNum, index, amountToRepay, timestamp, displayTime
+        cardNum or "DEBUG_CARD", index, amountToRepay, timestamp, displayTime, isDebug
     })
 
-    self.refreshTimer = 30
+    self.refreshTimer = 2
 end
 
 function S4_Bank_Loans:onDebugDeadline()
     local gt = getGameTime()
     gt:setDay(gt:getDay() + 2)
-    self.ComUI:AddMsgBox("Debug", nil, "Advanced time by 2 days.")
+    self.player:setHaloNote("Debug: +2 Days", 200, 200, 200, 300) -- Show text above player
+    self.ComUI:AddMsgBox("Debug", nil, "Advanced time by 2 days. Current Day: " .. gt:getDay())
+    self:updateLoanListUI()
 end
 
 function S4_Bank_Loans:onDebugRepay()
     local LoanModData = ModData.get("S4_LoanData")
     local UserName = self.player:getUsername()
     if LoanModData and LoanModData[UserName] then
-        for i, loan in ipairs(LoanModData[UserName]) do
+        local count = 0
+        for i, loan in pairs(LoanModData[UserName]) do
             if loan.Status == "Active" then
-                self:onRepayLoan(i, loan)
-                break
+                self:onRepayLoan(i, loan, true)
+                count = count + 1
             end
         end
+        self.ComUI:AddMsgBox("Debug", nil, "Force repaid " .. count .. " active loans.")
+        self:refreshAndDraw() -- Update UI immediately
     end
 end
 

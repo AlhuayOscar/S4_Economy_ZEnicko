@@ -323,27 +323,34 @@ function S4Economy.RepayLoan(player, args)
     local RepayAmount = args[3]
     local Timestamp = args[4]
     local DisplayTime = args[5]
+    local IsDebug = args[6] -- New debug flag
 
     local CardModData = ModData.get("S4_CardData")
     local LoanModData = ModData.get("S4_LoanData")
     local CardLogModData = ModData.get("S4_CardLog")
 
-    if not CardModData[CardNum] or not LoanModData[UserName] or not LoanModData[UserName][LoanIndex] then return end
+    if not LoanModData[UserName] or not LoanModData[UserName][LoanIndex] then return end
 
     local loan = LoanModData[UserName][LoanIndex]
     
-    -- Check if card has enough money
-    if CardModData[CardNum].Money < RepayAmount then return end
+    -- Normal logic for non-debug repayment
+    if not IsDebug then
+        if not CardModData[CardNum] then return end
+        
+        -- Check if card has enough money
+        if CardModData[CardNum].Money < RepayAmount then return end
 
-    -- Deduct money
-    CardModData[CardNum].Money = CardModData[CardNum].Money - RepayAmount
+        -- Deduct money
+        CardModData[CardNum].Money = CardModData[CardNum].Money - RepayAmount
+    end
+
+    -- Update Loan Data (Always runs)
     loan.Repaid = (loan.Repaid or 0) + RepayAmount
-
     if loan.Repaid >= loan.TotalToPay then
         loan.Status = "Repaid"
     end
 
-    -- Add to Log
+    -- Add to Log (Always runs, but CardModData transmit only if not debug)
     if CardLogModData[CardNum] then
         CardLogModData[CardNum][Timestamp] = {
             Type = "Withdraw",

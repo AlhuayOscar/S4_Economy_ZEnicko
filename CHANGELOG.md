@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.3] - 2026-02-17
+
+## Feature: Knox News Timeline
+
+- Implemented Knox News Timeline with 13 chronological entries following lore.
+- Added dynamic date-based news unlocking synced with the in-game calendar (Year, Month, Day).
+- Redesigned Knox News UI:
+  - Atmospheric blurred background image based on the current news.
+  - Centered rich text panel with dark overlay for maximum readability.
+  - Sequential "Previous" and "Next" navigation for an immersive story experience.
+  - Page counter (e.g., "1 / 13").
+
 ## [1.1.2] - 2026-02-17
 
 ## Patch: Boot Sequence Skip

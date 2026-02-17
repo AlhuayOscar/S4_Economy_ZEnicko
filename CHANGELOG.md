@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.1] - 2026-02-17
+
+## Patch: Non-disruptive Shop Sync
+
+- Added non-disruptive refresh flow for GoodShop (preserves current category/search/page).
+- Added auto-refresh cycle (10s) without forcing UI reset.
+- Added sync status label next to Refresh:
+  - shows `Sync: updating...`
+  - shows elapsed time since last sync + in-game clock.
+- Added fallback so `Sync: updating...` doesn't get stuck:
+  - triggers soft refresh if ModData event is delayed,
+  - force-clears pending state after timeout.
+- Updated client-side ModData handling to avoid full `ReloadUI()` on shop updates.
+- Synced Admin list state display after reload.
+
 ## [1.1.0] - 2026-02-17
 
 ### Added
@@ -19,4 +34,3 @@ All notable changes to this project are documented in this file.
 - Hardened item cache creation by skipping unsafe instance creation for `WeaponPart` script items.
 - Fixed search guard boolean checks to prevent nil-access in list search paths.
 - Fixed server-side discount update typo in `UpdateShopData` (`Discount` now maps correctly).
-

@@ -764,7 +764,8 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
 
     local CNameKey = "IGUI_S4_ItemCat_" .. item.item
     local CNameT = getText(CNameKey)
-    if CNameT == CNameKey then
+    -- Robust fallback: if translation is the key itself or the key inside brackets
+    if CNameT == CNameKey or (CNameT == "[" .. CNameKey .. "]") then
         CNameT = item.item
     end
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)

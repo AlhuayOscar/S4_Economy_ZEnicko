@@ -181,11 +181,7 @@ function S4_Computer_Main:createChildren()
         }
         self["Btn_" .. BtnType].IconName = BtnData.Name
         self["Btn_" .. BtnType]:setImage(BtnData.Icon)
-        local CurrentIconSize = IconSize
-        if BtnType == "News" then
-            CurrentIconSize = 64
-        end
-        self["Btn_" .. BtnType]:forceImageSize(CurrentIconSize, CurrentIconSize) -- Need to change icon size depending on resolution
+        self["Btn_" .. BtnType]:forceImageSize(IconSize, IconSize)
         self["Btn_" .. BtnType].render = S4_Computer_Main.BtnRender
         self["Btn_" .. BtnType]:initialise()
         self:addChild(self["Btn_" .. BtnType])
@@ -306,6 +302,16 @@ function S4_Computer_Main:render()
     self.TimeAppX = self:getWidth() - DumpTimeW - (AppImgSize * 2) - 30
 
     -- TaskBar Icon
+    -- Knox News Notification Logic
+    local newsModData = ModData.getOrCreate("S4_KnoxNews")
+    if self.Btn_News then
+        if newsModData.IsNew then
+            self.Btn_News.image = getTexture("media/textures/S4_Icon/NewspaperIncoming.png")
+        else
+            self.Btn_News.image = getTexture("media/textures/S4_Icon/Newspaper.png")
+        end
+    end
+
     for i, TaskBarUI in ipairs(self.TaskBar) do
         if self["Task" .. i] then
             local TaskX = self["Task" .. i]:getX()

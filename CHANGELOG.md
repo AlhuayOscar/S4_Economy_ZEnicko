@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.1.4] - 2026-02-17
+
+## Feature: Random News Events & Custom Notifications
+
+- Added 5 Random News Events (Breaking News) with custom immersive descriptions:
+  - Market Surge, Market Crash, Guerrilla Sightings, Suspicious Jobs, and Fuel Shortage.
+- Implemented smart notifications for Knox News:
+  - Icon changes to `NewspaperIncoming.png` when a new event occurs.
+  - Notification clears only after opening the app or re-focusing via the icon.
+- Added Sandbox Options for full event customization:
+  - Toggle random events (Enable/Disable).
+  - Configurable interval in hours (Min/Max wait time between events).
+- UI/UX Refinements:
+  - Standardized Knox News desktop icon size and alignment to match system icons.
+  - Mapped specific art backgrounds (`Event.png` to `Event_04.png`) to their respective events.
+- Added Debug Tool:
+  - "DEBUG: Test" button (Admins/Debug only) to force-trigger new events instantly.
+
 ## [1.1.3] - 2026-02-17
 
 ## Feature: Knox News Timeline

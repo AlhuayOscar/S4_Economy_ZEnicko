@@ -94,6 +94,34 @@ local KNOX_NEWS_TIMELINE = {
     },
 }
 
+local KNOX_NEWS_RANDOM_EVENTS = {
+    STOCK_RISE = {
+        title = "MARKET ALERT: Knox Stocks Surge!",
+        text = "LOUDEVILLE – The Knox County Stock Exchange saw a surprising 12% jump in trading today. Despite the ongoing telephone outages, local industries are reporting record productivity. \"The resilience of our workforce is showing,\" says investment analyst David Sterling. Investors are flocking to Kentucky-based manufacturing shares.",
+        image = "media/textures/S4_KnoxNews/Event.png"
+    },
+    STOCK_CRASH = {
+        title = "CRASH: Panic in the Markets",
+        text = "LOUDEVILLE – Chaos erupted at the Stock Exchange today as massive sell-offs sent local shares plummeting. Panic followed rumors of an imminent full military blockade. Many investors are reporting being unable to reach their brokers due to the persistent phone line issues. \"This is a freefall,\" shouted one floor trader.",
+        image = "media/textures/S4_KnoxNews/Event_01.png"
+    },
+    GUERRILLAS = {
+        title = "REPORTS: Guerrilla Activity in Knox",
+        text = "KNOX BORDERS – Sightings of unidentified armed groups moving through the woods have increased. Witnesses describe tactical gear but no insignia. The Military Cordon has refused to comment on these infiltrations. Citizens are strictly advised to avoid the border woods and keep their properties secured at night.",
+        image = "media/textures/S4_KnoxNews/Event_02.png"
+    },
+    SUSPICIOUS_JOBS = {
+        title = "Classified: High-Pay 'Clean-up' Jobs",
+        text = "URGENT – New vacancies for 'Civilian Support Personnel' have appeared across Knox. High pay, immediate start. No experience required. Requirements include 'high physical tolerance' and 'discretion'. Many applicants report being taken in military trucks to undisclosed locations near Muldraugh.",
+        image = "media/textures/S4_KnoxNews/Event_03.png"
+    },
+    FUEL_SHORTAGE = {
+        title = "EMERGENCY: Fuel Shortage Declared",
+        text = "KNOX REGION – Gas stations are running dry as supply lines are severed by the military blockade. Governor Fairweather has signed an emergency order rationing fuel for 'essential services' only. Public transit has been suspended in most areas, leaving thousands of commuters stranded.",
+        image = "media/textures/S4_KnoxNews/Event_04.png"
+    }
+}
+
 function S4_IE_KnoxNews:new(IEUI, x, y)
     local width = IEUI.ComUI:getWidth() - 12
     local TaskH = IEUI.ComUI:getHeight() - IEUI.ComUI.TaskBarY
@@ -153,6 +181,27 @@ function S4_IE_KnoxNews:initialise()
     self.nextBtn.borderColor = {r=1, g=1, b=1, a=0.2}
     self:addChild(self.nextBtn)
 
+    -- Debug: Test Events Button
+    if getDebug() or (self.player and self.player:getAccessLevel() ~= "") then
+        local testBtnW = 100
+        local testBtnH = btnH
+        local testBtnX = x + (w / 2) - (testBtnW / 2)
+        local testBtnY = btnY
+        self.testBtn = ISButton:new(testBtnX, testBtnY, testBtnW, testBtnH, "DEBUG: Test", self, S4_IE_KnoxNews.onTestEvents)
+        self.testBtn:initialise()
+        self.testBtn.backgroundColor = {r=0.5, g=0.2, b=0.2, a=0.8}
+        self.testBtn.borderColor = {r=1, g=0, b=0, a=0.5}
+        self:addChild(self.testBtn)
+    end
+
+    self:refreshVisibleNews()
+    self:clearNotification()
+end
+
+function S4_IE_KnoxNews:onTestEvents()
+    local modData = ModData.getOrCreate("S4_KnoxNews")
+    -- Force next event check
+    modData.NextEventHour = 0
     self:refreshVisibleNews()
 end
 
@@ -163,6 +212,7 @@ function S4_IE_KnoxNews:refreshVisibleNews()
     local gameMonth = gt:getMonth() -- 0-11
     local gameDay = gt:getDay() -- 0-indexed
 
+    -- 1. Load Timeline News
     for _, news in ipairs(KNOX_NEWS_TIMELINE) do
         local unlocked = false
         if gameYear > news.year then 
@@ -176,16 +226,78 @@ function S4_IE_KnoxNews:refreshVisibleNews()
                 end
             end
         end
-        
         if unlocked then
             table.insert(self.VisibleNews, news)
         end
     end
 
+    -- 2. Handle Random Events
+    local modData = ModData.getOrCreate("S4_KnoxNews")
+    local hoursSurvived = gt:getDaysSurvived() * 24
+
+    -- Check if events are enabled in Sandbox
+    local eventsEnabled = true
+    if SandboxVars.S4SandBox and SandboxVars.S4SandBox.NewsRandomEvents == false then
+        eventsEnabled = false
+    end
+
+    if eventsEnabled then
+        local minH = 72
+        local maxH = 168
+        if SandboxVars.S4SandBox then
+            minH = SandboxVars.S4SandBox.NewsMinHours or 72
+            maxH = SandboxVars.S4SandBox.NewsMaxHours or 168
+        end
+
+        -- Initialize if new
+        if not modData.NextEventHour then
+            modData.NextEventHour = hoursSurvived + ZombRand(minH, maxH + 1)
+            modData.CurrentEventID = nil
+            modData.IsNew = false
+        end
+
+        -- Check if it's time for a new random event
+        if hoursSurvived >= modData.NextEventHour then
+            local eventKeys = {"STOCK_RISE", "STOCK_CRASH", "GUERRILLAS", "SUSPICIOUS_JOBS", "FUEL_SHORTAGE"}
+            local newEventID = eventKeys[ZombRand(#eventKeys) + 1]
+            
+            modData.CurrentEventID = newEventID
+            modData.IsNew = true
+            modData.NextEventHour = hoursSurvived + ZombRand(minH, maxH + 1)
+            modData.EventDate = "Day " .. math.floor(gt:getDaysSurvived()) .. ", 1993"
+        end
+
+        -- Add current random event if it exists
+        if modData.CurrentEventID then
+            local event = KNOX_NEWS_RANDOM_EVENTS[modData.CurrentEventID]
+            if event then
+                local eventEntry = {
+                    date = modData.EventDate or "Breaking News",
+                    title = event.title,
+                    text = event.text,
+                    image = event.image,
+                    isRandom = true
+                }
+                table.insert(self.VisibleNews, eventEntry)
+            end
+        end
+    end
+
+    -- Default to the latest news available
     self.CurrentNewsIndex = #self.VisibleNews
     if self.CurrentNewsIndex < 1 then self.CurrentNewsIndex = 1 end
     
     self:updateNewsContent()
+end
+
+function S4_IE_KnoxNews:clearNotification()
+    local modData = ModData.getOrCreate("S4_KnoxNews")
+    modData.IsNew = false
+end
+
+function S4_IE_KnoxNews:ReloadUI()
+    self:refreshVisibleNews()
+    self:clearNotification()
 end
 
 function S4_IE_KnoxNews:updateNewsContent()

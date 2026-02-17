@@ -69,10 +69,17 @@ option S4SandBox.Blackjack = {
 	type = boolean, default = true, 
 	page = S4SandBox, translation = S4SandBox_Blackjack,
 }
-/*
-option S4SandBox.SellAddStock = {
+option S4SandBox.NewsRandomEvents = {
 	type = boolean, default = true, 
-	page = S4SandBox, translation = S4SandBox_SellAddStock,
+	page = S4SandBox, translation = S4SandBox_NewsRandomEvents,
+}
+option S4SandBox.NewsMinHours = {
+	type = integer, min = 1, max = 8760, default = 72,
+	page = S4SandBox, translation = S4SandBox_NewsMinHours,
+}
+option S4SandBox.NewsMaxHours = {
+	type = integer, min = 1, max = 8760, default = 168,
+	page = S4SandBox, translation = S4SandBox_NewsMaxHours,
 }
 */
 

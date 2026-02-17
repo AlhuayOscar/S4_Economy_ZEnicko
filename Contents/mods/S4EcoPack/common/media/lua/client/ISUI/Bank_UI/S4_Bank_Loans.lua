@@ -136,8 +136,9 @@ function S4_Bank_Loans:createChildren()
     self.loanList = ISScrollingListBox:new(rightX, y + 20, leftW, self:getHeight() - y - 30)
     self.loanList:initialise()
     self.loanList:instantiate()
+    self.loanList.backgroundColor.a = 0 -- Transparent background
     self.loanList.itemheight = S4_UI.FH_S * 3 + 10
-    self.loanList.doDrawItem = self.drawLoanItem
+    self.loanList.doDrawItem = function(y, item, alt) return self:drawLoanItem(y, item, alt) end
     self:addChild(self.loanList)
 
     self:updateCalculation()
@@ -226,8 +227,11 @@ function S4_Bank_Loans:updateLoanList()
 end
 
 function S4_Bank_Loans:drawLoanItem(y, item, alt)
+    if not item or not item.itemData then return y end
     local loan = item.itemData.loan
-    local isMouseOver = self.mouseovercol == item.index
+    if not loan then return y end
+    
+    local isMouseOver = self.loanList.mouseovercol == item.index
     
     if isMouseOver then
         self:drawRect(0, y, self:getWidth(), item.height, 0.2, 1, 1, 1)

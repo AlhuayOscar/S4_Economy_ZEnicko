@@ -68,8 +68,15 @@ function S4_IE_ZomBank:createChildren()
     self.InfoPanel.backgroundColor.a = 0
     self.InfoPanel.borderColor = {r=0.7, g=0.7, b=0.7, a=1}
     self.InfoPanel:initialise()
-    self.InfoPanel:setVisible(false)
     self:addChild(self.InfoPanel)
+
+    local InfoLY = 5
+    self.BalanceLabel = ISLabel:new(10, InfoLY, S4_UI.FH_M, "", 1, 1, 1, 0.8, UIFont.Medium, true)
+    self.InfoPanel:addChild(self.BalanceLabel)
+    InfoLY = InfoLY + S4_UI.FH_M
+    self.DebtLabel = ISLabel:new(10, InfoLY, S4_UI.FH_M, "", 1, 1, 1, 0.8, UIFont.Medium, true)
+    self.InfoPanel:addChild(self.DebtLabel)
+
     y = y + LogoH + 10
 
     local MenuH = S4_UI.FH_L + 10
@@ -174,10 +181,58 @@ function S4_IE_ZomBank:MenuChildren()
     self:addChild(self.LoanBtn)
 end
 
--- function S4_IE_ZomBank:render()
---     ISPanel.render(self)
+function S4_IE_ZomBank:render()
+    ISPanel.render(self)
+    local CardNumber = self.ComUI.CardNumber
+    local UserName = self.player:getUsername()
+    local BalanceText = getText("IGUI_S4_Label_CardBalance") .. getText("IGUI_S4_Network_UnKnown")
+    local DebtText = getText("IGUI_S4_Label_TotalDebt") .. getText("IGUI_S4_Network_UnKnown")
+    local balanceColor = {r=1, g=1, b=1}
+    local debtColor = {r=1, g=1, b=1}
 
--- end
+    if CardNumber then
+        local CardModData = ModData.get("S4_CardData")
+        local LoanModData = ModData.get("S4_LoanData")
+        
+        if CardModData and CardModData[CardNumber] then
+            local money = CardModData[CardNumber].Money
+            BalanceText = getText("IGUI_S4_Label_CardBalance") .. "$ " .. S4_UI.getNumCommas(money)
+            if money < 0 then
+                balanceColor = {r=1, g=0, b=0}
+            end
+
+            -- Calculate net debt (Loans - Balance)
+            local totalLoanDebt = 0
+            if LoanModData and LoanModData[UserName] then
+                for _, loan in pairs(LoanModData[UserName]) do
+                    if loan.Status == "Active" then
+                        totalLoanDebt = totalLoanDebt + (loan.TotalToPay - (loan.Repaid or 0))
+                    end
+                end
+            end
+
+            local uncoveredDebt = totalLoanDebt - money
+
+            if uncoveredDebt > 0 then
+                DebtText = getText("IGUI_S4_Label_TotalDebt") .. "$ " .. S4_UI.getNumCommas(uncoveredDebt)
+                debtColor = {r=1, g=0, b=0}
+            else
+                DebtText = getText("IGUI_S4_DebtFree")
+                debtColor = {r=0, g=1, b=0}
+            end
+        end
+    end
+    
+    self.BalanceLabel:setName(BalanceText)
+    self.BalanceLabel.r = balanceColor.r
+    self.BalanceLabel.g = balanceColor.g
+    self.BalanceLabel.b = balanceColor.b
+    
+    self.DebtLabel:setName(DebtText)
+    self.DebtLabel.r = debtColor.r
+    self.DebtLabel.g = debtColor.g
+    self.DebtLabel.b = debtColor.b
+end
 
 -- button click
 function S4_IE_ZomBank:BtnClick(Button)

@@ -354,19 +354,38 @@ function S4_Shop_Cart:BuySellAction()
                             TotalPrice = TotalPrice + quickComm
                             DeliveryType = "Quick"
                         end
+                        local function confirmBuy(self, DeliveryType, TotalPrice, DeliveryAddress)
+                            local LogTime = S4_Utils.getLogTime()
+                            sendClientCommand("S4SD", "ShopBuy", {LogTime, DeliveryType, self.ComUI.CardNumber, TotalPrice, self.ComUI.BuyCart, DeliveryAddress})
+                            self.ComUI.BuyCart = {}
+                            self.ParentsUI:ReloadData("Buy")
+                            self:close()
+                        end
+
                         if (CardMoney - TotalPrice) >= getCardCreditLimit() then
                             local DeliveryAddress = self.DeliveryBox:getOptionData(self.DeliveryBox.selected)
                             if DeliveryAddress ~= "None" then
-                                local LogTime = S4_Utils.getLogTime()
-                                sendClientCommand("S4SD", "ShopBuy", {LogTime, DeliveryType, self.ComUI.CardNumber, TotalPrice, self.ComUI.BuyCart, DeliveryAddress})
-                                -- Shop data initialization function after delay, CartUI Close
-                                self.ComUI.BuyCart = {}
-                                self.ParentsUI:ReloadData("Buy")
+                                if (CardMoney - TotalPrice) < 0 then
+                                    -- Show credit card confirmation
+                                    if self.ComUI.ShopMsgBox then self.ComUI.ShopMsgBox:close() end
+                                    self.ComUI.ShopMsgBox = S4_System:new(self.ComUI)
+                                    self.ComUI.ShopMsgBox.TitleName = "Credit Purchase"
+                                    self.ComUI.ShopMsgBox.PageType = "BankMsgBox"
+                                    self.ComUI.ShopMsgBox.CheckType = "CreditBuy"
+                                    self.ComUI.ShopMsgBox.MsgText1 = getText("IGUI_S4_Cart_CreditConfirm")
+                                    self.ComUI.ShopMsgBox.pUI = self
+                                    self.ComUI.ShopMsgBox.onConfirm = function() confirmBuy(self, DeliveryType, TotalPrice, DeliveryAddress) end
+                                    self.ComUI.ShopMsgBox:initialise()
+                                    self.ComUI:addChild(self.ComUI.ShopMsgBox)
+                                    self.ComUI:AddTaskBar(self.ComUI.ShopMsgBox)
+                                else
+                                    confirmBuy(self, DeliveryType, TotalPrice, DeliveryAddress)
+                                end
                             else -- No shipping address
                                 self.ComUI:AddMsgBox("Error - Good Shop", nil, getText("IGUI_S4_ATM_Msg_Error"), getText("IGUI_S4_ATM_Msg_NotDeliveryAddress"), getText("IGUI_S4_ATM_Msg_NotDeliveryAddressTry"))
                                 return
                             end
-                        else -- Insufficient card balance
+                        else -- Insufficient card balance (Exceeds credit limit)
                             self.ComUI:AddMsgBox("Error - Good Shop", nil, getText("IGUI_S4_ATM_Msg_Error"), getText("IGUI_S4_ATM_Msg_LowBalance"))
                             return
                         end

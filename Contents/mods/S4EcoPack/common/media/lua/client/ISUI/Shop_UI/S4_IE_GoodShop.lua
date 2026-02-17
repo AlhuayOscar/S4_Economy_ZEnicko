@@ -257,10 +257,14 @@ end
 
 function S4_IE_GoodShop:render()
     ISPanel.render(self)
+
     if self.MenuType then
-        local x, y, w, h = self[self.MenuType .. "Btn"]:getX(), self[self.MenuType .. "Btn"]:getY() + 1,
-            self[self.MenuType .. "Btn"]:getWidth(), self[self.MenuType .. "Btn"]:getHeight() - 2
-        self:drawRect(x, y, w, h, 0.2, 1, 1, 1)
+        local targetBtn = self[self.MenuType .. "Btn"]
+        if targetBtn then
+            local x, y, w, h = targetBtn:getX(), targetBtn:getY() + 1,
+                targetBtn:getWidth(), targetBtn:getHeight() - 2
+            self:drawRect(x, y, w, h, 0.2, 1, 1, 1)
+        end
     end
 end
 
@@ -616,6 +620,33 @@ function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView)
     Events.OnTick.Add(UpdateCount_DataSetup)
 end
 
+function S4_IE_GoodShop:CheckDebt()
+    if self.ComUI.CardNumber then
+        local CardModData = ModData.get("S4_CardData")
+        local LoanModData = ModData.get("S4_LoanData")
+        local UserName = self.player:getUsername()
+        
+        if CardModData and CardModData[self.ComUI.CardNumber] then
+            local money = CardModData[self.ComUI.CardNumber].Money
+            
+            local totalLoanDebt = 0
+            if LoanModData and LoanModData[UserName] then
+                for _, loan in pairs(LoanModData[UserName]) do
+                    if loan.Status == "Active" then
+                        totalLoanDebt = totalLoanDebt + (loan.TotalToPay - (loan.Repaid or 0))
+                    end
+                end
+            end
+
+            -- Block if net debt is positive (Loans > balance)
+            if (totalLoanDebt - money) > 0 then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 -- Category settings
 function S4_IE_GoodShop:AddCategory()
     self.CategoryBox:clear()
@@ -664,9 +695,9 @@ function S4_IE_GoodShop:BtnClick(Button)
     if self.BuyBox or self.SellBox then
         return
     end
-    if internal == "Buy" or internal == "Sell" or internal == "Cart" then
-        if self.ComUI.CardNumber and self.ComUI.CardMoney and self.ComUI.CardMoney < 0 then
-            self.ComUI:AddMsgBox(getText("IGUI_S4_ATM_Msg_Error"), nil, "You must get out of debt first", getText("IGUI_S4_ATM_Msg_LowBalance"))
+    if internal == "Buy" then
+        if self:CheckDebt() then
+            self.ComUI:AddMsgBox(getText("IGUI_S4_ATM_Msg_Error"), nil, getText("IGUI_S4_NoMoneyDebt"), getText("IGUI_S4_ATM_Msg_LowBalance"))
             return
         end
     end

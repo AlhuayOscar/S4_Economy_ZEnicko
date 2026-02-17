@@ -135,6 +135,11 @@ function S4_Sys_BankMsgBox:BtnClick(Button)
                 self.ComUI:AddMsgBox("Error - ZomBank", nil, getText("IGUI_S4_ATM_Msg_Error"), getText("IGUI_S4_Bank_Msg_DeliveryFail"), getText("IGUI_S4_Bank_Msg_DeliveryFailTry"))
                 self.SysUI:close()
             end
+        elseif self.SysUI.CheckType == "CreditBuy" then
+            if self.SysUI.onConfirm then
+                self.SysUI.onConfirm()
+            end
+            self.SysUI:close()
         end
     elseif internal == "Cancel" then
         self.SysUI:close()

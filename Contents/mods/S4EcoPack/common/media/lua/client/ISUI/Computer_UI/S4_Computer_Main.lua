@@ -518,10 +518,6 @@ function S4_Computer_Main:BtnClick(Button)
         end
         self.TopApp = self.ZomBank
     elseif internal == "GoodShop" then
-        if self.CardNumber and self.CardMoney and self.CardMoney < 0 then
-            self:AddMsgBox(getText("IGUI_S4_ATM_Msg_Error"), nil, "You must get out of debt first", getText("IGUI_S4_ATM_Msg_LowBalance"))
-            return
-        end
         if self.GoodShop then
             ModData.request("S4_ShopData")
             ModData.request("S4_PlayerShopData")

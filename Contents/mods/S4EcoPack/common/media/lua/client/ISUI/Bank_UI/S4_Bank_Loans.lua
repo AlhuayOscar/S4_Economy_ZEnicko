@@ -121,6 +121,14 @@ function S4_Bank_Loans:createChildren()
     self.acceptBtn:initialise()
     self.acceptBtn.backgroundColor = {r=0.2, g=0.5, b=0.2, a=0.8}
     self.requestPanel:addChild(self.acceptBtn)
+    ry = ry + S4_UI.FH_M + 10
+
+    -- Next Payment Info
+    self.nextPaymentLabel = ISRichTextPanel:new(rx, ry, leftW - 20, 60)
+    self.nextPaymentLabel:initialise()
+    self.nextPaymentLabel:instantiate()
+    self.nextPaymentLabel.backgroundColor.a = 0
+    self.requestPanel:addChild(self.nextPaymentLabel)
 
     -- Debug Buttons (Lower Left)
     if getDebug() then
@@ -180,6 +188,7 @@ end
 function S4_Bank_Loans:refreshAndDraw()
     self:refreshLoans()
     self:updateLoanListUI()
+    self:updateNextPaymentInfo()
 end
 
 function S4_Bank_Loans:updateLoanListUI()
@@ -322,12 +331,50 @@ end
 
 function S4_Bank_Loans:update()
     ISPanel.update(self)
+    
+    -- Fix delay: update calculation every frame while typing
+    if self.amountEntry and self.amountEntry:isFocused() then
+        self:updateCalculation()
+    end
+
     if self.refreshTimer and self.refreshTimer > 0 then
         self.refreshTimer = self.refreshTimer - 1
         if self.refreshTimer == 0 then
-            self:updateLoanListUI()
+            self:refreshAndDraw()
         end
     end
+    
+    -- Update "Next Payment" info regularly
+    self:updateNextPaymentInfo()
+end
+
+function S4_Bank_Loans:updateNextPaymentInfo()
+    if not self.nextPaymentLabel then return end
+    
+    local UserName = self.player:getUsername()
+    local LoanModData = ModData.get("S4_LoanData")
+    local closestDays = nil
+    local currentDay = getGameTime():getDay()
+    
+    if LoanModData and LoanModData[UserName] then
+        for _, loan in pairs(LoanModData[UserName]) do
+            if loan.Status == "Active" then
+                local daysLeft = (loan.StartDay or 0) + (loan.Deadline or 0) - currentDay
+                if closestDays == nil or daysLeft < closestDays then
+                    closestDays = daysLeft
+                end
+            end
+        end
+    end
+    
+    if closestDays then
+        local color = "<RGB:1,0,0>" -- Red for urgent
+        if closestDays > 7 then color = "<RGB:0.5,1,0.5>" end -- Green if far
+        self.nextPaymentLabel.text = string.format(" <RGB:0.8,0.8,0.8> Next loan payment in: %s %d Days", color, closestDays)
+    else
+        self.nextPaymentLabel.text = " <RGB:0.5,0.5,0.5> No upcoming payments."
+    end
+    self.nextPaymentLabel:paginate()
 end
 
 function S4_Bank_Loans:onRepayLoan(index, loan, isDebug)

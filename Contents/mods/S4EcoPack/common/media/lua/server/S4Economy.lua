@@ -295,21 +295,23 @@ function S4Economy.RequestLoan(player, args)
         Deadline = DeadlineDays,
         Timestamp = Timestamp,
         DisplayTime = DisplayTime,
+        StartDay = getGameTime():getDay(), -- Store the game day for deadline tracking
         CardNum = CardNum,
         Repaid = 0,
         Status = "Active"
     })
 
     -- Add to Card Log
-    if CardLogModData[CardNum] then
-        CardLogModData[CardNum][Timestamp] = {
-            Type = "Deposit",
-            Money = Amount,
-            Sender = Lender,
-            Receiver = UserName,
-            DisplayTime = DisplayTime,
-        }
+    if not CardLogModData[CardNum] then
+        CardLogModData[CardNum] = {}
     end
+    CardLogModData[CardNum][Timestamp] = {
+        Type = "Deposit",
+        Money = Amount,
+        Sender = Lender,
+        Receiver = UserName,
+        DisplayTime = DisplayTime,
+    }
 
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_LoanData")
@@ -351,15 +353,16 @@ function S4Economy.RepayLoan(player, args)
     end
 
     -- Add to Log (Always runs, but CardModData transmit only if not debug)
-    if CardLogModData[CardNum] then
-        CardLogModData[CardNum][Timestamp] = {
-            Type = "Withdraw",
-            Money = RepayAmount,
-            Sender = UserName,
-            Receiver = loan.Lender,
-            DisplayTime = DisplayTime,
-        }
+    if not CardLogModData[CardNum] then
+        CardLogModData[CardNum] = {}
     end
+    CardLogModData[CardNum][Timestamp] = {
+        Type = "Withdraw",
+        Money = RepayAmount,
+        Sender = UserName,
+        Receiver = loan.Lender,
+        DisplayTime = DisplayTime,
+    }
 
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_LoanData")

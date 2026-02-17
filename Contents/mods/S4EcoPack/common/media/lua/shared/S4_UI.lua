@@ -347,6 +347,7 @@ end
 
 -- Function to add a comma to a number
 function S4_UI.getNumCommas(number)
+    if not number or type(number) ~= "number" then return "0" end
     local isNegative = number < 0
     local numStr = tostring(math.abs(number))  -- Absolute value processing
     local formatted = numStr:reverse():gsub("(%d%d%d)", "%1,"):reverse()

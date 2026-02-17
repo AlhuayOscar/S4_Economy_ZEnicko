@@ -100,7 +100,10 @@ function S4_Bank_Loans:createChildren()
     self.amountEntry:initialise()
     self.amountEntry:instantiate()
     self.amountEntry:setOnlyNumbers(true)
-    self.amountEntry.onTextChange = function() self:updateCalculation() end
+    -- Correctly hook text change for real-time calculation
+    self.amountEntry.onTextChange = function(entry) 
+        self:updateCalculation() 
+    end
     self.requestPanel:addChild(self.amountEntry)
     ry = ry + S4_UI.FH_S + 20
 
@@ -153,48 +156,60 @@ end
 function S4_Bank_Loans:updateLoanListUI()
     if not self.listPanel then return end
     
-    -- Clear previous items
-    self.listPanel:clearChildren()
+    -- Robust way to clear Lua children
+    if self.listPanel.children then
+        for k,v in pairs(self.listPanel.children) do
+            self.listPanel:removeChild(v)
+        end
+        self.listPanel.children = {}
+    end
     
     local py = 5
     local itemH = 65
     local UserName = self.player:getUsername()
     local LoanModData = ModData.get("S4_LoanData")
+    local found = false
     
     if LoanModData and LoanModData[UserName] then
-        for i, loan in ipairs(LoanModData[UserName]) do
+        for i, loan in pairs(LoanModData[UserName]) do
             if loan.Status == "Active" then
-                local item = ISPanel:new(5, py, self.listPanel:getWidth() - 10, itemH)
-                item.backgroundColor = {r=0.1, g=0.1, b=0.1, a=0.4}
-                item.borderColor = {r=0.5, g=0.5, b=0.5, a=0.5}
-                item:initialise()
-                self.listPanel:addChild(item)
+                found = true
+                local itemBody = ISPanel:new(5, py, self.listPanel:getWidth() - 10, itemH)
+                itemBody.backgroundColor = {r=0.1, g=0.1, b=0.1, a=0.4}
+                itemBody.borderColor = {r=0.5, g=0.5, b=0.5, a=0.5}
+                itemBody:initialise()
+                self.listPanel:addChild(itemBody)
                 
                 local lx = 5
                 local ly = 5
-                local label = ISLabel:new(lx, ly, 14, loan.Lender, 1, 1, 1, 1, UIFont.Small, true)
-                item:addChild(label)
+                local nameLabel = ISLabel:new(lx, ly, 14, loan.Lender, 1, 1, 1, 1, UIFont.Small, true)
+                itemBody:addChild(nameLabel)
                 ly = ly + 16
                 
                 local status = string.format("Repaid: $ %s / $ %s", S4_UI.getNumCommas(loan.Repaid or 0), S4_UI.getNumCommas(loan.TotalToPay))
-                label = ISLabel:new(lx, ly, 14, status, 0.8, 0.8, 0.8, 1, UIFont.Small, true)
-                item:addChild(label)
+                local statusLabel = ISLabel:new(lx, ly, 14, status, 0.8, 0.8, 0.8, 1, UIFont.Small, true)
+                itemBody:addChild(statusLabel)
                 ly = ly + 16
                 
-                label = ISLabel:new(lx, ly, 14, "Card: " .. loan.CardNum, 0.6, 0.6, 0.6, 1, UIFont.Small, true)
-                item:addChild(label)
+                local cardLabel = ISLabel:new(lx, ly, 14, "Card: " .. loan.CardNum, 0.6, 0.6, 0.6, 1, UIFont.Small, true)
+                itemBody:addChild(cardLabel)
                 
                 local btnW = 70
                 local btnH = 20
-                local repayBtn = ISButton:new(item:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, "Repay", self, function() self:onRepayLoan(i, loan) end)
+                local repayBtn = ISButton:new(itemBody:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, "Repay", self, function() self:onRepayLoan(i, loan) end)
                 repayBtn:initialise()
                 repayBtn.backgroundColor = {r=0.4, g=0.2, b=0.2, a=0.8}
-                item:addChild(repayBtn)
+                itemBody:addChild(repayBtn)
                 
                 py = py + itemH + 5
-                if py + itemH > self.listPanel:getHeight() then break end -- Limit view to visible area
+                if py + itemH > self.listPanel:getHeight() then break end
             end
         end
+    end
+
+    if not found then
+        local emptyLabel = ISLabel:new(10, 10, 14, "No active loans found.", 0.5, 0.5, 0.5, 0.8, UIFont.Small, true)
+        self.listPanel:addChild(emptyLabel)
     end
 end
 

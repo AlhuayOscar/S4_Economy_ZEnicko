@@ -1,9 +1,57 @@
 -- Function initialization
 S4Shop = {}
-local S4_SHOP_DATA_PATHS = {
-    "media/lua/shared/S4_Shop_Data.lua",
-    "../Lua/S4Economy/S4_Shop_Data.lua",
-}
+local S4_SHOP_DATA_PATHS = {"media/lua/shared/S4_Shop_Data.lua", "../Lua/S4Economy/S4_Shop_Data.lua"}
+
+local S4_LAST_SHOP_DATA_SOURCE = nil
+
+local function addSteamWorkshopShopDataCandidates(addPath, workshopIds)
+    local roots = {}
+    local seenRoots = {}
+    local suffixes = {}
+    local seenSuffixes = {}
+
+    local function addRoot(path)
+        if type(path) ~= "string" or path == "" then
+            return
+        end
+        if seenRoots[path] then
+            return
+        end
+        seenRoots[path] = true
+        table.insert(roots, path)
+    end
+
+    local function addSuffix(path)
+        if type(path) ~= "string" or path == "" then
+            return
+        end
+        if seenSuffixes[path] then
+            return
+        end
+        seenSuffixes[path] = true
+        table.insert(suffixes, path)
+    end
+
+    addRoot("C:/Program Files (x86)/Steam")
+    addRoot("C:/Program Files/Steam")
+    for i = 65, 90 do
+        local drive = string.char(i) .. ":"
+        addRoot(drive .. "/SteamLibrary")
+        addRoot(drive .. "/Program Files (x86)/Steam")
+        addRoot(drive .. "/Program Files/Steam")
+    end
+
+    for _, workshopId in ipairs(workshopIds) do
+        addSuffix("steamapps/workshop/content/108600/" .. workshopId ..
+                      "/mods/S4EcoPack/common/media/lua/shared/S4_Shop_Data.lua")
+    end
+
+    for _, root in ipairs(roots) do
+        for _, suffix in ipairs(suffixes) do
+            addPath(root .. "/" .. suffix)
+        end
+    end
+end
 
 local function getCardCreditLimit()
     local maxNegative = 1000
@@ -19,13 +67,32 @@ end
 local function collectShopDataCandidates()
     local candidates = {}
     local seen = {}
+    local discoveredWorkshopIds = {}
+    local seenWorkshopIds = {}
 
     local function addPath(path)
-        if type(path) ~= "string" or path == "" then return end
-        if seen[path] then return end
+        if type(path) ~= "string" or path == "" then
+            return
+        end
+        if seen[path] then
+            return
+        end
         seen[path] = true
         table.insert(candidates, path)
     end
+
+    local function addWorkshopId(workshopId)
+        if type(workshopId) ~= "string" or workshopId == "" then
+            return
+        end
+        if seenWorkshopIds[workshopId] then
+            return
+        end
+        seenWorkshopIds[workshopId] = true
+        table.insert(discoveredWorkshopIds, workshopId)
+    end
+
+    addWorkshopId("3667850050")
 
     if getLoadedLuaCount and getLoadedLua then
         local okCount, loadedCount = pcall(getLoadedLuaCount)
@@ -34,6 +101,10 @@ local function collectShopDataCandidates()
                 local okPath, loadedPath = pcall(getLoadedLua, i)
                 if okPath and type(loadedPath) == "string" then
                     local pathLower = string.lower(loadedPath)
+                    local workshopId = string.match(pathLower, "workshop/content/108600/(%d+)/mods/s4ecopack/")
+                    if workshopId then
+                        addWorkshopId(workshopId)
+                    end
                     if string.find(pathLower, "s4_shop_data.lua", 1, true) then
                         addPath(loadedPath)
                     end
@@ -45,6 +116,8 @@ local function collectShopDataCandidates()
     for _, path in ipairs(S4_SHOP_DATA_PATHS) do
         addPath(path)
     end
+
+    addSteamWorkshopShopDataCandidates(addPath, discoveredWorkshopIds)
 
     return candidates
 end
@@ -64,6 +137,10 @@ local function refreshShopDataSource()
         if exists then
             pcall(reloadLuaFile, filePath)
             if type(S4_Shop_Data) == "table" then
+                if S4_LAST_SHOP_DATA_SOURCE ~= filePath then
+                    print("[S4_Economy] Shop data source: " .. tostring(filePath))
+                    S4_LAST_SHOP_DATA_SOURCE = filePath
+                end
                 break
             end
         end
@@ -86,13 +163,15 @@ local function buildShopEntry(Data, CurrentCategory)
         BuyAuthority = tonumber(Data and Data.BuyAuthority) or 0,
         SellAuthority = tonumber(Data and Data.SellAuthority) or 0,
         Discount = tonumber(Data and Data.Discount) or 0,
-        HotItem = tonumber(Data and Data.HotItem) or 0,
+        HotItem = tonumber(Data and Data.HotItem) or 0
     }
 end
 
 local function applyShopDataFromLua(overwriteExisting, removeMissing)
     local ShopModData = ModData.get("S4_ShopData")
-    if not ShopModData or type(S4_Shop_Data) ~= "table" then return false end
+    if not ShopModData or type(S4_Shop_Data) ~= "table" then
+        return false
+    end
 
     if removeMissing then
         for ItemName, _ in pairs(ShopModData) do
@@ -175,16 +254,18 @@ function S4Shop.UpdateShopData(player, args)
             BuyAuthority = FixBuyAuthority,
             SellAuthority = FixSellAuthority,
             Discount = FixDiscount,
-            HotItem = FixHotItem,
+            HotItem = FixHotItem
         }
-  
+
     end
     ModData.transmit("S4_ShopData")
 end
 
 function S4Shop.ResetShopData(player, args)
     local Account = ModData.get("S4_ShopData")
-    if not Account then return end
+    if not Account then
+        return
+    end
     for ItemName, _ in pairs(Account) do
         ModData.get("S4_ShopData")[ItemName] = nil
     end
@@ -194,7 +275,9 @@ end
 function S4Shop.RemoveShopData(player, args)
     local ItemName = args[1]
     local Account = ModData.get("S4_ShopData")[ItemName]
-    if not Account then return end
+    if not Account then
+        return
+    end
     ModData.get("S4_ShopData")[ItemName] = nil
     ModData.transmit("S4_ShopData")
 end
@@ -210,14 +293,24 @@ function S4Shop.ShopBuy(player, args)
     local CardNum = args[3]
     local TotalPrice = args[4]
     local CardModData = ModData.get("S4_CardData")[CardNum]
-    if not CardModData then return end
-    if (CardModData.Money - TotalPrice) < getCardCreditLimit() then return end
+    if not CardModData then
+        return
+    end
+    if (CardModData.Money - TotalPrice) < getCardCreditLimit() then
+        return
+    end
     local CardLogModData = ModData.get("S4_CardLog")[CardNum]
-    if not CardLogModData then return end
+    if not CardLogModData then
+        return
+    end
     local PlayerShopModData = ModData.get("S4_PlayerShopData")[UserName]
-    if not PlayerShopModData then return end
+    if not PlayerShopModData then
+        return
+    end
     local ShopModData = ModData.get("S4_ShopData")
-    if not ShopModData then return end
+    if not ShopModData then
+        return
+    end
     -- Card data update
     CardModData.Money = CardModData.Money - TotalPrice
     ModData.transmit("S4_CardData")
@@ -227,7 +320,7 @@ function S4Shop.ShopBuy(player, args)
         Money = TotalPrice,
         Sender = UserName,
         Receiver = "GoodShop",
-        DisplayTime = DisplayTime,
+        DisplayTime = DisplayTime
     }
     ModData.transmit("S4_CardLog")
     -- Delivery information update
@@ -253,13 +346,19 @@ function S4Shop.ShopSell(player, args)
     local CardModData = ModData.get("S4_CardData")[CardNum]
     if not CardModData then
         local PlayerModData = ModData.get("S4_PlayerData")[UserName]
-        if not PlayerModData then return end
+        if not PlayerModData then
+            return
+        end
         CardNum = PlayerModData.MainCard
         CardModData = ModData.get("S4_CardData")[CardNum]
     end
-    if not CardModData then return end
+    if not CardModData then
+        return
+    end
     local CardLogModData = ModData.get("S4_CardLog")[CardNum]
-    if not CardLogModData then return end
+    if not CardLogModData then
+        return
+    end
     CardModData.Money = CardModData.Money + Price
     local LogTime = args[3]
     local DisplayTime = S4_Utils.getLogTimeMin(LogTime)
@@ -268,24 +367,30 @@ function S4Shop.ShopSell(player, args)
         Money = Price,
         Sender = "GoodShop",
         Receiver = UserName,
-        DisplayTime = DisplayTime,
+        DisplayTime = DisplayTime
     }
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_CardLog")
 end
 
 function S4Shop.ShopDataAddon(player, args)
-    if not refreshShopDataSource() then return end
+    if not refreshShopDataSource() then
+        return
+    end
     applyShopDataFromLua(false, false)
 end
 
 function S4Shop.OverWriteShopDataAddon(player, args)
-    if not refreshShopDataSource() then return end
+    if not refreshShopDataSource() then
+        return
+    end
     applyShopDataFromLua(true, false)
 end
 
 -- Reload S4_Shop_Data.lua from disk and apply it immediately to runtime shop data.
 function S4Shop.RefreshShopDataFromLua(player, args)
-    if not refreshShopDataSource() then return end
+    if not refreshShopDataSource() then
+        return
+    end
     applyShopDataFromLua(true, true)
 end

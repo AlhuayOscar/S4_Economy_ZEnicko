@@ -288,7 +288,7 @@ function S4_IE_GoodShop:AddItems(Reload)
                 self.ListBox:AddItem(Data)
             end
         elseif self.CategoryBox.CategoryType == "Search" then
-            if not self.ListBox and not self.ListBox.SearchEntry then return end
+            if not self.ListBox or not self.ListBox.SearchEntry then return end
             if Data.FullType and Data.DisplayName then
                 local ST = self.ListBox.SearchEntry:getText()
                 if ST ~= "" then

@@ -1,5 +1,10 @@
 -- Function initialization
 S4Shop = {}
+local S4_SHOP_DATA_PATHS = {
+    "media/lua/shared/S4_Shop_Data.lua",
+    "../Lua/S4Economy/S4_Shop_Data.lua",
+}
+
 local function getCardCreditLimit()
     local maxNegative = 1000
     if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.MaxNegativeBalance then
@@ -9,6 +14,113 @@ local function getCardCreditLimit()
         maxNegative = 0
     end
     return -maxNegative
+end
+
+local function collectShopDataCandidates()
+    local candidates = {}
+    local seen = {}
+
+    local function addPath(path)
+        if type(path) ~= "string" or path == "" then return end
+        if seen[path] then return end
+        seen[path] = true
+        table.insert(candidates, path)
+    end
+
+    if getLoadedLuaCount and getLoadedLua then
+        local okCount, loadedCount = pcall(getLoadedLuaCount)
+        if okCount and type(loadedCount) == "number" then
+            for i = 0, loadedCount - 1 do
+                local okPath, loadedPath = pcall(getLoadedLua, i)
+                if okPath and type(loadedPath) == "string" then
+                    local pathLower = string.lower(loadedPath)
+                    if string.find(pathLower, "s4_shop_data.lua", 1, true) then
+                        addPath(loadedPath)
+                    end
+                end
+            end
+        end
+    end
+
+    for _, path in ipairs(S4_SHOP_DATA_PATHS) do
+        addPath(path)
+    end
+
+    return candidates
+end
+
+local function refreshShopDataSource()
+    S4_Shop_Data = nil
+
+    local candidates = collectShopDataCandidates()
+
+    for _, filePath in ipairs(candidates) do
+        local exists = true
+        if fileExists then
+            local okExists, result = pcall(fileExists, filePath)
+            exists = okExists and result == true
+        end
+
+        if exists then
+            pcall(reloadLuaFile, filePath)
+            if type(S4_Shop_Data) == "table" then
+                break
+            end
+        end
+    end
+
+    return type(S4_Shop_Data) == "table"
+end
+
+local function buildShopEntry(Data, CurrentCategory)
+    local category = Data and Data.Category
+    if not category or category == "" then
+        category = CurrentCategory or "Etc"
+    end
+    return {
+        BuyPrice = tonumber(Data and Data.BuyPrice) or 0,
+        SellPrice = tonumber(Data and Data.SellPrice) or 0,
+        Stock = tonumber(Data and Data.Stock) or 0,
+        Restock = tonumber(Data and Data.Restock) or 0,
+        Category = category,
+        BuyAuthority = tonumber(Data and Data.BuyAuthority) or 0,
+        SellAuthority = tonumber(Data and Data.SellAuthority) or 0,
+        Discount = tonumber(Data and Data.Discount) or 0,
+        HotItem = tonumber(Data and Data.HotItem) or 0,
+    }
+end
+
+local function applyShopDataFromLua(overwriteExisting, removeMissing)
+    local ShopModData = ModData.get("S4_ShopData")
+    if not ShopModData or type(S4_Shop_Data) ~= "table" then return false end
+
+    if removeMissing then
+        for ItemName, _ in pairs(ShopModData) do
+            if not S4_Shop_Data[ItemName] then
+                ShopModData[ItemName] = nil
+            end
+        end
+    end
+
+    for ItemName, Data in pairs(S4_Shop_Data) do
+        if not ShopModData[ItemName] then
+            ShopModData[ItemName] = buildShopEntry(Data)
+        elseif overwriteExisting then
+            local merged = buildShopEntry(Data, ShopModData[ItemName].Category)
+            ShopModData[ItemName].BuyPrice = merged.BuyPrice
+            ShopModData[ItemName].SellPrice = merged.SellPrice
+            ShopModData[ItemName].Stock = merged.Stock
+            ShopModData[ItemName].Restock = merged.Restock
+            ShopModData[ItemName].Category = merged.Category
+            ShopModData[ItemName].BuyAuthority = merged.BuyAuthority
+            ShopModData[ItemName].SellAuthority = merged.SellAuthority
+            ShopModData[ItemName].Discount = merged.Discount
+            ShopModData[ItemName].HotItem = merged.HotItem
+        end
+    end
+
+    ModData.transmit("S4_ShopData")
+    return true
 end
 
 -- Generate kill data
@@ -38,7 +150,7 @@ function S4Shop.UpdateShopData(player, args)
             Account.SellAuthority = args["SellAuthority"]
         end
         if args["Discount"] then
-            Account.Discount = args["SellAuthority"]
+            Account.Discount = args["Discount"]
         end
         if args["HotItem"] then
             Account.HotItem = args["HotItem"]
@@ -163,55 +275,17 @@ function S4Shop.ShopSell(player, args)
 end
 
 function S4Shop.ShopDataAddon(player, args)
-    local ShopModData = ModData.get("S4_ShopData")
-    if ShopModData and S4_Shop_Data then
-        for ItemName, Data in pairs(S4_Shop_Data) do
-            if not ShopModData[ItemName] then
-                ShopModData[ItemName] = {
-                    BuyPrice = Data.BuyPrice,
-                    SellPrice = Data.SellPrice,
-                    Stock = Data.Stock,
-                    Restock = Data.Restock,
-                    Category = Data.Category,
-                    BuyAuthority = Data.BuyAuthority,
-                    SellAuthority = Data.SellAuthority,
-                    Discount = Data.Discount,
-                    HotItem = Data.HotItem,
-                }
-            end
-        end
-        ModData.transmit("S4_ShopData")
-    end
+    if not refreshShopDataSource() then return end
+    applyShopDataFromLua(false, false)
 end
 
 function S4Shop.OverWriteShopDataAddon(player, args)
-    local ShopModData = ModData.get("S4_ShopData")
-    if ShopModData and S4_Shop_Data then
-        for ItemName, Data in pairs(S4_Shop_Data) do
-            if not ShopModData[ItemName] then
-                ShopModData[ItemName] = {
-                    BuyPrice = Data.BuyPrice,
-                    SellPrice = Data.SellPrice,
-                    Stock = Data.Stock,
-                    Restock = Data.Restock,
-                    Category = Data.Category,
-                    BuyAuthority = Data.BuyAuthority,
-                    SellAuthority = Data.SellAuthority,
-                    Discount = Data.Discount,
-                    HotItem = Data.HotItem,
-                }
-            else
-                ShopModData[ItemName].BuyPrice = Data.BuyPrice
-                ShopModData[ItemName].SellPrice = Data.SellPrice
-                ShopModData[ItemName].Stock = Data.Stock
-                ShopModData[ItemName].Restock = Data.Restock
-                ShopModData[ItemName].Category = Data.Category
-                ShopModData[ItemName].BuyAuthority = Data.BuyAuthority
-                ShopModData[ItemName].SellAuthority = Data.SellAuthority
-                ShopModData[ItemName].Discount = Data.Discount
-                ShopModData[ItemName].HotItem = Data.HotItem
-            end
-        end
-        ModData.transmit("S4_ShopData")
-    end
+    if not refreshShopDataSource() then return end
+    applyShopDataFromLua(true, false)
+end
+
+-- Reload S4_Shop_Data.lua from disk and apply it immediately to runtime shop data.
+function S4Shop.RefreshShopDataFromLua(player, args)
+    if not refreshShopDataSource() then return end
+    applyShopDataFromLua(true, true)
 end

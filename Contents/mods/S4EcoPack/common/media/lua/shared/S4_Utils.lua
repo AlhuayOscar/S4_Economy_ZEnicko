@@ -1,6 +1,35 @@
 S4_Utils = {}
 S4_Utils.ItemCashe = {}
 
+local function shouldSkipItemInstance(itemName)
+    if not getScriptManager then
+        return false
+    end
+
+    local okManager, scriptManager = pcall(getScriptManager)
+    if not okManager or not scriptManager then
+        return false
+    end
+
+    local okFind, scriptItem = pcall(function()
+        return scriptManager:FindItem(itemName)
+    end)
+    if not okFind or not scriptItem then
+        return false
+    end
+
+    if scriptItem.getTypeString then
+        local okType, typeString = pcall(function()
+            return scriptItem:getTypeString()
+        end)
+        if okType and typeString == "WeaponPart" then
+            return true
+        end
+    end
+
+    return false
+end
+
 -- Object mode data storage function
 function S4_Utils.SnycObject(Object)
     if not SandboxVars.S4SandBox.SinglePlay and isClient() then
@@ -94,6 +123,10 @@ function S4_Utils.setItemCashe(itemName)
         return nil
     end
     if not S4_Cashe[itemName] then
+        if shouldSkipItemInstance(itemName) then
+            S4_Cashe[itemName] = false
+            return nil
+        end
         local ok, ItemData = pcall(instanceItem, itemName)
         if ok and ItemData then
             S4_Cashe[itemName] = ItemData

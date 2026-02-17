@@ -25,43 +25,60 @@ function S4_IE_GoodShopAdmin:initialise()
     self.MenuType = "Setup"
     self.ListCount = Count
 
-    self.FilterItem = S4_Utils.setItemCashe("Base.Bandage_Abdomen") 
+    self.FilterItem = false
     self.AllItems = {}
     self.AllCategory = {}
+    local ShopModData = ModData.get("S4_ShopData") or {}
     local AllItemList = getAllItems()
     for i=0, AllItemList:size()-1 do
         local item = AllItemList:get(i)
         if item and item:getFullName() and item:getTypeString() then
             local Data = {}
-            -- Data.ListCategory = item:getTypeString()
-            Data.ListCategory = item:getDisplayCategory()
-            local itemCashe = S4_Utils.setItemCashe(item:getFullName()) 
-            if itemCashe then
-                Data.FullType = itemCashe:getFullType()
-                Data.DisplayName = itemCashe:getDisplayName()
-                Data.Texture = itemCashe:getTex()
-                Data.itemData = itemCashe
-                local ShopModData = ModData.get("S4_ShopData")
-                if ShopModData[Data.FullType] then
-                    Data.DataCheck = true
-                    Data.BuyPrice = ShopModData[Data.FullType].BuyPrice
-                    Data.SellPrice = ShopModData[Data.FullType].SellPrice
-                    Data.Stock = ShopModData[Data.FullType].Stock
-                    Data.Restock = ShopModData[Data.FullType].Restock
-                    Data.Category = ShopModData[Data.FullType].Category
-                    Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority
-                    Data.SellAuthority = ShopModData[Data.FullType].SellAuthority
-                    Data.Discount = ShopModData[Data.FullType].Discount
-                    Data.HotItem = ShopModData[Data.FullType].HotItem
-                else
-                    Data.DataCheck = false
+            local ListCategory = item:getDisplayCategory()
+            if not ListCategory or ListCategory == "" then
+                ListCategory = item:getTypeString() or "Etc"
+            end
+
+            Data.ListCategory = ListCategory
+            Data.FullType = item:getFullName()
+            Data.DisplayName = item:getDisplayName() or Data.FullType
+
+            local iconTexture = nil
+            if item.getNormalTexture then
+                local okTexture, normalTexture = pcall(function() return item:getNormalTexture() end)
+                if okTexture and normalTexture then
+                    iconTexture = normalTexture
                 end
-                local filterTex = self.FilterItem and self.FilterItem:getTex() or false
-                if filterTex ~= Data.Texture then
-                    table.insert(self.AllItems, Data)
-                    if not self.AllCategory[item:getDisplayCategory()] then
-                        self.AllCategory[item:getDisplayCategory()] = item:getDisplayCategory()
-                    end
+            end
+            if not iconTexture and item.getIcon then
+                local okIcon, iconName = pcall(function() return item:getIcon() end)
+                if okIcon and iconName and iconName ~= "" then
+                    iconTexture = getTexture(iconName) or getTexture("Item_" .. iconName)
+                end
+            end
+            Data.Texture = iconTexture or false
+            Data.itemData = false
+
+            if ShopModData[Data.FullType] then
+                Data.DataCheck = true
+                Data.BuyPrice = ShopModData[Data.FullType].BuyPrice
+                Data.SellPrice = ShopModData[Data.FullType].SellPrice
+                Data.Stock = ShopModData[Data.FullType].Stock
+                Data.Restock = ShopModData[Data.FullType].Restock
+                Data.Category = ShopModData[Data.FullType].Category
+                Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority
+                Data.SellAuthority = ShopModData[Data.FullType].SellAuthority
+                Data.Discount = ShopModData[Data.FullType].Discount
+                Data.HotItem = ShopModData[Data.FullType].HotItem
+            else
+                Data.DataCheck = false
+            end
+
+            local isFilterItem = (Data.FullType == "Base.Bandage_Abdomen")
+            if not isFilterItem then
+                table.insert(self.AllItems, Data)
+                if not self.AllCategory[ListCategory] then
+                    self.AllCategory[ListCategory] = ListCategory
                 end
             end
         end
@@ -228,7 +245,7 @@ function S4_IE_GoodShopAdmin:AddItems()
                     self.ListBox:AddItem(Data)
                 end
             elseif self.CategoryBox.CategoryType == "Search" then
-                if not self.ListBox and not self.ListBox.SearchEntry then return end
+                if not self.ListBox or not self.ListBox.SearchEntry then return end
                 if Data.FullType and Data.DisplayName then
                     local ST = self.ListBox.SearchEntry:getText()
                     if ST ~= "" then
@@ -243,6 +260,37 @@ function S4_IE_GoodShopAdmin:AddItems()
             end
         -- end
     end
+end
+
+function S4_IE_GoodShopAdmin:ReloadData()
+    local ShopModData = ModData.get("S4_ShopData") or {}
+    for _, Data in pairs(self.AllItems) do
+        local ShopData = ShopModData[Data.FullType]
+        if ShopData then
+            Data.DataCheck = true
+            Data.BuyPrice = ShopData.BuyPrice
+            Data.SellPrice = ShopData.SellPrice
+            Data.Stock = ShopData.Stock
+            Data.Restock = ShopData.Restock
+            Data.Category = ShopData.Category
+            Data.BuyAuthority = ShopData.BuyAuthority
+            Data.SellAuthority = ShopData.SellAuthority
+            Data.Discount = ShopData.Discount
+            Data.HotItem = ShopData.HotItem
+        else
+            Data.DataCheck = false
+            Data.BuyPrice = 0
+            Data.SellPrice = 0
+            Data.Stock = 0
+            Data.Restock = 0
+            Data.Category = Data.ListCategory or "Etc"
+            Data.BuyAuthority = 0
+            Data.SellAuthority = 0
+            Data.Discount = 0
+            Data.HotItem = 0
+        end
+    end
+    self:AddItems()
 end
 
 function S4_IE_GoodShopAdmin:BtnClick(Button)

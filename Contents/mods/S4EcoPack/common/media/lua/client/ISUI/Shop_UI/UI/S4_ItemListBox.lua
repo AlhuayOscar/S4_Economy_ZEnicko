@@ -52,6 +52,15 @@ function S4_ItemListBox:createChildren()
     self.SearchBtn.textColor.a = 0.8
     self.SearchBtn:initialise()
     self:addChild(self.SearchBtn)
+    Sx = Sx + 110
+
+    self.RefreshBtn = ISButton:new(Sx, Sy, 90, Sh, "Refresh", self, S4_ItemListBox.BtnClick)
+    self.RefreshBtn.font = UIFont.Medium
+    self.RefreshBtn.internal = "Refresh"
+    self.RefreshBtn.borderColor = {r=0.3, g=0.3, b=0.3, a=1}
+    self.RefreshBtn.textColor.a = 0.8
+    self.RefreshBtn:initialise()
+    self:addChild(self.RefreshBtn)
 
     local PageT = "000 / 000"
     local PageTw = getTextManager():MeasureStringX(UIFont.Medium, PageT)
@@ -105,6 +114,18 @@ function S4_ItemListBox:BtnClick(Button)
         self.ParentsUI.CategoryBox.selectedRow = false
         self.ParentsUI.CategoryBox.CategoryType = internal
         self.ParentsUI:AddItems()
+        return
+    elseif internal == "Refresh" then
+        sendClientCommand("S4SD", "RefreshShopDataFromLua", {nil})
+        ModData.request("S4_ShopData")
+        ModData.request("S4_PlayerShopData")
+        if self.ParentsUI and self.ParentsUI.ReloadData then
+            if self.ParentsUI.MenuType == "Buy" or self.ParentsUI.MenuType == "Sell" then
+                self.ParentsUI:ReloadData(self.ParentsUI.MenuType)
+            else
+                self.ParentsUI:ReloadData()
+            end
+        end
         return
     end
     local Data = Button.item

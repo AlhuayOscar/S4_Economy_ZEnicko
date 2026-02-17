@@ -30,12 +30,25 @@ This repository is a Workshop-ready package layout:
   - `Add Data` -> `OverWriteShopDataAddon` (add + overwrite existing entries)
   - `Erase All` -> `ResetShopData`
 
+## Refresh Data Flow
+
+- `Refresh` button is available in item lists (player shop and admin shop).
+- Refresh triggers server command `RefreshShopDataFromLua`.
+- Server reloads `S4_Shop_Data.lua` and applies it into runtime `S4_ShopData`.
+- Runtime data is transmitted back through `ModData`, then UI reloads item values.
+
+Behavior:
+- New entries in `S4_Shop_Data` are added.
+- Existing entries are overwritten with file values.
+- Entries missing from `S4_Shop_Data` are removed during refresh overwrite mode.
+
 ## Useful File References
 
 - Server command router: `Contents/mods/S4EcoPack/common/media/lua/server/S4ServerCommand.lua`
 - Shop logic: `Contents/mods/S4EcoPack/common/media/lua/server/S4Shop.lua`
 - Client data sync: `Contents/mods/S4EcoPack/common/media/lua/client/S4_Eco_Client.lua`
 - Admin shop UI: `Contents/mods/S4EcoPack/common/media/lua/client/ISUI/Admin_UI/S4_IE_GoodShopAdmin.lua`
+- Shop list UI (Refresh button): `Contents/mods/S4EcoPack/common/media/lua/client/ISUI/Shop_UI/UI/S4_ItemListBox.lua`
 
 ## Troubleshooting
 

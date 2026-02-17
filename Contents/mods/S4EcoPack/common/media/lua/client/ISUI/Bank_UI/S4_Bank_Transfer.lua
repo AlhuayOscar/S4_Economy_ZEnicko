@@ -130,6 +130,11 @@ function S4_Bank_Transfer:setLable()
     end
     if self.CardBalanceLable and self.CardMoney then
         self.CardBalanceLable:setName(getText("IGUI_S4_Label_CardBalance") .. "$ " .. S4_UI.getNumCommas(self.CardMoney))
+        if self.CardMoney < 0 then
+            self.CardBalanceLable:setColor(1, 0, 0)
+        else
+            self.CardBalanceLable:setColor(1, 1, 1)
+        end
     end
 end
 

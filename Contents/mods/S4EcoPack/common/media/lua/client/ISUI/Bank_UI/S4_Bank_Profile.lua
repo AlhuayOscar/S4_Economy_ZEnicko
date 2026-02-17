@@ -131,6 +131,11 @@ function S4_Bank_Profile:onChangeMyCard()
             self.InfoPanel.MasterLabel:setName(getText("IGUI_S4_Label_CardMaster")..SelectCardData.Master)
             local BalanceText = getText("IGUI_S4_Label_CardBalance").."$ ".. S4_UI.getNumCommas(SelectCardData.Money)
             self.InfoPanel.BalanceLabel:setName(BalanceText)
+            if SelectCardData.Money < 0 then
+                self.InfoPanel.BalanceLabel:setColor(1, 0, 0)
+            else
+                self.InfoPanel.BalanceLabel:setColor(1, 1, 1)
+            end
         end
     end
 end

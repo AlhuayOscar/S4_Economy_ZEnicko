@@ -97,6 +97,9 @@ function S4_IE_SNetwork:createChildren()
     end
     InfoLabelText2 = getText("IGUI_S4_Label_CardBalance") .. InfoLabelText2
     self.InfoLabel2 = ISLabel:new(InfoPanelX + 10, InfoLabelY, S4_UI.FH_S, InfoLabelText2, 0, 0, 0, 1, UIFont.Small, true)
+    if self.ComUI.CardMoney and self.ComUI.CardMoney < 0 then
+        self.InfoLabel2:setColor(1, 0, 0)
+    end
     self:addChild(self.InfoLabel2)
     InfoLabelY = InfoLabelY + S4_UI.FH_S
     -- (Network Period: 0000-00-00 00:00)

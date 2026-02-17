@@ -17,6 +17,7 @@ function S4_Bank_Loans:new(BankUI, x, y, width, height)
     o.ComUI = BankUI.ComUI
     o.player = BankUI.player
     o.loans = {}
+    o.lastViewedRate = 0
     return o
 end
 
@@ -68,7 +69,7 @@ function S4_Bank_Loans:createChildren()
     local leftW = (w / 2) - 10
     self.requestPanel = ISPanel:new(x, y, leftW, self:getHeight() - y - 10)
     self.requestPanel.backgroundColor.a = 0
-    self.requestPanel.borderColor = {r=0.7, g=0.7, b=0.7, a=0.5}
+    self.requestPanel.borderColor = {r=0, g=0, b=0, a=0} -- Fully invisible border
     self:addChild(self.requestPanel)
 
     local rx, ry = 10, 10
@@ -110,6 +111,23 @@ function S4_Bank_Loans:createChildren()
     self.acceptBtn.backgroundColor = {r=0.2, g=0.5, b=0.2, a=0.8}
     self.requestPanel:addChild(self.acceptBtn)
 
+    -- Debug: Test Buttons
+    if getDebug() then
+        local dbgY = self:getHeight() - (S4_UI.FH_S * 2) - 20
+        local dbgW = 100
+        self.debugDeadlineBtn = ISButton:new(x, dbgY, dbgW, S4_UI.FH_S, "Deadline Test", self, self.onDebugDeadline)
+        self.debugDeadlineBtn:initialise()
+        self:addChild(self.debugDeadlineBtn)
+
+        self.debugPayBtn = ISButton:new(x + dbgW + 5, dbgY, dbgW, S4_UI.FH_S, "Pay Loan", self, self.onDebugRepay)
+        self.debugPayBtn:initialise()
+        self:addChild(self.debugPayBtn)
+
+        self.debugEventBtn = ISButton:new(x + (dbgW * 2) + 10, dbgY, dbgW, S4_UI.FH_S, "Hit Event", self, self.onDebugEvent)
+        self.debugEventBtn:initialise()
+        self:addChild(self.debugEventBtn)
+    end
+
     -- Right Side: Active Loans List
     local rightX = x + leftW + 20
     self.activeLabel = ISLabel:new(rightX, y, S4_UI.FH_S, "Active Loans:", 0.9, 0.9, 0.9, 1, UIFont.Small, true)
@@ -136,6 +154,7 @@ function S4_Bank_Loans:updateCalculation()
     end
 
     local rate = self:getCurrentRate(lender.baseRate)
+    self.lastViewedRate = rate -- Store for validation
     local total = math.floor(amount * (1 + rate))
     
     self.calcLabel.text = string.format(" <RGB:0.8,0.8,0.8> Interest Rate: <RGB:1,1,0> %.1f%% <LINE> <RGB:0.8,0.8,0.8> Total to Repay: <RGB:1,0,0> $ %s <LINE> <RGB:0.8,0.8,0.8> Deadline: <RGB:0,1,1> %d Days", 
@@ -165,6 +184,14 @@ function S4_Bank_Loans:onAcceptLoan()
     end
 
     local rate = self:getCurrentRate(lender.baseRate)
+    
+    -- Check if rates changed due to an event
+    if self.lastViewedRate ~= rate then
+        self.ComUI:AddMsgBox("Rate Changed", nil, "Disculpa las molestias, Los valores cambiaron.")
+        self:updateCalculation()
+        return
+    end
+
     local total = math.floor(amount * (1 + rate))
     local timestamp = S4_Utils.getLogTime()
     local displayTime = S4_Utils.getLogTimeMin(timestamp)
@@ -255,4 +282,30 @@ function S4_Bank_Loans:onRepayLoan(index, loan)
     })
 
     self.refreshTimer = 30
+end
+
+function S4_Bank_Loans:onDebugDeadline()
+    -- Advance game time by 2 days (debug)
+    local gt = getGameTime()
+    gt:setDay(gt:getDay() + 2)
+    self.ComUI:AddMsgBox("Debug", nil, "Advanced time by 2 days.")
+end
+
+function S4_Bank_Loans:onDebugRepay()
+    -- Force repay the first active loan if any
+    for i, loan in ipairs(self.loans) do
+        if loan.Status == "Active" then
+            self:onRepayLoan(i, loan)
+            break
+        end
+    end
+end
+
+function S4_Bank_Loans:onDebugEvent()
+    -- Trigger a random economic event modifier for testing
+    local modData = ModData.getOrCreate("S4_KnoxNews")
+    local events = {"STOCK_RISE", "STOCK_CRASH", "GUERRILLAS", "FUEL_SHORTAGE"}
+    modData.CurrentEventID = events[ZombRand(#events) + 1]
+    self.ComUI:AddMsgBox("Debug", nil, "Event Modifier Changed: " .. modData.CurrentEventID)
+    self:updateCalculation()
 end

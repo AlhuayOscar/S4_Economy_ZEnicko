@@ -163,6 +163,7 @@ function S4_Utils.getTimeOver(InputTime)
         CurrentGameTime:getMinutes()
     }
     local ExpYear, ExpMonth, ExpDay, ExpHour, ExpMin = InputTime:match("(%d+)-(%d+)-(%d+) (%d+):(%d+)")
+    if not ExpYear then return false end
     local ExpirationTime = {
         tonumber(ExpYear),
         tonumber(ExpMonth),
@@ -172,12 +173,12 @@ function S4_Utils.getTimeOver(InputTime)
     }
     for i = 1, 5 do
         if CurrentTime[i] < ExpirationTime[i] then
-            return true  -- expired
+            return true  -- Current time is before expiration, so IT IS VALID
         elseif CurrentTime[i] > ExpirationTime[i] then
-            return false  -- Does not expire
+            return false  -- Current time has passed expiration, so IT IS EXPIRED
         end
     end
-    return false  -- Does not expire
+    return false  -- Exact same minute, also consider it expired/over
 end
 
 -- Current time text function (year, month, day, hour, minute)

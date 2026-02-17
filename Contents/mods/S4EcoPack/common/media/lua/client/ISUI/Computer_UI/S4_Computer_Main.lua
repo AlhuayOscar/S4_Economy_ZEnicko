@@ -9,6 +9,11 @@ function S4_Computer_Main:show(player, ComObj, x, y)
         S4_Computer_Main.instance = S4_Computer_Main:new(player, ComObj, x, y)
         S4_Computer_Main.instance:initialise()
         S4_Computer_Main.instance:instantiate()
+    else
+        -- Update player and object if we're reusing the instance
+        S4_Computer_Main.instance.player = player
+        S4_Computer_Main.instance.ComObj = ComObj
+        S4_Computer_Main.instance:CheckModData() -- Refresh internet/card status
     end
     S4_Computer_Main.instance:addToUIManager()
     S4_Computer_Main.instance:setVisible(true)
@@ -55,6 +60,17 @@ function S4_Computer_Main:initialise()
 end
 
 function S4_Computer_Main:CheckModData()
+    -- Reset flags to avoid stale data from other computers
+    self.CardReaderInstall = false
+    self.CardNumber = nil
+    self.CardMaster = nil
+    self.CardMoney = 0
+    self.CardPassword = nil
+    self.isCardPassword = false
+    self.SatelliteInstall = false
+    self.NetPeriod = nil
+    self.NetContract = false
+
     -- Whether card reader/satellite antenna is installed
     -- If a card reader is installed, retrieve the saved card number
     local ComModData = self.ComObj:getModData()
@@ -75,8 +91,10 @@ function S4_Computer_Main:CheckModData()
             self.SatelliteInstall = true
         else
             self.SatelliteInstall = false
-            ComModData.ComSatelliteXYZ = false
-            S4_Utils.SnycObject(self.ComObj)
+            -- Do not wipe ComSatelliteXYZ here, as it might just be in an unloaded chunk.
+            -- Wiping it here makes the internet permanently 'broken' until reinstalled.
+            -- ComModData.ComSatelliteXYZ = false
+            -- S4_Utils.SnycObject(self.ComObj)
         end
 
         if ComModData.ComPeriod then -- Internet contract confirmation

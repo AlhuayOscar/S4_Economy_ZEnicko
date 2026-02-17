@@ -224,7 +224,11 @@ function S4_IE_SNetwork:ActionContract()
             if self.ComUI.isCardPassword then
                 if (CardModData[self.ComUI.CardNumber].Money - Price) >= getCardCreditLimit() then
                     local Period = S4_Utils.getDateTimeText()
-                    if self.ComUI.NetPeriod then Period = self.ComUI.NetPeriod end
+                    -- If the contract is still active, add to the existing period.
+                    -- If it's already expired (NetContract is false), start from now.
+                    if self.ComUI.NetContract and self.ComUI.NetPeriod then 
+                        Period = self.ComUI.NetPeriod 
+                    end
                     local NewPeriod = S4_Utils.setAddTime(Period, (SelectDay * 24))
 
                     -- Server transfers and computer data updates

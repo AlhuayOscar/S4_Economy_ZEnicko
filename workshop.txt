@@ -1,4 +1,4 @@
-version=2
+version=1
 id=3667850050
 title=S4 Economy[Shop] - Server Modpack Version by ZEnicko
 description=S4 Economy[Shop] by @Pkoko

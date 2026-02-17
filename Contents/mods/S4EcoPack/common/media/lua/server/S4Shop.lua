@@ -167,11 +167,24 @@ local function buildShopEntry(Data, CurrentCategory)
     }
 end
 
+local function getShopDataState(shopData)
+    if not shopData then return "0:0" end
+    local count = 0
+    local sum = 0
+    for _, v in pairs(shopData) do
+        count = count + 1
+        sum = sum + (tonumber(v.BuyPrice) or 0) + (tonumber(v.SellPrice) or 0) + (tonumber(v.Stock) or 0)
+    end
+    return tostring(count) .. ":" .. tostring(sum)
+end
+
 local function applyShopDataFromLua(overwriteExisting, removeMissing)
     local ShopModData = ModData.get("S4_ShopData")
     if not ShopModData or type(S4_Shop_Data) ~= "table" then
         return false
     end
+
+    local oldState = getShopDataState(ShopModData)
 
     if removeMissing then
         for ItemName, _ in pairs(ShopModData) do
@@ -198,8 +211,13 @@ local function applyShopDataFromLua(overwriteExisting, removeMissing)
         end
     end
 
-    ModData.transmit("S4_ShopData")
-    return true
+    local newState = getShopDataState(ShopModData)
+    if oldState ~= newState then
+        ModData.transmit("S4_ShopData")
+        return true, true -- success, hadChanges
+    end
+
+    return true, false -- success, noChanges
 end
 
 -- Generate kill data
@@ -400,4 +418,13 @@ function S4Shop.RefreshShopDataFromLua(player, args)
         return
     end
     applyShopDataFromLua(true, true)
+end
+
+function S4Shop.SyncShop(player, args)
+    if not refreshShopDataSource() then
+        sendServerCommand(player, "S4SD", "SyncResult", {success = false, hadChanges = false})
+        return
+    end
+    local success, hadChanges = applyShopDataFromLua(true, true)
+    sendServerCommand(player, "S4SD", "SyncResult", {success = success, hadChanges = hadChanges})
 end

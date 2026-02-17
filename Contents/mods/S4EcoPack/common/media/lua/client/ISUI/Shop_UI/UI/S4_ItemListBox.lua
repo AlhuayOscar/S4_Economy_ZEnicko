@@ -26,6 +26,7 @@ function S4_ItemListBox:new(ParentsUI, x, y, w, h)
     o.Items = {}
     o.AutoRefreshEnabled = true
     o.AutoRefreshIntervalMs = 10000
+    o.SyncLevel = 0 -- 0: 10s, 1: 15s, 2: 30s, 3: Manual
     o.NextAutoRefreshAt = 0
     o.LastRefreshRequestAt = 0
     o.LastRefreshAppliedAt = 0
@@ -170,6 +171,9 @@ function S4_ItemListBox:BtnClick(Button)
         self.ParentsUI:AddItems()
         return
     elseif internal == "Refresh" then
+        self.SyncLevel = 0
+        self.AutoRefreshEnabled = true
+        self.AutoRefreshIntervalMs = 10000
         self:requestDataRefresh(true)
         return
     end
@@ -224,10 +228,21 @@ function S4_ItemListBox:updateRefreshStatusLabel(nowMs)
         return
     end
     local text = ""
-    if self.RefreshPending then
-        text = "Sync: updating..."
+    local mode = "Auto"
+    if not self.AutoRefreshEnabled then
+        mode = "Manual"
+    elseif self.SyncLevel == 1 then
+        mode = "15s"
+    elseif self.SyncLevel == 2 then
+        mode = "30s"
     else
-        text = "Sync: " .. self:getElapsedRefreshText(nowMs) .. " | " .. self:getRefreshClockText()
+        mode = "10s"
+    end
+
+    if self.RefreshPending then
+        text = "Sync: updating... [" .. mode .. "]"
+    else
+        text = "Sync: " .. self:getElapsedRefreshText(nowMs) .. " [" .. mode .. "] | " .. self:getRefreshClockText()
     end
     self.RefreshStatusLabel:setName(text)
 end
@@ -245,16 +260,22 @@ function S4_ItemListBox:requestDataRefresh(isManual)
     self.RefreshPending = true
     self:updateRefreshStatusLabel(nowMs)
 
-    sendClientCommand("S4SD", "RefreshShopDataFromLua", {nil})
-    ModData.request("S4_ShopData")
-    ModData.request("S4_PlayerShopData")
+    sendClientCommand("S4SD", "SyncShop", {nil})
+    -- ModData.request is now handled in OnServerCommand if changes are detected
 end
 
-function S4_ItemListBox:markRefreshApplied()
+function S4_ItemListBox:markRefreshApplied(hadChanges)
     local nowMs = getTimestampMs()
     self.RefreshPending = false
     self.LastRefreshFallbackAt = 0
     self.LastRefreshAppliedAt = nowMs
+    
+    if hadChanges then
+        self.SyncLevel = 0
+        self.AutoRefreshEnabled = true
+        self.AutoRefreshIntervalMs = 10000
+    end
+    
     self:updateRefreshStatusLabel(nowMs)
 end
 
@@ -459,6 +480,16 @@ function S4_ItemListBox:update()
     end
 
     if nowMs >= self.NextAutoRefreshAt then
+        self.SyncLevel = self.SyncLevel + 1
+        if self.SyncLevel >= 3 then
+            self.AutoRefreshEnabled = false
+            self.SyncLevel = 3
+        elseif self.SyncLevel == 1 then
+            self.AutoRefreshIntervalMs = 15000
+        elseif self.SyncLevel == 2 then
+            self.AutoRefreshIntervalMs = 30000
+        end
+        
         self:requestDataRefresh(false)
         self.NextAutoRefreshAt = nowMs + self.AutoRefreshIntervalMs
     end
@@ -469,3 +500,31 @@ function S4_ItemListBox:EntryRender()
         self:drawText("Search(Item Name/Code)", 4, 2, 1, 1, 1, 0.5, UIFont.Medium)
     end
 end
+
+local function OnServerCommand(module, command, args)
+    if module == "S4SD" and command == "SyncResult" then
+        local ComUI = S4_Computer_Main and S4_Computer_Main.instance
+        -- Try to find the active Shop UI and its ListBox
+        local list = nil
+        if ComUI then
+            if ComUI.GoodShop and ComUI.GoodShop:isVisible() and ComUI.GoodShop.MainPage then
+                list = ComUI.GoodShop.MainPage.ListBox
+            elseif ComUI.GoodShopAdmin and ComUI.GoodShopAdmin:isVisible() and ComUI.GoodShopAdmin.MainPage then
+                list = ComUI.GoodShopAdmin.MainPage.ListBox
+            end
+        end
+
+        if list then
+            if args.hadChanges then
+                -- Changes detected, the server already called ModData.transmit
+                -- We call request just in case, and waiting for OnReceiveGlobalModData
+                ModData.request("S4_ShopData")
+                ModData.request("S4_PlayerShopData")
+            else
+                -- No changes on server, so we just release the pending state and escalate the timer
+                list:markRefreshApplied(false)
+            end
+        end
+    end
+end
+Events.OnServerCommand.Add(OnServerCommand)

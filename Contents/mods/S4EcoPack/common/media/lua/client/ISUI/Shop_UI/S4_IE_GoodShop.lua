@@ -490,7 +490,7 @@ function S4_IE_GoodShop:applyViewState(viewState)
 end
 
 -- Reset item data
-function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView)
+function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView, hadChanges)
     local savedView = nil
     if PreserveView then
         savedView = self:getViewState()
@@ -611,7 +611,7 @@ function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView)
             self:ShopBoxVisible(true, restored)
 
             if PreserveView and self.ListBox and self.ListBox.markRefreshApplied then
-                self.ListBox:markRefreshApplied()
+                self.ListBox:markRefreshApplied(hadChanges)
             end
         else
             return
@@ -666,24 +666,24 @@ function S4_IE_GoodShop:AddCategory()
     end
 end
 
-function S4_IE_GoodShop:SoftRefreshData()
+function S4_IE_GoodShop:SoftRefreshData(hadChanges)
     if self.BuyBox or self.SellBox then
         return
     end
     if self.MenuType ~= "Buy" and self.MenuType ~= "Sell" then
         if self.ListBox and self.ListBox.markRefreshApplied then
-            self.ListBox:markRefreshApplied()
+            self.ListBox:markRefreshApplied(hadChanges)
         end
         return
     end
-    self:ReloadData(self.MenuType, true)
+    self:ReloadData(self.MenuType, true, hadChanges)
 end
 
 function S4_IE_GoodShop:OnShopDataUpdated(key)
     if key ~= "S4_ShopData" and key ~= "S4_PlayerShopData" then
         return
     end
-    self:SoftRefreshData()
+    self:SoftRefreshData(true)
 end
 
 -- button click
@@ -705,10 +705,12 @@ function S4_IE_GoodShop:BtnClick(Button)
     if internal == "Buy" then
         ModData.request("S4_ShopData")
         ModData.request("S4_PlayerShopData")
+        if self.ListBox then self.ListBox.SyncLevel = 0 end
         self:ReloadData("Buy")
     elseif internal == "Sell" then
         ModData.request("S4_ShopData")
         ModData.request("S4_PlayerShopData")
+        if self.ListBox then self.ListBox.SyncLevel = 0 end
         self:ReloadData("Sell")
     elseif internal == "Home" then
         self:ShopBoxVisible(false)

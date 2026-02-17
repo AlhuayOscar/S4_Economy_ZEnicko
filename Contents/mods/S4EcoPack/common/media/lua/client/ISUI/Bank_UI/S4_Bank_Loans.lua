@@ -18,6 +18,8 @@ function S4_Bank_Loans:new(BankUI, x, y, width, height)
     o.player = BankUI.player
     o.loans = {}
     o.lastViewedRate = 0
+    o.itemheight = 60 -- Fixed height for stability
+    o.refreshTimer = 0
     return o
 end
 
@@ -130,18 +132,23 @@ function S4_Bank_Loans:createChildren()
 
     -- Right Side: Active Loans List
     local rightX = x + leftW + 20
+    local listW = leftW
+    local listH = self:getHeight() - y - 40
+    
     self.activeLabel = ISLabel:new(rightX, y, S4_UI.FH_S, "Active Loans:", 0.9, 0.9, 0.9, 1, UIFont.Small, true)
     self:addChild(self.activeLabel)
     
-    self.loanList = ISScrollingListBox:new(rightX, y + 20, leftW, self:getHeight() - y - 30)
+    self.loanList = ISScrollingListBox:new(rightX, y + 20, listW, listH)
     self.loanList:initialise()
     self.loanList:instantiate()
-    self.loanList.backgroundColor.a = 0 -- Transparent background
-    self.loanList.itemheight = S4_UI.FH_S * 3 + 10
-    self.loanList.doDrawItem = function(y, item, alt) return self:drawLoanItem(y, item, alt) end
+    self.loanList.itemheight = 60
+    self.loanList.backgroundColor = {r=0, g=0, b=0, a=0}
+    self.loanList.borderColor = {r=1, g=1, b=1, a=0}
+    self.loanList.doDrawItem = S4_Bank_Loans.drawLoanItem
+    self.loanList.target = self
     self:addChild(self.loanList)
 
-    self:updateCalculation()
+    self:onLenderChange()
     self:updateLoanList()
 end
 
@@ -208,6 +215,7 @@ function S4_Bank_Loans:onAcceptLoan()
 end
 
 function S4_Bank_Loans:update()
+    ISPanel.update(self)
     if self.refreshTimer and self.refreshTimer > 0 then
         self.refreshTimer = self.refreshTimer - 1
         if self.refreshTimer == 0 then
@@ -227,11 +235,10 @@ function S4_Bank_Loans:updateLoanList()
 end
 
 function S4_Bank_Loans:drawLoanItem(y, item, alt)
-    if not item or not item.itemData then return y end
+    if not item or not item.itemData or not item.itemData.loan then return y end
     local loan = item.itemData.loan
-    if not loan then return y end
     
-    local isMouseOver = self.loanList.mouseovercol == item.index
+    local isMouseOver = self.mouseovercol == item.index
     
     if isMouseOver then
         self:drawRect(0, y, self:getWidth(), item.height, 0.2, 1, 1, 1)
@@ -239,26 +246,39 @@ function S4_Bank_Loans:drawLoanItem(y, item, alt)
     
     local tx, ty = 10, y + 5
     self:drawText(loan.Lender, tx, ty, 1, 1, 1, 1, UIFont.Small)
-    ty = ty + S4_UI.FH_S
+    ty = ty + 16
     
     local status = string.format("Repaid: $ %s / $ %s", S4_UI.getNumCommas(loan.Repaid or 0), S4_UI.getNumCommas(loan.TotalToPay))
     self:drawText(status, tx, ty, 0.8, 0.8, 0.8, 1, UIFont.Small)
-    ty = ty + S4_UI.FH_S
+    ty = ty + 16
     
     self:drawText("Card: " .. loan.CardNum, tx, ty, 0.6, 0.6, 0.6, 1, UIFont.Small)
     
     -- Repay Button
     local btnW = 80
-    local btnH = S4_UI.FH_S + 4
+    local btnH = 20
     local btnX = self:getWidth() - btnW - 10
     local btnY = y + (item.height / 2) - (btnH / 2)
     
-    if self:drawButton(btnX, btnY, btnW, btnH, "Repay", 0.7) then
-        -- Repay Logic
-        self:onRepayLoan(item.itemData.index, loan)
+    -- We use the target (S4_Bank_Loans instance) for custom drawing and logic
+    local target = self.target
+    if target and target:drawButtonInList(self, btnX, btnY, btnW, btnH, "Repay", 0.7) then
+        target:onRepayLoan(item.itemData.index, loan)
     end
 
     return y + item.height
+end
+
+function S4_Bank_Loans:drawButtonInList(list, x, y, w, h, text, alpha)
+    local mouseX, mouseY = list:getMouseX(), list:getMouseY()
+    local over = mouseX >= x and mouseX <= x + w and mouseY >= y and mouseY <= y + h
+    
+    list:drawRect(x, y, w, h, alpha, 0.2, 0.2, 0.2)
+    list:drawRectBorder(x, y, w, h, 1, 1, 1, 1)
+    local textW = getTextManager():MeasureStringX(UIFont.Small, text)
+    list:drawText(text, x + (w/2) - (textW/2), y + 2, 1, 1, 1, 1, UIFont.Small)
+    
+    return over and isMouseButtonDown(0)
 end
 
 function S4_Bank_Loans:drawButton(x, y, w, h, text, alpha)

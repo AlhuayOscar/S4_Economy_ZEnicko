@@ -15,6 +15,11 @@ This project is open to code, balance, translation, and QA contributions while p
 - Admin tools to update/reset shop data
 - UI modules for ATM, bank, computer, network, and system panels
 
+### Knox News Reference Source
+
+- Timeline/events and media reference source for Knox News:
+  `https://steamcommunity.com/sharedfiles/filedetails/?id=3389064477`
+
 ### Repository Layout (Workshop Package)
 
 - `workshop.txt`
@@ -27,9 +32,9 @@ This project is open to code, balance, translation, and QA contributions while p
 - Server is the source of truth for shop data (`ModData`).
 - Live client updates are applied on `OnReceiveGlobalModData`.
 - Shop admin actions:
-`Update Data` -> `ShopDataAddon` (add missing entries only)
-`Add Data` -> `OverWriteShopDataAddon` (add + overwrite existing entries)
-`Erase All` -> `ResetShopData`
+  `Update Data` -> `ShopDataAddon` (add missing entries only)
+  `Add Data` -> `OverWriteShopDataAddon` (add + overwrite existing entries)
+  `Erase All` -> `ResetShopData`
 
 ### Refresh Data Flow
 
@@ -39,6 +44,7 @@ This project is open to code, balance, translation, and QA contributions while p
 - Runtime data is transmitted back through `ModData`, then UI refreshes values.
 
 Behavior:
+
 - New entries in `S4_Shop_Data` are added.
 - Existing entries are overwritten with file values.
 - Missing entries in `S4_Shop_Data` are removed in overwrite mode.
@@ -55,7 +61,7 @@ Behavior:
 
 - If admin actions seem to do nothing, verify server-side execution first.
 - Typical runtime log path:
-`C:\Users\<user>\Zomboid\Lua\S4Economy\S4_AdminShop.log`
+  `C:\Users\<user>\Zomboid\Lua\S4Economy\S4_AdminShop.log`
 
 ### Credits
 
@@ -100,6 +106,11 @@ Este proyecto esta abierto a contribuciones de codigo, balance, traduccion y QA,
 - Herramientas admin para actualizar/resetear datos de tienda
 - Modulos UI para ATM, banco, computadora, red y paneles del sistema
 
+### Fuente de Referencia Knox News
+
+- Fuente de referencia para timeline/eventos y recursos de Knox News:
+  `https://steamcommunity.com/sharedfiles/filedetails/?id=3389064477`
+
 ### Estructura del Repositorio (Paquete Workshop)
 
 - `workshop.txt`
@@ -112,9 +123,9 @@ Este proyecto esta abierto a contribuciones de codigo, balance, traduccion y QA,
 - El servidor es la fuente de verdad para datos de tienda (`ModData`).
 - Las actualizaciones en cliente se aplican en `OnReceiveGlobalModData`.
 - Acciones admin de tienda:
-`Update Data` -> `ShopDataAddon` (solo agrega faltantes)
-`Add Data` -> `OverWriteShopDataAddon` (agrega + sobrescribe existentes)
-`Erase All` -> `ResetShopData`
+  `Update Data` -> `ShopDataAddon` (solo agrega faltantes)
+  `Add Data` -> `OverWriteShopDataAddon` (agrega + sobrescribe existentes)
+  `Erase All` -> `ResetShopData`
 
 ### Flujo de Refresco de Datos
 
@@ -124,6 +135,7 @@ Este proyecto esta abierto a contribuciones de codigo, balance, traduccion y QA,
 - Los datos runtime se retransmiten por `ModData` y luego la UI refresca valores.
 
 Comportamiento:
+
 - Entradas nuevas en `S4_Shop_Data` se agregan.
 - Entradas existentes se sobrescriben con los valores del archivo.
 - Entradas faltantes en `S4_Shop_Data` se eliminan en modo overwrite.
@@ -140,7 +152,7 @@ Comportamiento:
 
 - Si acciones admin no hacen nada, verifica primero ejecucion en servidor.
 - Ruta de log runtime tipica:
-`C:\Users\<usuario>\Zomboid\Lua\S4Economy\S4_AdminShop.log`
+  `C:\Users\<usuario>\Zomboid\Lua\S4Economy\S4_AdminShop.log`
 
 ### Creditos
 

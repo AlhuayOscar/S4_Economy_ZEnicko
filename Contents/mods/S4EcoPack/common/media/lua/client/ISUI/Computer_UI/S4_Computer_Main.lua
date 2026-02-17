@@ -21,10 +21,20 @@ function S4_Computer_Main:new(player, ComObj, x, y)
     o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.player = player 
+    o.player = player
     o.ComObj = ComObj
-    o.backgroundColor = {r=0/255, g=128/255, b=128/255, a=1}
-    o.borderColor = {r=0, g=0, b=0, a=1}
+    o.backgroundColor = {
+        r = 0 / 255,
+        g = 128 / 255,
+        b = 128 / 255,
+        a = 1
+    }
+    o.borderColor = {
+        r = 0,
+        g = 0,
+        b = 0,
+        a = 1
+    }
     o.moveWithMouse = true
     o.TaskBar = {}
     o.BuyCart = {}
@@ -68,7 +78,7 @@ function S4_Computer_Main:CheckModData()
             ComModData.ComSatelliteXYZ = false
             S4_Utils.SnycObject(self.ComObj)
         end
-        
+
         if ComModData.ComPeriod then -- Internet contract confirmation
             self.NetPeriod = ComModData.ComPeriod
             self.NetContract = S4_Utils.getTimeOver(ComModData.ComPeriod)
@@ -88,19 +98,56 @@ end
 function S4_Computer_Main:createChildren()
     ISPanel.createChildren(self)
 
-    S4_Category.ComputerIconData["MyCom"] = { Name = "My Computer", Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")}
-    S4_Category.ComputerIconData["MyDoc"] = { Name = "My Documents", Icon = getTexture("media/textures/S4_Icon/Icon_64_MyDoc.png")}
-    S4_Category.ComputerIconData["IE"] = { Name = "Internet Explorer", Icon = getTexture("media/textures/S4_Icon/Icon_64_IE.png")}
-    S4_Category.ComputerIconData["Network"] = { Name = "Network Neighborhood", Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")}
-    S4_Category.ComputerIconData["Trash"] = { Name = "Trash", Icon = getTexture("media/textures/S4_Icon/Icon_64_Trash.png")}
-    S4_Category.ComputerIconData["Settings"] = { Name = "Settings", Icon = getTexture("media/textures/S4_Icon/Icon_64_Setting.png")}
-    S4_Category.ComputerIconData["CardReader"] = { Name = "Card Reader", Icon = getTexture("media/textures/S4_Icon/Icon_64_CardReader.png")}
-    S4_Category.ComputerIconData["UserSetting"] = { Name = "User Setting", Icon = getTexture("media/textures/S4_Icon/Icon_64_UserSetting.png")}
-    S4_Category.ComputerIconData["ZomBank"] = { Name = "Zom Bank", Icon = getTexture("media/textures/S4_Icon/Icon_64_ZomBank.png")}
-    S4_Category.ComputerIconData["GoodShop"] = { Name = "Good Shop", Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")}
+    S4_Category.ComputerIconData["MyCom"] = {
+        Name = "My Computer",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
+    }
+    S4_Category.ComputerIconData["MyDoc"] = {
+        Name = "My Documents",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_MyDoc.png")
+    }
+    S4_Category.ComputerIconData["IE"] = {
+        Name = "Internet Explorer",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_IE.png")
+    }
+    S4_Category.ComputerIconData["Network"] = {
+        Name = "Network Neighborhood",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+    }
+    S4_Category.ComputerIconData["Trash"] = {
+        Name = "Trash",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Trash.png")
+    }
+    S4_Category.ComputerIconData["Settings"] = {
+        Name = "Settings",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Setting.png")
+    }
+    S4_Category.ComputerIconData["CardReader"] = {
+        Name = "Card Reader",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_CardReader.png")
+    }
+    S4_Category.ComputerIconData["UserSetting"] = {
+        Name = "User Setting",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_UserSetting.png")
+    }
+    S4_Category.ComputerIconData["News"] = {
+        Name = "Knox News",
+        Icon = getTexture("media/textures/S4_Icon/Newspaper.png")
+    }
+    S4_Category.ComputerIconData["ZomBank"] = {
+        Name = "Zom Bank",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_ZomBank.png")
+    }
+    S4_Category.ComputerIconData["GoodShop"] = {
+        Name = "Good Shop",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
+    }
 
     if SandboxVars.S4SandBox.Blackjack then
-        S4_Category.ComputerIconData["BlackJack"] = { Name = "Black Jack", Icon = getTexture("media/textures/S4_Icon/Icon_64_BlackJack.png")}
+        S4_Category.ComputerIconData["BlackJack"] = {
+            Name = "Black Jack",
+            Icon = getTexture("media/textures/S4_Icon/Icon_64_BlackJack.png")
+        }
     end
 
     local IconSize = S4_UI.FH_S * 2
@@ -121,20 +168,29 @@ function S4_Computer_Main:createChildren()
         end
         local BtnName = BtnData.Name
         local BtnIcon = BtnData.Icon
-        self["Btn_"..BtnType] = ISButton:new(BtnX, BtnY, BtnW, BtnH, "", self, S4_Computer_Main.BtnClick)
-        self["Btn_"..BtnType].font = UIFont.Small
-        self["Btn_"..BtnType].internal = BtnType
-        self["Btn_"..BtnType].borderColor.a = 0
-        self["Btn_"..BtnType].backgroundColor.a = 0
-        self["Btn_"..BtnType].backgroundColorMouseOver = {r=189/255, g=190/255, b=189/255, a=0.3}
-        self["Btn_"..BtnType].IconName = BtnData.Name
-        self["Btn_"..BtnType]:setImage(BtnData.Icon)
-        self["Btn_"..BtnType]:forceImageSize(IconSize, IconSize) -- Need to change icon size depending on resolution
-        self["Btn_"..BtnType].render = S4_Computer_Main.BtnRender
-        self["Btn_"..BtnType]:initialise()
-        self:addChild(self["Btn_"..BtnType])
+        self["Btn_" .. BtnType] = ISButton:new(BtnX, BtnY, BtnW, BtnH, "", self, S4_Computer_Main.BtnClick)
+        self["Btn_" .. BtnType].font = UIFont.Small
+        self["Btn_" .. BtnType].internal = BtnType
+        self["Btn_" .. BtnType].borderColor.a = 0
+        self["Btn_" .. BtnType].backgroundColor.a = 0
+        self["Btn_" .. BtnType].backgroundColorMouseOver = {
+            r = 189 / 255,
+            g = 190 / 255,
+            b = 189 / 255,
+            a = 0.3
+        }
+        self["Btn_" .. BtnType].IconName = BtnData.Name
+        self["Btn_" .. BtnType]:setImage(BtnData.Icon)
+        local CurrentIconSize = IconSize
+        if BtnType == "News" then
+            CurrentIconSize = 64
+        end
+        self["Btn_" .. BtnType]:forceImageSize(CurrentIconSize, CurrentIconSize) -- Need to change icon size depending on resolution
+        self["Btn_" .. BtnType].render = S4_Computer_Main.BtnRender
+        self["Btn_" .. BtnType]:initialise()
+        self:addChild(self["Btn_" .. BtnType])
     end
-    
+
     if self.player:isAccessLevel("admin") or getDebug() then
         local ABtnX = self:getWidth() - BtnW - 16
         self.Btn_GoodshopAdmin = ISButton:new(ABtnX, 20, BtnW, BtnH, "", self, S4_Computer_Main.BtnClick)
@@ -142,7 +198,12 @@ function S4_Computer_Main:createChildren()
         self.Btn_GoodshopAdmin.internal = "GoodShopAdmin"
         self.Btn_GoodshopAdmin.borderColor.a = 0
         self.Btn_GoodshopAdmin.backgroundColor.a = 0
-        self.Btn_GoodshopAdmin.backgroundColorMouseOver = {r=189/255, g=190/255, b=189/255, a=0.3}
+        self.Btn_GoodshopAdmin.backgroundColorMouseOver = {
+            r = 189 / 255,
+            g = 190 / 255,
+            b = 189 / 255,
+            a = 0.3
+        }
         self.Btn_GoodshopAdmin.IconName = "Good Shop Admin"
         self.Btn_GoodshopAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_IE.png"))
         self.Btn_GoodshopAdmin:forceImageSize(IconSize, IconSize) -- Need to change icon size depending on resolution
@@ -170,23 +231,23 @@ function S4_Computer_Main:render()
     local TaskWidth = self:getWidth() - 2
     local TaskHeight = FontHeightLine + 8
     local TaskY = self:getHeight() - TaskHeight - 1
-    self:drawRect(1, TaskY, TaskWidth, TaskHeight, 1, 192/255, 192/255, 192/255)
+    self:drawRect(1, TaskY, TaskWidth, TaskHeight, 1, 192 / 255, 192 / 255, 192 / 255)
     -- Top of TaskBar
-    self:drawRect(1, TaskY - 2, TaskWidth, 2, 1, 132/255, 132/255, 132/255)
+    self:drawRect(1, TaskY - 2, TaskWidth, 2, 1, 132 / 255, 132 / 255, 132 / 255)
     -- Start Button
     local StartTextWidth = getTextManager():MeasureStringX(UI_Font, "Start")
     local StartBtnWidth = 10 + FontHeightLine + StartTextWidth
     local StartBtnHeight = FontHeightLine + 2
     local StartY = TaskY + 3
     if self.StartBtnAction then
-        self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 1, 127/255, 127/255, 127/255)
+        self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 1, 127 / 255, 127 / 255, 127 / 255)
         self:drawRectBorder(3, StartY, StartBtnWidth, StartBtnHeight, 1, 0, 0, 0)
     else
         if self:isMouseOver() and self.StartBtn then
-            self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 0.6, 147/255, 147/255, 147/255)
+            self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 0.6, 147 / 255, 147 / 255, 147 / 255)
             self:drawRectBorder(3, StartY, StartBtnWidth, StartBtnHeight, 0.9, 0, 0, 0)
         else
-            self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 1, 187/255, 187/255, 187/255)
+            self:drawRect(3, StartY, StartBtnWidth, StartBtnHeight, 1, 187 / 255, 187 / 255, 187 / 255)
             self:drawRectBorder(3, StartY, StartBtnWidth, StartBtnHeight, 0.8, 0, 0, 0)
         end
     end
@@ -194,7 +255,8 @@ function S4_Computer_Main:render()
     local StartTextY = TaskY + 2
     local StartImgY = StartTextY + 2
     local StartTextX = 8 + FontHeightLine
-    self:drawTextureScaled(getTexture("media/textures/S4_Icon/Icon_Windows_Start.png"), 5, StartImgY, FontHeightLine, FontHeightLine, 1)
+    self:drawTextureScaled(getTexture("media/textures/S4_Icon/Icon_Windows_Start.png"), 5, StartImgY, FontHeightLine,
+        FontHeightLine, 1)
     self:drawText("Start", StartTextX, StartTextY, 0, 0, 0, 1, UI_Font)
     -- Save global function size
     self.StartBtnWidth = StartBtnWidth
@@ -204,14 +266,14 @@ function S4_Computer_Main:render()
     self.TaskBarH = TaskHeight
 
     -- Time/App
-    local DumpAM = getTextManager():MeasureStringX(UI_Font, getText("IGUI_S4_COM_AM").." 00:00")
-    local DumpPM = getTextManager():MeasureStringX(UI_Font, getText("IGUI_S4_COM_PM").." 00:00")
+    local DumpAM = getTextManager():MeasureStringX(UI_Font, getText("IGUI_S4_COM_AM") .. " 00:00")
+    local DumpPM = getTextManager():MeasureStringX(UI_Font, getText("IGUI_S4_COM_PM") .. " 00:00")
     local DumpTimeW = math.max(DumpAM, DumpPM)
     local AppImgSize = FontHeightLine - 4
     local AppImgY = StartImgY + 3
     local TimeX = self:getWidth() - DumpTimeW - (AppImgSize * 2) - 25
     local TimeW = DumpTimeW + (AppImgSize * 2) + 20
-    self:drawRect(TimeX, StartY, TimeW, StartBtnHeight, 0.6, 147/255, 147/255, 147/255)
+    self:drawRect(TimeX, StartY, TimeW, StartBtnHeight, 0.6, 147 / 255, 147 / 255, 147 / 255)
     self:drawRectBorder(TimeX, StartY, TimeW, StartBtnHeight, 0.9, 0, 0, 0)
     TimeX = TimeX + 5
     -- if change image after checking whether object mode data is installed
@@ -245,19 +307,19 @@ function S4_Computer_Main:render()
 
     -- TaskBar Icon
     for i, TaskBarUI in ipairs(self.TaskBar) do
-        if self["Task"..i] then
-            local TaskX = self["Task"..i]:getX()
-            local TaskY = self["Task"..i]:getY()
-            local TaskW = self["Task"..i]:getWidth()
-            local TaskH = self["Task"..i]:getHeight()
+        if self["Task" .. i] then
+            local TaskX = self["Task" .. i]:getX()
+            local TaskY = self["Task" .. i]:getY()
+            local TaskW = self["Task" .. i]:getWidth()
+            local TaskH = self["Task" .. i]:getHeight()
             local BtnName = S4_UI.TextLimitOne(TaskBarUI.TitleName, self.BtnMaxW, self.UI_Font)
             -- Highlight top-level window TaskBar
-            if self.TopApp == self["Task"..i].App then
-                self:drawRect(TaskX, TaskY, TaskW, TaskH, 0.6, 127/255, 127/255, 127/255)
+            if self.TopApp == self["Task" .. i].App then
+                self:drawRect(TaskX, TaskY, TaskW, TaskH, 0.6, 127 / 255, 127 / 255, 127 / 255)
                 self:drawRectBorder(TaskX, TaskY, TaskW, TaskH, 0.9, 0, 0, 0)
                 self:drawText(BtnName, TaskX + 3, TaskY, 0, 0, 0, 1, UI_Font)
             else
-                self:drawRect(TaskX, TaskY, TaskW, TaskH, 0.6, 187/255, 187/255, 187/255)
+                self:drawRect(TaskX, TaskY, TaskW, TaskH, 0.6, 187 / 255, 187 / 255, 187 / 255)
                 self:drawRectBorder(TaskX, TaskY, TaskW, TaskH, 0.9, 0, 0, 0)
                 self:drawText(BtnName, TaskX + 3, TaskY, 0, 0, 0, 1, UI_Font)
             end
@@ -396,6 +458,25 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.UserSetting)
         end
         self.TopApp = self.UserSetting
+    elseif internal == "News" then
+        if self.News then
+            if not self.News:isVisible() then
+                self.News:setVisible(true)
+            end
+            if self.News.ReloadUI then
+                self.News:ReloadUI()
+            end
+            self.News:bringToTop()
+        else
+            self.News = S4_InternetExplorer:new(self)
+            self.News:initialise()
+            self.News.TitleName = "Knox News - Internet Explorer"
+            self.News.AddressText = "http://hind.com/KnoxNews/home"
+            self.News.PageType = internal
+            self:addChild(self.News)
+            self:AddTaskBar(self.News)
+        end
+        self.TopApp = self.News
     elseif internal == "ZomBank" then
         if self.ZomBank then
             if not self.ZomBank:isVisible() then
@@ -472,7 +553,9 @@ function S4_Computer_Main:BtnClick(Button)
 end
 
 function S4_Computer_Main:AddMsgBox(MsgTitle, IconImg, Text1, Text2, Text3)
-    if self.MsgBox then self.MsgBox:close() end
+    if self.MsgBox then
+        self.MsgBox:close()
+    end
     self.MsgBox = S4_System:new(self)
     self.MsgBox:initialise()
     self.MsgBox.TitleName = MsgTitle
@@ -492,7 +575,9 @@ function S4_Computer_Main:AddMsgBox(MsgTitle, IconImg, Text1, Text2, Text3)
 end
 
 function S4_Computer_Main:AddAdminMsgBox(CheckType, MsgTitle, IconImg, Text1, Text2, Text3)
-    if self.AdminMsgBox then self.AdminMsgBox:close() end
+    if self.AdminMsgBox then
+        self.AdminMsgBox:close()
+    end
     self.AdminMsgBox = S4_System:new(self)
     self.AdminMsgBox.TitleName = MsgTitle
     self.AdminMsgBox.PageType = "AdminMsgBox"
@@ -532,12 +617,12 @@ end
 
 function S4_Computer_Main:TaskBtnClick(Button)
     local internal = Button.internal
-    if internal and self["Task"..internal] and self["Task"..internal].App then
-        if not self["Task"..internal].App:isVisible() then
-            self["Task"..internal].App:setVisible(true)
+    if internal and self["Task" .. internal] and self["Task" .. internal].App then
+        if not self["Task" .. internal].App:isVisible() then
+            self["Task" .. internal].App:setVisible(true)
         end
-        self["Task"..internal].App:bringToTop()
-        self.TopApp = self["Task"..internal].App
+        self["Task" .. internal].App:bringToTop()
+        self.TopApp = self["Task" .. internal].App
     end
 end
 
@@ -567,30 +652,31 @@ end
 
 function S4_Computer_Main:setTaskBarBtn()
     for j = 1, 15 do
-        if self["Task"..j] then
-            self:removeChild(self["Task"..j])
-            self["Task"..j] = nil
+        if self["Task" .. j] then
+            self:removeChild(self["Task" .. j])
+            self["Task" .. j] = nil
         end
     end
 
     for i, v in ipairs(self.TaskBar) do
         local Bx = 16 + self.StartBtnWidth
-        
-        if i ~= 1 and self["Task"..(i-1)] then
-            Bx = self["Task"..(i-1)]:getRight() + 5
+
+        if i ~= 1 and self["Task" .. (i - 1)] then
+            Bx = self["Task" .. (i - 1)]:getRight() + 5
         end
-        if i ~= 1 and not self["Task"..(i-1)] then
+        if i ~= 1 and not self["Task" .. (i - 1)] then
             return
         end
         if Bx + self.BtnMaxW <= self.TimeAppX then
             local BtnName = S4_UI.TextLimitOne(v.TitleName, self.BtnMaxW, self.UI_Font)
-            self["Task"..i] = ISButton:new(Bx, self.StartY, 0, self.StartBtnHeight, BtnName, self, S4_Computer_Main.TaskBtnClick)
-            self["Task"..i].internal = i
-            self["Task"..i].App = self[v.PageType]
-            self["Task"..i]:initialise()
-            self["Task"..i]:setFont(self.UI_Font)
-            self["Task"..i]:setWidthToTitle(50, false)
-            self:addChild(self["Task"..i])
+            self["Task" .. i] = ISButton:new(Bx, self.StartY, 0, self.StartBtnHeight, BtnName, self,
+                S4_Computer_Main.TaskBtnClick)
+            self["Task" .. i].internal = i
+            self["Task" .. i].App = self[v.PageType]
+            self["Task" .. i]:initialise()
+            self["Task" .. i]:setFont(self.UI_Font)
+            self["Task" .. i]:setWidthToTitle(50, false)
+            self:addChild(self["Task" .. i])
         end
         -- Later... add the remaining Btn by adding a window
     end
@@ -599,7 +685,7 @@ end
 -- mouse movement
 function S4_Computer_Main:onMouseMove(dx, dy)
     local mouseX, mouseY = self:getMouseX(), self:getMouseY()
-    
+
     -- TaskBar
     self.StartBtn = false
     if self.StartBtnWidth and self.StartY and self.StartBtnHeight then
@@ -611,7 +697,9 @@ function S4_Computer_Main:onMouseMove(dx, dy)
     end
 
     -- movement related
-    if not self.moveWithMouse then return; end
+    if not self.moveWithMouse then
+        return;
+    end
     self.mouseOver = true;
 
     if self.moving then
@@ -635,7 +723,7 @@ function S4_Computer_Main:onMouseDown(x, y)
         else
             self.StartBtnAction = true
             local FontH = getTextManager():getFontFromEnum(self.UI_Font):getLineHeight()
-            local StartW = math.max(self:getWidth()/4, FontH)
+            local StartW = math.max(self:getWidth() / 4, FontH)
             local StartH = (self:getHeight() / 2)
             local StartY = self.TaskBarY - StartH
             self.StartPanel = S4_Computer_Start:new(self, 1, StartY, StartW, StartH)
@@ -646,7 +734,9 @@ function S4_Computer_Main:onMouseDown(x, y)
     end
 
     -- movement related
-    if not self.moveWithMouse then return true; end
+    if not self.moveWithMouse then
+        return true;
+    end
     if not self:getIsVisible() then
         return;
     end
@@ -707,34 +797,40 @@ function S4_Computer_Main:BtnRender()
             alpha = self.blinkImageAlpha
         end
         if self.forcedWidthImage and self.forcedHeightImage then
-            self:drawTextureScaledAspect(self.image, (self.width / 2) - (self.forcedWidthImage / 2), 2, self.forcedWidthImage,self.forcedHeightImage, alpha, self.textureColor.r, self.textureColor.g, self.textureColor.b)
+            self:drawTextureScaledAspect(self.image, (self.width / 2) - (self.forcedWidthImage / 2), 2,
+                self.forcedWidthImage, self.forcedHeightImage, alpha, self.textureColor.r, self.textureColor.g,
+                self.textureColor.b)
         elseif self.image:getWidthOrig() <= self.width and self.image:getHeightOrig() <= self.height then
-            self:drawTexture(self.image, (self.width / 2) - (self.image:getWidthOrig() / 2), (self.height / 2) - (self.image:getHeightOrig() / 2), alpha, self.textureColor.r, self.textureColor.g, self.textureColor.b)
+            self:drawTexture(self.image, (self.width / 2) - (self.image:getWidthOrig() / 2),
+                (self.height / 2) - (self.image:getHeightOrig() / 2), alpha, self.textureColor.r, self.textureColor.g,
+                self.textureColor.b)
         else
-            self:drawTextureScaledAspect(self.image, 0, 0, self.width, self.height, alpha, self.textureColor.r, self.textureColor.g, self.textureColor.b)
+            self:drawTextureScaledAspect(self.image, 0, 0, self.width, self.height, alpha, self.textureColor.r,
+                self.textureColor.g, self.textureColor.b)
         end
-	end
-	local textW = getTextManager():MeasureStringX(self.font, self.title)
-	local height = getTextManager():MeasureStringY(self.font, self.title)
-	local x = self.width / 2 - textW / 2
-	if self.isJoypad and self.joypadTexture then
-		local texWH = self.joypadTextureWH
-		local texX = x - 5 - texWH
-		local texY = self.height / 2 - 20 / 2
-		texX = math.max(5, texX)
-		x = texX + texWH + 5
-		self:drawTextureScaled(self.joypadTexture,texX,texY,texWH,texWH,1,1,1,1)
-	end
-	if self.enable then
-		self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, self.textColor.r, self.textColor.g, self.textColor.b, self.textColor.a, self.font)
-	elseif self.displayBackground and not self.isJoypad and self.joypadFocused then
-		self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, 0, 0, 0, 1, self.font)
-	else
-		self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, 0.3, 0.3, 0.3, 1, self.font)
-	end
-	if self.overlayText then
-		self:drawTextRight(self.overlayText, self.width, self.height - 10, 1, 1, 1, 0.5, UIFont.Small)
-	end
+    end
+    local textW = getTextManager():MeasureStringX(self.font, self.title)
+    local height = getTextManager():MeasureStringY(self.font, self.title)
+    local x = self.width / 2 - textW / 2
+    if self.isJoypad and self.joypadTexture then
+        local texWH = self.joypadTextureWH
+        local texX = x - 5 - texWH
+        local texY = self.height / 2 - 20 / 2
+        texX = math.max(5, texX)
+        x = texX + texWH + 5
+        self:drawTextureScaled(self.joypadTexture, texX, texY, texWH, texWH, 1, 1, 1, 1)
+    end
+    if self.enable then
+        self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, self.textColor.r, self.textColor.g,
+            self.textColor.b, self.textColor.a, self.font)
+    elseif self.displayBackground and not self.isJoypad and self.joypadFocused then
+        self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, 0, 0, 0, 1, self.font)
+    else
+        self:drawText(self.title, x, 2 + self.forcedHeightImage + 8, 0.3, 0.3, 0.3, 1, self.font)
+    end
+    if self.overlayText then
+        self:drawTextRight(self.overlayText, self.width, self.height - 10, 1, 1, 1, 0.5, UIFont.Small)
+    end
     if self.IconName then
         if getTextManager():MeasureStringX(UIFont.Small, self.IconName) >= self.forcedWidthImage + 68 then
             -- Text output after separating text
@@ -742,8 +838,8 @@ function S4_Computer_Main:BtnRender()
             for TextNum, lineText in ipairs(TextTable) do -- Result output
                 local NameX = self.width / 2 - getTextManager():MeasureStringX(self.font, lineText) / 2
                 local lineTextY = 2 + self.forcedHeightImage + 8
-                if TextNum == 2 then 
-                    lineTextY = lineTextY + S4_UI.FH_S 
+                if TextNum == 2 then
+                    lineTextY = lineTextY + S4_UI.FH_S
                 end
                 self:drawText(lineText, NameX, lineTextY, 1, 1, 1, self.textColor.a, self.font)
             end
@@ -753,17 +849,20 @@ function S4_Computer_Main:BtnRender()
         end
     end
 
-	if (self.mouseOver and self.onmouseover) then
-		self.onmouseover(self.target, self, x, y)
+    if (self.mouseOver and self.onmouseover) then
+        self.onmouseover(self.target, self, x, y)
     end
 
     if self.textureOverride then
-        self:drawTexture(self.textureOverride, (self.width /2) - (self.textureOverride:getWidth() / 2), (self.height /2) - (self.textureOverride:getHeight() / 2), 1, 1, 1, 1)
+        self:drawTexture(self.textureOverride, (self.width / 2) - (self.textureOverride:getWidth() / 2),
+            (self.height / 2) - (self.textureOverride:getHeight() / 2), 1, 1, 1, 1)
     end
 
     if false and self.mouseOver and self.tooltip then
-        self:drawRect(self:getMouseX() + 23, self:getMouseY() + 23, getTextManager():MeasureStringX(UIFont.Small, self.tooltip) + 24, 32+24, 0.7, 0.05, 0.05, 0.05)
-        self:drawRectBorder(self:getMouseX()  + 23, self:getMouseY() + 23, getTextManager():MeasureStringX(UIFont.Small, self.tooltip) + 24, 32+24, 0.5, 0.9, 0.9, 1)
-        self:drawText(self.tooltip, self:getMouseX()  + 23 + 12, self:getMouseY() + 23 + 12, 1,1,1,1)
+        self:drawRect(self:getMouseX() + 23, self:getMouseY() + 23,
+            getTextManager():MeasureStringX(UIFont.Small, self.tooltip) + 24, 32 + 24, 0.7, 0.05, 0.05, 0.05)
+        self:drawRectBorder(self:getMouseX() + 23, self:getMouseY() + 23,
+            getTextManager():MeasureStringX(UIFont.Small, self.tooltip) + 24, 32 + 24, 0.5, 0.9, 0.9, 1)
+        self:drawText(self.tooltip, self:getMouseX() + 23 + 12, self:getMouseY() + 23 + 12, 1, 1, 1, 1)
     end
 end

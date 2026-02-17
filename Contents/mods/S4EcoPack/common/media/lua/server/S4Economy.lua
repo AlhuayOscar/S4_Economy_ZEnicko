@@ -259,3 +259,102 @@ function S4Economy.ReplacementCardData(player, args)
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_CardLog")
 end
+
+-- Loan System
+function S4Economy.RequestLoan(player, args)
+    local UserName = player:getUsername()
+    local CardNum = args[1]
+    local Lender = args[2]
+    local Amount = args[3]
+    local InterestRate = args[4]
+    local TotalToPay = args[5]
+    local DeadlineDays = args[6]
+    local Timestamp = args[7]
+    local DisplayTime = args[8]
+
+    local CardModData = ModData.get("S4_CardData")
+    local LoanModData = ModData.get("S4_LoanData")
+    local CardLogModData = ModData.get("S4_CardLog")
+
+    if not CardModData[CardNum] then return end
+
+    -- Initialize player loan table if not exists
+    if not LoanModData[UserName] then
+        LoanModData[UserName] = {}
+    end
+
+    -- Add Money to Card
+    CardModData[CardNum].Money = CardModData[CardNum].Money + Amount
+
+    -- Record Loan
+    table.insert(LoanModData[UserName], {
+        Lender = Lender,
+        Amount = Amount,
+        InterestRate = InterestRate,
+        TotalToPay = TotalToPay,
+        Deadline = DeadlineDays,
+        Timestamp = Timestamp,
+        DisplayTime = DisplayTime,
+        CardNum = CardNum,
+        Repaid = 0,
+        Status = "Active"
+    })
+
+    -- Add to Card Log
+    if CardLogModData[CardNum] then
+        CardLogModData[CardNum][Timestamp] = {
+            Type = "Deposit",
+            Money = Amount,
+            Sender = Lender,
+            Receiver = UserName,
+            DisplayTime = DisplayTime,
+        }
+    end
+
+    ModData.transmit("S4_CardData")
+    ModData.transmit("S4_LoanData")
+    ModData.transmit("S4_CardLog")
+end
+
+function S4Economy.RepayLoan(player, args)
+    local UserName = player:getUsername()
+    local CardNum = args[1]
+    local LoanIndex = args[2]
+    local RepayAmount = args[3]
+    local Timestamp = args[4]
+    local DisplayTime = args[5]
+
+    local CardModData = ModData.get("S4_CardData")
+    local LoanModData = ModData.get("S4_LoanData")
+    local CardLogModData = ModData.get("S4_CardLog")
+
+    if not CardModData[CardNum] or not LoanModData[UserName] or not LoanModData[UserName][LoanIndex] then return end
+
+    local loan = LoanModData[UserName][LoanIndex]
+    
+    -- Check if card has enough money
+    if CardModData[CardNum].Money < RepayAmount then return end
+
+    -- Deduct money
+    CardModData[CardNum].Money = CardModData[CardNum].Money - RepayAmount
+    loan.Repaid = (loan.Repaid or 0) + RepayAmount
+
+    if loan.Repaid >= loan.TotalToPay then
+        loan.Status = "Repaid"
+    end
+
+    -- Add to Log
+    if CardLogModData[CardNum] then
+        CardLogModData[CardNum][Timestamp] = {
+            Type = "Withdraw",
+            Money = RepayAmount,
+            Sender = UserName,
+            Receiver = loan.Lender,
+            DisplayTime = DisplayTime,
+        }
+    end
+
+    ModData.transmit("S4_CardData")
+    ModData.transmit("S4_LoanData")
+    ModData.transmit("S4_CardLog")
+end

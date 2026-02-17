@@ -16,6 +16,9 @@ function S4ServerCommand.OnInitGlobalModData()
     -- Shop
     ModData.getOrCreate("S4_ShopData")
     ModData.getOrCreate("S4_PlayerShopData")
+    -- News & Loans
+    ModData.getOrCreate("S4_KnoxNews")
+    ModData.getOrCreate("S4_LoanData")
     -- Xp Count
     ModData.getOrCreate("S4_PlayerXpData")
     -- Server Data
@@ -39,7 +42,7 @@ local function S4ServerCommand_OnClientCommand(module, command, player, args)
     elseif module == "S4SD" and S4Shop[command] then
         S4Shop[command](player, args)
     elseif module == "S4SMD" and S4Server[command] then
-    S4Server[command](player, args)
+        S4Server[command](player, args)
     end
 end
 Events.OnClientCommand.Add(S4ServerCommand_OnClientCommand)

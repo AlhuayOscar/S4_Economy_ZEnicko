@@ -274,6 +274,7 @@ IGUI_EN = {
     IGUI_S4_Bank_Btn_WithdrawFilter = "View withdrawals only",
     IGUI_S4_Bank_Btn_RemoveCard = "Remove card",
     IGUI_S4_Bank_Btn_ReplacementCard = "Replacemen card",
+    IGUI_S4_Bank_Loans = "Loans",
 
     IGUI_S4_BlackJack_GameStart = "Start Game",
     IGUI_S4_BlackJack_GameRestart = "Restart Game",

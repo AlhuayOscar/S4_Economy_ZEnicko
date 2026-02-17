@@ -161,6 +161,17 @@ function S4_IE_ZomBank:MenuChildren()
     self.ProfileBtn.textColor.a = 0.9
     self.ProfileBtn:initialise()
     self:addChild(self.ProfileBtn)
+    x = x + BtnW - 1
+
+    self.LoanBtn= ISButton:new(x, y, BtnW, self:getHeight(), getText("IGUI_S4_Bank_Loans"), self, S4_IE_ZomBank.MenuBtnClick)
+    self.LoanBtn.internal = "Loans"
+    self.LoanBtn.font = UIFont.Large
+    self.LoanBtn.backgroundColorMouseOver.a = 0.7
+    self.LoanBtn.backgroundColor.a = 0
+    self.LoanBtn.borderColor = {r=0.7, g=0.7, b=0.7, a=1}
+    self.LoanBtn.textColor.a = 0.9
+    self.LoanBtn:initialise()
+    self:addChild(self.LoanBtn)
 end
 
 -- function S4_IE_ZomBank:render()
@@ -194,6 +205,8 @@ function S4_IE_ZomBank:setMain(MainType)
         self.MainPanel = S4_Bank_Account:new(self, self.MainX, self.MainY, self.MainW, self.MainH)
     elseif MainType == "Profile" then
         self.MainPanel = S4_Bank_Profile:new(self, self.MainX, self.MainY, self.MainW, self.MainH)
+    elseif MainType == "Loans" then
+        self.MainPanel = S4_Bank_Loans:new(self, self.MainX, self.MainY, self.MainW, self.MainH)
     end
     if self.MainPanel then
         self.MainPanel:initialise()

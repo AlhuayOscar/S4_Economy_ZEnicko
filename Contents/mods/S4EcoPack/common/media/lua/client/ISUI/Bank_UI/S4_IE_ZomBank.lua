@@ -117,7 +117,7 @@ end
 function S4_IE_ZomBank:MenuChildren()
     ISPanel.createChildren(self)
     local x, y = 0, 0
-    local BtnW = 200
+    local BtnW = self:getWidth() / 5
 
     self.HomeBtn= ISButton:new(x, y, BtnW, self:getHeight(), getText("IGUI_S4_Bank_Home"), self, S4_IE_ZomBank.MenuBtnClick)
     self.HomeBtn.internal = "Home"

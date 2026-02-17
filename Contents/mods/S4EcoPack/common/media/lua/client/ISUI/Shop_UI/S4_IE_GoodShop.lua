@@ -762,7 +762,11 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
-    local CNameT = getText("IGUI_S4_ItemCat_" .. item.item)
+    local CNameKey = "IGUI_S4_ItemCat_" .. item.item
+    local CNameT = getText(CNameKey)
+    if CNameT == CNameKey then
+        CNameT = item.item
+    end
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)

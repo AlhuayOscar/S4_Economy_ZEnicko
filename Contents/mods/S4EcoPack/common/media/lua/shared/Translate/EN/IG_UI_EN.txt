@@ -337,6 +337,12 @@ IGUI_EN = {
     IGUI_S4_Shop_Home6 = "The recipe for the item is revealed below, so get the recipe for the signal device!",
     IGUI_S4_Shop_Home7 = "We wish you a safe day today.",
     IGUI_S4_Shop_RecipeBtn = "Get Signal Device Recipe",
+    
+    IGUI_S4_ItemCat_HotItem = "Popular Items",
+    IGUI_S4_ItemCat_InvItem = "Inventory",
+    IGUI_S4_ItemCat_AllView = "All Items",
+    IGUI_S4_ItemCat_Favorite = "Favorites",
+    IGUI_S4_ItemCat_Search = "Search Results",
 
     IGUI_S4_Cart_TotalBuy = "Total Purchase Price: $ %s",
     IGUI_S4_Cart_TotalSell = "Total Sale Price: $ %s",

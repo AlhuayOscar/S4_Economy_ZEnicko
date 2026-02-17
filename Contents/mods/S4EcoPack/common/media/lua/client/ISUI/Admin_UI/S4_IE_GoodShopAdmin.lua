@@ -8,8 +8,18 @@ function S4_IE_GoodShopAdmin:new(IEUI, x, y)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=0, g=0, b=0, a=1}
-    o.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    o.backgroundColor = {
+        r = 0,
+        g = 0,
+        b = 0,
+        a = 1
+    }
+    o.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     o.IEUI = IEUI -- Store parent UI reference
     o.ComUI = IEUI.ComUI -- Computer UI
     o.player = IEUI.player
@@ -30,7 +40,7 @@ function S4_IE_GoodShopAdmin:initialise()
     self.AllCategory = {}
     local ShopModData = ModData.get("S4_ShopData") or {}
     local AllItemList = getAllItems()
-    for i=0, AllItemList:size()-1 do
+    for i = 0, AllItemList:size() - 1 do
         local item = AllItemList:get(i)
         if item and item:getFullName() and item:getTypeString() then
             local Data = {}
@@ -45,13 +55,17 @@ function S4_IE_GoodShopAdmin:initialise()
 
             local iconTexture = nil
             if item.getNormalTexture then
-                local okTexture, normalTexture = pcall(function() return item:getNormalTexture() end)
+                local okTexture, normalTexture = pcall(function()
+                    return item:getNormalTexture()
+                end)
                 if okTexture and normalTexture then
                     iconTexture = normalTexture
                 end
             end
             if not iconTexture and item.getIcon then
-                local okIcon, iconName = pcall(function() return item:getIcon() end)
+                local okIcon, iconName = pcall(function()
+                    return item:getIcon()
+                end)
                 if okIcon and iconName and iconName ~= "" then
                     iconTexture = getTexture(iconName) or getTexture("Item_" .. iconName)
                 end
@@ -125,7 +139,12 @@ function S4_IE_GoodShopAdmin:createChildren()
 
     self.CategoryPanel = ISPanel:new(InfoX, CategoryY, CategoryW, CategoryH)
     self.CategoryPanel.backgroundColor.a = 0
-    self.CategoryPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.CategoryPanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self:addChild(self.CategoryPanel)
 
     local CText = "Category"
@@ -156,13 +175,23 @@ function S4_IE_GoodShopAdmin:createChildren()
 
     self.ListBox = S4_ItemListBox:new(self, BoxX, CategoryY, BoxW, CategoryH)
     self.ListBox.backgroundColor.a = 0
-    self.ListBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.ListBox.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.ListBox.ListCount = self.ListCount
     self.ListBox.AdminAccess = true
     self:addChild(self.ListBox)
 
     self.InfoPanel = ISPanel:new(BoxX, InfoY, BoxW, InfoH)
-    self.InfoPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.InfoPanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.InfoPanel.borderColor.abs = 0
     self:addChild(self.InfoPanel)
 
@@ -236,28 +265,30 @@ function S4_IE_GoodShopAdmin:AddItems()
     for _, Data in pairs(self.AllItems) do
         local Category = Data.ListCategory
         -- if self.FilterItem:getTex() ~= Data.Texture then
-            if self.CategoryBox.CategoryType == Category then
+        if self.CategoryBox.CategoryType == Category then
+            self.ListBox:AddItem(Data)
+        elseif self.CategoryBox.CategoryType == "All" then
+            self.ListBox:AddItem(Data)
+        elseif self.CategoryBox.CategoryType == "Reg" then
+            if Data.DataCheck then
                 self.ListBox:AddItem(Data)
-            elseif self.CategoryBox.CategoryType == "All" then
-                self.ListBox:AddItem(Data)
-            elseif self.CategoryBox.CategoryType == "Reg" then
-                if Data.DataCheck then
-                    self.ListBox:AddItem(Data)
-                end
-            elseif self.CategoryBox.CategoryType == "Search" then
-                if not self.ListBox or not self.ListBox.SearchEntry then return end
-                if Data.FullType and Data.DisplayName then
-                    local ST = self.ListBox.SearchEntry:getText()
-                    if ST ~= "" then
-                        ST = string.lower(ST):gsub("%s+", "")
-                        local SD = string.lower(Data.DisplayName):gsub("%s+", "")
-                        local SF = string.lower(Data.FullType):gsub("%s+", "")
-                        if SD:find(ST) or SF:find(ST) then
-                            self.ListBox:AddItem(Data)
-                        end
+            end
+        elseif self.CategoryBox.CategoryType == "Search" then
+            if not self.ListBox or not self.ListBox.SearchEntry then
+                return
+            end
+            if Data.FullType and Data.DisplayName then
+                local ST = self.ListBox.SearchEntry:getText()
+                if ST ~= "" then
+                    ST = string.lower(ST):gsub("%s+", "")
+                    local SD = string.lower(Data.DisplayName):gsub("%s+", "")
+                    local SF = string.lower(Data.FullType):gsub("%s+", "")
+                    if SD:find(ST) or SF:find(ST) then
+                        self.ListBox:AddItem(Data)
                     end
                 end
             end
+        end
         -- end
     end
 end
@@ -291,12 +322,17 @@ function S4_IE_GoodShopAdmin:ReloadData()
         end
     end
     self:AddItems()
+    if self.ListBox and self.ListBox.markRefreshApplied then
+        self.ListBox:markRefreshApplied()
+    end
 end
 
 function S4_IE_GoodShopAdmin:BtnClick(Button)
     local internal = Button.internal
     -- if not internal or self.SettingBox then return end
-    if not internal then return end
+    if not internal then
+        return
+    end
     local MsgTitle = getText("IGUI_S4_ShopAdminMsgBox")
     if internal == "AllReset" then
         local Text1 = getText("IGUI_S4_ShopAdminMsgBox_AllReset1")
@@ -334,7 +370,7 @@ function S4_IE_GoodShopAdmin:doDrawItem_CategoryBox(y, item, alt)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
-    local CNameT = getText("IGUI_ItemCat_"..item.item)
+    local CNameT = getText("IGUI_ItemCat_" .. item.item)
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)
@@ -344,24 +380,33 @@ end
 
 function S4_IE_GoodShopAdmin:onMouseDown_CategoryBox(x, y)
     local ShopUI = self.parentUI
-    if ShopUI.SettingBox then return end
+    if ShopUI.SettingBox then
+        return
+    end
     ISScrollingListBox.onMouseDown(self, x, y)
     local list = self
     local rowIndex = list:rowAt(x, y)
     if rowIndex > 0 then
-        list.selectedRow = rowIndex 
+        list.selectedRow = rowIndex
         list.CategoryType = self.items[rowIndex].item
         ShopUI:AddItems()
     end
 end
 
 function S4_IE_GoodShopAdmin:OpenSettingBox(Data)
-    if self.SettingBox then self.SettingBox:close() end
+    if self.SettingBox then
+        self.SettingBox:close()
+    end
     if Data then
         local x, y, w, h = self.ListBox:getX(), self.ListBox:getY(), self.ListBox:getWidth(), self.ListBox:getHeight()
         self.SettingBox = S4_ItemSettingBox:new(self, x, y, w, h)
         self.SettingBox.backgroundColor.a = 0
-        self.SettingBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+        self.SettingBox.borderColor = {
+            r = 0.4,
+            g = 0.4,
+            b = 0.4,
+            a = 1
+        }
         self.SettingBox.ItemData = Data
         self.SettingBox:initialise()
         self:addChild(self.SettingBox)
@@ -371,14 +416,18 @@ end
 
 -- UI move/close related functions
 function S4_IE_GoodShopAdmin:onMouseDown(x, y)
-    if not self.Moving then return end
+    if not self.Moving then
+        return
+    end
     self.IEUI.moving = true
     self.IEUI:bringToTop()
     self.ComUI.TopApp = self.IEUI
 end
 
 function S4_IE_GoodShopAdmin:onMouseUpOutside(x, y)
-    if not self.Moving then return end
+    if not self.Moving then
+        return
+    end
     self.IEUI.moving = false
 end
 

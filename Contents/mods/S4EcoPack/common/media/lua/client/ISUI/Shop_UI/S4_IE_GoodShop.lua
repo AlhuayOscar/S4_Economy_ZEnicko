@@ -8,8 +8,18 @@ function S4_IE_GoodShop:new(IEUI, x, y)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=0, g=0, b=0, a=1}
-    o.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    o.backgroundColor = {
+        r = 0,
+        g = 0,
+        b = 0,
+        a = 1
+    }
+    o.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     o.IEUI = IEUI -- Save parent UI reference
     o.ComUI = IEUI.ComUI -- computer ui
     o.player = IEUI.player
@@ -33,7 +43,9 @@ function S4_IE_GoodShop:initialise()
     local ShopModData = ModData.get("S4_ShopData") or {}
     local PlayerShopRoot = ModData.get("S4_PlayerShopData") or {}
     local PlayerShopModData = PlayerShopRoot[PlayerName]
-    if not PlayerShopModData then return end
+    if not PlayerShopModData then
+        return
+    end
     for FullType, MData in pairs(ShopModData) do
         local itemCashe = S4_Utils.setItemCashe(FullType)
         if itemCashe then
@@ -66,10 +78,10 @@ function S4_IE_GoodShop:initialise()
             end
             if PlayerShopModData then
                 if Data.BuyAuthority > PlayerShopModData.BuyAuthority then
-                    Data.BuyAccessFail = true 
+                    Data.BuyAccessFail = true
                 end
                 if Data.SellAuthority > PlayerShopModData.SellAuthority then
-                    Data.SellAccessFail = true 
+                    Data.SellAccessFail = true
                 end
             end
             if self.InvItems and self.InvItems[Data.FullType] then
@@ -122,19 +134,34 @@ function S4_IE_GoodShop:createChildren()
 
     self.HomePanel = S4_Shop_Home:new(self, InfoX, CategoryY, self:getWidth() - 20, CategoryH)
     self.HomePanel.backgroundColor.a = 0
-    self.HomePanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.HomePanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.HomePanel:initialise()
     self:addChild(self.HomePanel)
 
     self.CartPanel = S4_Shop_Cart:new(self, InfoX, CategoryY, self:getWidth() - 20, CategoryH)
     self.CartPanel.backgroundColor.a = 0
-    self.CartPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.CartPanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.CartPanel:initialise()
     self:addChild(self.CartPanel)
 
     self.CategoryPanel = ISPanel:new(InfoX, CategoryY, CategoryW, CategoryH)
     self.CategoryPanel.backgroundColor.a = 0
-    self.CategoryPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.CategoryPanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self:addChild(self.CategoryPanel)
 
     local CText = "Category"
@@ -164,13 +191,23 @@ function S4_IE_GoodShop:createChildren()
 
     self.ListBox = S4_ItemListBox:new(self, BoxX, CategoryY, BoxW, CategoryH)
     self.ListBox.backgroundColor.a = 0
-    self.ListBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.ListBox.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.ListBox.ListCount = self.ListCount
     self:addChild(self.ListBox)
 
     self.InfoPanel = ISPanel:new(BoxX, InfoY, BoxW, InfoH)
     self.InfoPanel.backgroundColor.a = 0
-    self.InfoPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.InfoPanel.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self:addChild(self.InfoPanel)
 
     local BtnX = BoxX + 10
@@ -204,7 +241,7 @@ function S4_IE_GoodShop:createChildren()
     self.SellBtn:initialise()
     self:addChild(self.SellBtn)
     BtnX = BtnX + BtnW + 10
-    
+
     self.CartBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Cart", self, S4_IE_GoodShop.BtnClick)
     self.CartBtn.internal = "Cart"
     self.CartBtn.font = UIFont.Large
@@ -221,27 +258,44 @@ end
 function S4_IE_GoodShop:render()
     ISPanel.render(self)
     if self.MenuType then
-        local x, y, w, h = self[self.MenuType.."Btn"]:getX(), self[self.MenuType.."Btn"]:getY() + 1, self[self.MenuType.."Btn"]:getWidth(), self[self.MenuType.."Btn"]:getHeight() - 2
+        local x, y, w, h = self[self.MenuType .. "Btn"]:getX(), self[self.MenuType .. "Btn"]:getY() + 1,
+            self[self.MenuType .. "Btn"]:getWidth(), self[self.MenuType .. "Btn"]:getHeight() - 2
         self:drawRect(x, y, w, h, 0.2, 1, 1, 1)
     end
 end
 
 -- Item purchase/sale information window
 function S4_IE_GoodShop:OpenBuyBox(Data)
-    if self.BuyBox then self.BuyBox:close() end
-    self.BuyBox = S4_Shop_BuyBox:new(self, self.ListBox:getX(), self.ListBox:getY(), self.ListBox:getWidth(), self.ListBox:getHeight())
+    if self.BuyBox then
+        self.BuyBox:close()
+    end
+    self.BuyBox = S4_Shop_BuyBox:new(self, self.ListBox:getX(), self.ListBox:getY(), self.ListBox:getWidth(),
+        self.ListBox:getHeight())
     self.BuyBox.backgroundColor.a = 0
-    self.BuyBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.BuyBox.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.BuyBox.ItemData = Data
     self.BuyBox:initialise()
     self:addChild(self.BuyBox)
     self.ListBox:setVisible(false)
 end
 function S4_IE_GoodShop:OpenSellBox(Data)
-    if self.SellBox then self.SellBox:close() end
-    self.SellBox = S4_Shop_SellBox:new(self, self.ListBox:getX(), self.ListBox:getY(), self.ListBox:getWidth(), self.ListBox:getHeight())
+    if self.SellBox then
+        self.SellBox:close()
+    end
+    self.SellBox = S4_Shop_SellBox:new(self, self.ListBox:getX(), self.ListBox:getY(), self.ListBox:getWidth(),
+        self.ListBox:getHeight())
     self.SellBox.backgroundColor.a = 0
-    self.SellBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.SellBox.borderColor = {
+        r = 0.4,
+        g = 0.4,
+        b = 0.4,
+        a = 1
+    }
     self.SellBox.ItemData = Data
     self.SellBox:initialise()
     self:addChild(self.SellBox)
@@ -288,7 +342,9 @@ function S4_IE_GoodShop:AddItems(Reload)
                 self.ListBox:AddItem(Data)
             end
         elseif self.CategoryBox.CategoryType == "Search" then
-            if not self.ListBox or not self.ListBox.SearchEntry then return end
+            if not self.ListBox or not self.ListBox.SearchEntry then
+                return
+            end
             if Data.FullType and Data.DisplayName then
                 local ST = self.ListBox.SearchEntry:getText()
                 if ST ~= "" then
@@ -341,12 +397,107 @@ function S4_IE_GoodShop:AddCartItem(Reload)
     end
 end
 
+function S4_IE_GoodShop:getDefaultCategoryType()
+    if self.MenuType == "Buy" then
+        return "HotItem"
+    elseif self.MenuType == "Sell" then
+        return "InvItem"
+    end
+    return false
+end
+
+function S4_IE_GoodShop:getCategoryRow(CategoryType)
+    if not CategoryType or not self.CategoryBox or not self.CategoryBox.items then
+        return false
+    end
+    for i, rowData in ipairs(self.CategoryBox.items) do
+        if rowData and rowData.item == CategoryType then
+            return i
+        end
+    end
+    return false
+end
+
+function S4_IE_GoodShop:getViewState()
+    local data = {}
+    data.MenuType = self.MenuType
+    data.CategoryType = self.CategoryBox and self.CategoryBox.CategoryType or false
+    data.SelectedRow = self.CategoryBox and self.CategoryBox.selectedRow or false
+    data.ItemPage = 1
+    data.SearchText = ""
+    if self.ListBox then
+        data.ItemPage = self.ListBox.ItemPage or 1
+        if self.ListBox.SearchEntry then
+            data.SearchText = self.ListBox.SearchEntry:getText() or ""
+        end
+    end
+    return data
+end
+
+function S4_IE_GoodShop:applyViewState(viewState)
+    if not viewState then
+        return false
+    end
+    if self.MenuType ~= "Buy" and self.MenuType ~= "Sell" then
+        return false
+    end
+
+    local searchText = viewState.SearchText or ""
+    if self.ListBox and self.ListBox.SearchEntry then
+        self.ListBox.SearchEntry:setText(searchText)
+    end
+
+    local categoryType = viewState.CategoryType or self:getDefaultCategoryType()
+    local selectedRow = false
+    if categoryType == "Search" then
+        if searchText == "" then
+            categoryType = self:getDefaultCategoryType()
+        end
+    end
+
+    if categoryType ~= "Search" then
+        selectedRow = self:getCategoryRow(categoryType)
+        if not selectedRow then
+            categoryType = self:getDefaultCategoryType()
+            selectedRow = self:getCategoryRow(categoryType)
+        end
+    end
+
+    self.CategoryBox.CategoryType = categoryType
+    self.CategoryBox.selectedRow = selectedRow or false
+    self:AddItems(true)
+
+    if self.ListBox then
+        local page = tonumber(viewState.ItemPage) or 1
+        if page < 1 then
+            page = 1
+        end
+        if page > self.ListBox.ItemPageMax then
+            page = self.ListBox.ItemPageMax
+        end
+        if page < 1 then
+            page = 1
+        end
+        self.ListBox.ItemPage = page
+        self.ListBox:setItemBtn()
+        self.ListBox:setPage()
+    end
+    return true
+end
+
 -- Reset item data
-function S4_IE_GoodShop:ReloadData(ReloadType)
+function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView)
+    local savedView = nil
+    if PreserveView then
+        savedView = self:getViewState()
+    end
+
     self.AllItems = {}
+    self.BuyCategory = {}
+    self.SellCategory = {}
     self.InvItems = {}
     self.InvItems = S4_Utils.getPlayerItems(self.player)
-    if ReloadType == "Sell" then
+    if ReloadType == "Sell" and not PreserveView then
         self.ComUI.SellCart = {}
     end
 
@@ -360,7 +511,12 @@ function S4_IE_GoodShop:ReloadData(ReloadType)
             local ShopModData = ModData.get("S4_ShopData") or {}
             local PlayerShopRoot = ModData.get("S4_PlayerShopData") or {}
             local PlayerShopModData = PlayerShopRoot[PlayerName]
-            if not PlayerShopModData then return end
+            if not PlayerShopModData then
+                if PreserveView and self.ListBox and self.ListBox.markRefreshApplied then
+                    self.ListBox:markRefreshApplied()
+                end
+                return
+            end
             for FullType, MData in pairs(ShopModData) do
                 local itemCashe = S4_Utils.setItemCashe(FullType)
                 if itemCashe then
@@ -393,10 +549,10 @@ function S4_IE_GoodShop:ReloadData(ReloadType)
                     end
                     if PlayerShopModData then
                         if Data.BuyAuthority > PlayerShopModData.BuyAuthority then
-                            Data.BuyAccessFail = true 
+                            Data.BuyAccessFail = true
                         end
                         if Data.SellAuthority > PlayerShopModData.SellAuthority then
-                            Data.SellAccessFail = true 
+                            Data.SellAccessFail = true
                         end
                     end
                     if self.InvItems and self.InvItems[Data.FullType] then
@@ -424,14 +580,35 @@ function S4_IE_GoodShop:ReloadData(ReloadType)
                 self.PlayerSellAuthority = PlayerShopModData.SellAuthority
             end
             self:AddCategory()
-            if ReloadType == "Buy" then
-                self.MenuType = "Buy"
-                self:AddItems(false)
-            elseif ReloadType == "Sell" then
-                self.MenuType = "Sell"
-                self:AddCartItem(false)
+
+            local targetMenu = ReloadType
+            if targetMenu ~= "Buy" and targetMenu ~= "Sell" then
+                targetMenu = self.MenuType
             end
-            self:ShopBoxVisible(true)
+
+            if targetMenu == "Buy" or targetMenu == "Sell" then
+                self.MenuType = targetMenu
+            end
+
+            local restored = false
+            if PreserveView and savedView and self.MenuType == savedView.MenuType then
+                restored = self:applyViewState(savedView)
+            end
+
+            if not restored then
+                if ReloadType == "Buy" then
+                    self.MenuType = "Buy"
+                    self:AddItems(false)
+                elseif ReloadType == "Sell" then
+                    self.MenuType = "Sell"
+                    self:AddCartItem(false)
+                end
+            end
+            self:ShopBoxVisible(true, restored)
+
+            if PreserveView and self.ListBox and self.ListBox.markRefreshApplied then
+                self.ListBox:markRefreshApplied()
+            end
         else
             return
         end
@@ -458,11 +635,35 @@ function S4_IE_GoodShop:AddCategory()
     end
 end
 
+function S4_IE_GoodShop:SoftRefreshData()
+    if self.BuyBox or self.SellBox then
+        return
+    end
+    if self.MenuType ~= "Buy" and self.MenuType ~= "Sell" then
+        if self.ListBox and self.ListBox.markRefreshApplied then
+            self.ListBox:markRefreshApplied()
+        end
+        return
+    end
+    self:ReloadData(self.MenuType, true)
+end
+
+function S4_IE_GoodShop:OnShopDataUpdated(key)
+    if key ~= "S4_ShopData" and key ~= "S4_PlayerShopData" then
+        return
+    end
+    self:SoftRefreshData()
+end
+
 -- button click
 function S4_IE_GoodShop:BtnClick(Button)
     local internal = Button.internal
-    if not internal then return end
-    if self.BuyBox or self.SellBox then return end
+    if not internal then
+        return
+    end
+    if self.BuyBox or self.SellBox then
+        return
+    end
     self.MenuType = internal
     if internal == "Buy" then
         ModData.request("S4_ShopData")
@@ -483,17 +684,21 @@ function S4_IE_GoodShop:BtnClick(Button)
 end
 
 -- Reset Category Settings, Category Visible Settings
-function S4_IE_GoodShop:ShopBoxVisible(Value)
+function S4_IE_GoodShop:ShopBoxVisible(Value, KeepCurrentView)
     if self.MenuType == "Buy" then
-        self.CategoryBox.selectedRow = 1 
-        self.CategoryBox.CategoryType = "HotItem"
-        self:AddItems()
+        if not KeepCurrentView or not self.CategoryBox.CategoryType then
+            self.CategoryBox.selectedRow = 1
+            self.CategoryBox.CategoryType = "HotItem"
+            self:AddItems()
+        end
     elseif self.MenuType == "Sell" then
-        self.CategoryBox.selectedRow = 1 
-        self.CategoryBox.CategoryType = "InvItem"
-        self:AddItems()
+        if not KeepCurrentView or not self.CategoryBox.CategoryType then
+            self.CategoryBox.selectedRow = 1
+            self.CategoryBox.CategoryType = "InvItem"
+            self:AddItems()
+        end
     else
-        self.CategoryBox.selectedRow = false 
+        self.CategoryBox.selectedRow = false
         self.CategoryBox.CategoryType = false
     end
     self.HomePanel:setVisible(false)
@@ -518,7 +723,7 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
-    local CNameT = getText("IGUI_S4_ItemCat_"..item.item)
+    local CNameT = getText("IGUI_S4_ItemCat_" .. item.item)
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)
@@ -529,14 +734,18 @@ end
 -- Click on Category
 function S4_IE_GoodShop:onMouseDown_CategoryBox(x, y)
     local ShopUI = self.parentUI
-    if ShopUI.SettingBox then return end
-    if ShopUI.BuyBox or ShopUI.SellBox then return end
+    if ShopUI.SettingBox then
+        return
+    end
+    if ShopUI.BuyBox or ShopUI.SellBox then
+        return
+    end
     if ShopUI.MenuType == "Buy" or ShopUI.MenuType == "Sell" then
         ISScrollingListBox.onMouseDown(self, x, y)
         local list = self
         local rowIndex = list:rowAt(x, y)
         if rowIndex > 0 then
-            list.selectedRow = rowIndex 
+            list.selectedRow = rowIndex
             list.CategoryType = self.items[rowIndex].item
             ShopUI:AddItems()
         end
@@ -545,14 +754,18 @@ end
 
 -- Functions related to moving and exiting UI
 function S4_IE_GoodShop:onMouseDown(x, y)
-    if not self.Moving then return end
+    if not self.Moving then
+        return
+    end
     self.IEUI.moving = true
     self.IEUI:bringToTop()
     self.ComUI.TopApp = self.IEUI
 end
 
 function S4_IE_GoodShop:onMouseUpOutside(x, y)
-    if not self.Moving then return end
+    if not self.Moving then
+        return
+    end
     self.IEUI.moving = false
 end
 

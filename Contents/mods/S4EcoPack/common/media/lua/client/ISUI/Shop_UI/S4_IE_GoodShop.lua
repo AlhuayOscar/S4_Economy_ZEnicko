@@ -54,15 +54,15 @@ function S4_IE_GoodShop:initialise()
             Data.DisplayName = itemCashe:getDisplayName()
             Data.Texture = itemCashe:getTex()
             Data.itemData = itemCashe
-            Data.BuyPrice = ShopModData[Data.FullType].BuyPrice
-            Data.SellPrice = ShopModData[Data.FullType].SellPrice
-            Data.Stock = ShopModData[Data.FullType].Stock
-            Data.Restock = ShopModData[Data.FullType].Restock
-            Data.Category = ShopModData[Data.FullType].Category
-            Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority
-            Data.SellAuthority = ShopModData[Data.FullType].SellAuthority
-            Data.Discount = ShopModData[Data.FullType].Discount
-            Data.HotItem = ShopModData[Data.FullType].HotItem
+            Data.BuyPrice = ShopModData[Data.FullType].BuyPrice or 0
+            Data.SellPrice = ShopModData[Data.FullType].SellPrice or 0
+            Data.Stock = ShopModData[Data.FullType].Stock or 0
+            Data.Restock = ShopModData[Data.FullType].Restock or 0
+            Data.Category = ShopModData[Data.FullType].Category or "None"
+            Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority or 0
+            Data.SellAuthority = ShopModData[Data.FullType].SellAuthority or 0
+            Data.Discount = ShopModData[Data.FullType].Discount or 0
+            Data.HotItem = ShopModData[Data.FullType].HotItem or 0
             if PlayerShopModData.FavoriteList[Data.FullType] then
                 Data.Favorite = true
             end
@@ -525,15 +525,15 @@ function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView)
                     Data.DisplayName = itemCashe:getDisplayName()
                     Data.Texture = itemCashe:getTex()
                     Data.itemData = itemCashe
-                    Data.BuyPrice = ShopModData[Data.FullType].BuyPrice
-                    Data.SellPrice = ShopModData[Data.FullType].SellPrice
-                    Data.Stock = ShopModData[Data.FullType].Stock
-                    Data.Restock = ShopModData[Data.FullType].Restock
-                    Data.Category = ShopModData[Data.FullType].Category
-                    Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority
-                    Data.SellAuthority = ShopModData[Data.FullType].SellAuthority
-                    Data.Discount = ShopModData[Data.FullType].Discount
-                    Data.HotItem = ShopModData[Data.FullType].HotItem
+                    Data.BuyPrice = ShopModData[Data.FullType].BuyPrice or 0
+                    Data.SellPrice = ShopModData[Data.FullType].SellPrice or 0
+                    Data.Stock = ShopModData[Data.FullType].Stock or 0
+                    Data.Restock = ShopModData[Data.FullType].Restock or 0
+                    Data.Category = ShopModData[Data.FullType].Category or "None"
+                    Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority or 0
+                    Data.SellAuthority = ShopModData[Data.FullType].SellAuthority or 0
+                    Data.Discount = ShopModData[Data.FullType].Discount or 0
+                    Data.HotItem = ShopModData[Data.FullType].HotItem or 0
                     if PlayerShopModData.FavoriteList[Data.FullType] then
                         Data.Favorite = true
                     end

@@ -118,8 +118,12 @@ function S4_Shop_Cart:createChildren()
     self.DeliveryLabel:setVisible(false)
     self:addChild(self.DeliveryLabel)
 
-    local NormalDeliveryPrice = SandboxVars.S4SandBox.DeliveryCommission
-    local QuickDeliveryPrice = SandboxVars.S4SandBox.QuickDeliveryCommission
+    local NormalDeliveryPrice = 0
+    local QuickDeliveryPrice = 0
+    if SandboxVars and SandboxVars.S4SandBox then
+        NormalDeliveryPrice = SandboxVars.S4SandBox.DeliveryCommission or 0
+        QuickDeliveryPrice = SandboxVars.S4SandBox.QuickDeliveryCommission or 0
+    end
     local TickY = Dy - (S4_UI.FH_S * 2) - 10
     self.QuickBox = ISTickBox:new(Sx + 10, TickY, S4_UI.FH_S, S4_UI.FH_S, "", self)
     self.QuickBox.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
@@ -164,24 +168,26 @@ function S4_Shop_Cart:setTotal()
     local TotalCD = 0
     local Commission = 0
     for _, Data in pairs(self.Items) do
-        if self.CartType == "Buy" then
-            local Price = Data.ItemData.BuyPrice
-            local Discount = Data.ItemData.Discount
-            local Amount = self.ComUI.BuyCart[Data.FullType]
-            local FixPrice = Price - math.floor((Price * (Discount / 100)))
-            TotalPrice = TotalPrice + (Price * Amount)
-            TotalAmount = TotalAmount + Amount
-            TotalCD = TotalCD + (math.floor((Price * (Discount / 100))) * Amount)
-            TotalFixPrice = TotalFixPrice + (FixPrice * Amount)
-        elseif self.CartType == "Sell" then
-            local Price = Data.ItemData.SellPrice
-            Commission = S4_Utils.CheckCommission(self.ParentsUI.PlayerSellAuthority)
-            local Amount = self.ComUI.SellCart[Data.FullType]
-            local FixPrice = Price - math.floor((Price * (Commission / 100)))
-            TotalPrice = TotalPrice + (Price * Amount)
-            TotalAmount = TotalAmount + Amount
-            TotalCD = TotalCD + (math.floor((Price * (Commission / 100))) * Amount)
-            TotalFixPrice = TotalFixPrice + (FixPrice * Amount)
+        if Data.ItemData then
+            if self.CartType == "Buy" then
+                local Price = Data.ItemData.BuyPrice or 0
+                local Discount = Data.ItemData.Discount or 0
+                local Amount = self.ComUI.BuyCart[Data.FullType] or 0
+                local FixPrice = Price - math.floor((Price * (Discount / 100)))
+                TotalPrice = TotalPrice + (Price * Amount)
+                TotalAmount = TotalAmount + Amount
+                TotalCD = TotalCD + (math.floor((Price * (Discount / 100))) * Amount)
+                TotalFixPrice = TotalFixPrice + (FixPrice * Amount)
+            elseif self.CartType == "Sell" then
+                local Price = Data.ItemData.SellPrice or 0
+                local itemCommission = S4_Utils.CheckCommission(self.ParentsUI.PlayerSellAuthority) or 0
+                local Amount = self.ComUI.SellCart[Data.FullType] or 0
+                local FixPrice = Price - math.floor((Price * (itemCommission / 100)))
+                TotalPrice = TotalPrice + (Price * Amount)
+                TotalAmount = TotalAmount + Amount
+                TotalCD = TotalCD + (math.floor((Price * (itemCommission / 100))) * Amount)
+                TotalFixPrice = TotalFixPrice + (FixPrice * Amount)
+            end
         end
     end
     local SDText = ""
@@ -189,10 +195,17 @@ function S4_Shop_Cart:setTotal()
     local FixPriceText = ""
     local AmountText = string.format(getText("IGUI_S4_Cart_TotalAmount"), S4_UI.getNumCommas(TotalAmount))
     if self.CartType == "Buy" then
+        local deliveryFee = 0
+        local quickFee = 0
+        if SandboxVars and SandboxVars.S4SandBox then
+            deliveryFee = SandboxVars.S4SandBox.DeliveryCommission or 0
+            quickFee = SandboxVars.S4SandBox.QuickDeliveryCommission or 0
+        end
+
         if self.QuickBox:isSelected(1) then
-            TotalFixPrice = TotalFixPrice + SandboxVars.S4SandBox.DeliveryCommission
+            TotalFixPrice = TotalFixPrice + deliveryFee
         elseif self.QuickBox:isSelected(2) then
-            TotalFixPrice = TotalFixPrice + SandboxVars.S4SandBox.QuickDeliveryCommission
+            TotalFixPrice = TotalFixPrice + quickFee
         end
         PriceText = string.format(getText("IGUI_S4_Cart_TotalBuy"), S4_UI.getNumCommas(TotalPrice))
         SDText = string.format(getText("IGUI_S4_Shop_TotalDiscount"), S4_UI.getNumCommas(TotalCD))

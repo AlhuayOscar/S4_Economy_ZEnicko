@@ -45,7 +45,7 @@ function S4_ATM_Info:createChildren()
 end
 
 function S4_ATM_Info:render()
-    ISPanel.initialise(self)
+    ISPanel.render(self)
 
     -- self:drawRect(self.CardX, self.CardY, self.CardW, self.CardH, 1, 0.2, 0.6, 0)
     -- Card Insert Panel

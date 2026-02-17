@@ -132,9 +132,13 @@ function S4_Bank_Profile:onChangeMyCard()
             local BalanceText = getText("IGUI_S4_Label_CardBalance").."$ ".. S4_UI.getNumCommas(SelectCardData.Money)
             self.InfoPanel.BalanceLabel:setName(BalanceText)
             if SelectCardData.Money < 0 then
-                self.InfoPanel.BalanceLabel:setColor(1, 0, 0)
+                self.InfoPanel.BalanceLabel.r = 1
+                self.InfoPanel.BalanceLabel.g = 0
+                self.InfoPanel.BalanceLabel.b = 0
             else
-                self.InfoPanel.BalanceLabel:setColor(1, 1, 1)
+                self.InfoPanel.BalanceLabel.r = 1
+                self.InfoPanel.BalanceLabel.g = 1
+                self.InfoPanel.BalanceLabel.b = 1
             end
         end
     end

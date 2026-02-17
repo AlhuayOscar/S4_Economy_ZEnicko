@@ -103,7 +103,7 @@ function S4_ATM_Withdraw:createChildren()
 end
 
 function S4_ATM_Withdraw:render()
-    ISPanel.initialise(self)
+    ISPanel.render(self)
 
     local CashH = S4_UI.FH_M + S4_UI.FH_S
     self:drawRect(50, self.CashY, self.CashW, CashH, 0.1, 1, 1, 1)
@@ -117,7 +117,11 @@ function S4_ATM_Withdraw:render()
     local CashValue = string.format(getText("IGUI_S4_ATM_Money_Value"), FixCash)
     local CashValueW = getTextManager():MeasureStringX(UIFont.Medium, CashValue)
     local CashValueX = (self:getWidth() / 2) - (CashValueW / 2)
-    self:drawText(CashValue, CashValueX, self.CashY + S4_UI.FH_S, 1, 1, 1, 1, UIFont.Medium)
+    local r, g, b = 1, 1, 1
+    if self.CardMoney < 0 then
+        r, g, b = 1, 0, 0
+    end
+    self:drawText(CashValue, CashValueX, self.CashY + S4_UI.FH_S, r, g, b, 1, UIFont.Medium)
 end
 
 function S4_ATM_Withdraw:ActionWithdraw()

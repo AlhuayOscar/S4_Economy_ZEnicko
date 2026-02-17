@@ -119,7 +119,7 @@ function S4_ATM_Transfer_Card:createChildren()
 end
 
 function S4_ATM_Transfer_Card:render()
-    ISPanel.initialise(self)
+    ISPanel.render(self)
 
     -- Current entrance inlet
     local InsertW = getTextManager():MeasureStringX(UIFont.Medium, getText("IGUI_S4_ATM_Transfer_SendMoney"))

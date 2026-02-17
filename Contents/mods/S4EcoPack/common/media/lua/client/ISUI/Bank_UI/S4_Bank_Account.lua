@@ -247,37 +247,34 @@ function S4_Bank_Account:onChangeMyCard()
             if CardLogModData[SelectCardData.CardNumber] then
                 self.DepositList, self.WithdrawList, self.AllList = {}, {}, {}
 
-                local DeCount, WiCount, AlCount = 0, 0, 0
-                self.DeMax, self.WiMax, self.AlMax = 1, 1, 1
+                -- 1. Collect all logs into a temporary table for sorting
+                local tempLogs = {}
                 for Tiem, Original in pairs(CardLogModData[SelectCardData.CardNumber]) do
                     local Data = copyTable(Original)
-                    if Data.Type == "Deposit" then
-                        local DeData = copyTable(Data)
-                        DeCount = DeCount + 1
-                        if DeCount > self.ListCount then
-                            DeCount = 1
-                            self.DeMax = self.DeMax + 1
-                        end
-                        DeData.DisplayName = Data.Sender
-                        DeData.ItemCount = DeCount
-                        DeData.Page = self.DeMax
-                        table.insert(self.DepositList, DeData)
+                    Data.TimeKey = Tiem -- Keep the timestamp string for sorting
+                    table.insert(tempLogs, Data)
+                end
+
+                -- 2. Sort logs by timestamp (descending - newest first)
+                table.sort(tempLogs, function(a, b) return a.TimeKey > b.TimeKey end)
+
+                -- 3. Populate lists with sorted data and calculate pagination
+                local DeCount, WiCount, AlCount = 0, 0, 0
+                self.DeMax, self.WiMax, self.AlMax = 1, 1, 1
+
+                for _, Data in ipairs(tempLogs) do
+                    -- Categorize based on Deposit/Withdraw nature
+                    local isDepositNature = (Data.Type == "Deposit" or Data.Type == "Loan")
+                    local isWithdrawNature = (Data.Type == "Withdraw" or Data.Type == "Repay")
+
+                    -- Handle DisplayName based on type
+                    if isDepositNature then
                         Data.DisplayName = Data.Sender
-                    elseif Data.Type == "Withdraw" then
-                        local WiData = copyTable(Data)
-                        WiCount = WiCount + 1
-                        if WiCount > self.ListCount then
-                            WiCount = 1
-                            self.WiMax = self.WiMax + 1
-                        end
-                        WiData.DisplayName = Data.Receiver
-                        WiData.ItemCount = WiCount
-                        WiData.Page = self.WiMax
-                        table.insert(self.WithdrawList, WiData)
-                        Data.DisplayName = Data.Receiver
                     else
-                        Data.DisplayName = Data.Receiver
+                        Data.DisplayName = Data.Receiver or Data.Sender -- Fallback
                     end
+
+                    -- All list pagination
                     AlCount = AlCount + 1
                     if AlCount > self.ListCount then
                         AlCount = 1
@@ -286,7 +283,32 @@ function S4_Bank_Account:onChangeMyCard()
                     Data.ItemCount = AlCount
                     Data.Page = self.AlMax
                     table.insert(self.AllList, Data)
+
+                    -- Filtered list pagination
+                    if isDepositNature then
+                        local DeData = copyTable(Data)
+                        DeCount = DeCount + 1
+                        if DeCount > self.ListCount then
+                            DeCount = 1
+                            self.DeMax = self.DeMax + 1
+                        end
+                        DeData.ItemCount = DeCount
+                        DeData.Page = self.DeMax
+                        table.insert(self.DepositList, DeData)
+
+                    elseif isWithdrawNature then
+                        local WiData = copyTable(Data)
+                        WiCount = WiCount + 1
+                        if WiCount > self.ListCount then
+                            WiCount = 1
+                            self.WiMax = self.WiMax + 1
+                        end
+                        WiData.ItemCount = WiCount
+                        WiData.Page = self.WiMax
+                        table.insert(self.WithdrawList, WiData)
+                    end
                 end
+
                 self.PageMax = 1
                 self.NowPage = 1
                 self:setPage()

@@ -306,7 +306,7 @@ function S4Economy.RequestLoan(player, args)
         CardLogModData[CardNum] = {}
     end
     CardLogModData[CardNum][Timestamp] = {
-        Type = "Deposit",
+        Type = "Loan",
         Money = Amount,
         Sender = Lender,
         Receiver = UserName,
@@ -357,7 +357,7 @@ function S4Economy.RepayLoan(player, args)
         CardLogModData[CardNum] = {}
     end
     CardLogModData[CardNum][Timestamp] = {
-        Type = "Withdraw",
+        Type = "Repay",
         Money = RepayAmount,
         Sender = UserName,
         Receiver = loan.Lender,

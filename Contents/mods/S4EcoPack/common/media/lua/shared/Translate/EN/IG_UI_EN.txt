@@ -134,6 +134,8 @@ IGUI_EN = {
     IGUI_S4_ATM_Transfer_Ok = "Transfer",
     IGUI_S4_ATM_Transfer_Card = "(Card) Account Transfer",
     IGUI_S4_ATM_Transfer_Cash = "(Cash) Account Transfer",
+    IGUI_S4_ATM_Loan = "Loan",
+    IGUI_S4_ATM_Repay = "Repayment",
 
     IGUI_S4_ATM_Balance_Info = "Card Balance",
     IGUI_S4_ATM_Deposit_InsertCash = "Inserted Cash",

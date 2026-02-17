@@ -666,7 +666,7 @@ function S4_IE_GoodShop:BtnClick(Button)
     end
     if internal == "Buy" or internal == "Sell" or internal == "Cart" then
         if self.ComUI.CardNumber and self.ComUI.CardMoney and self.ComUI.CardMoney < 0 then
-            self.ComUI:AddMsgBox(getText("IGUI_S4_ATM_Msg_Error"), nil, getText("IGUI_S4_BJ_Msg_Lack_Balance"), getText("IGUI_S4_ATM_Msg_LowBalance"))
+            self.ComUI:AddMsgBox(getText("IGUI_S4_ATM_Msg_Error"), nil, "You must get out of debt first", getText("IGUI_S4_ATM_Msg_LowBalance"))
             return
         end
     end

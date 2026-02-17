@@ -103,7 +103,7 @@ function S4_ATM_Transfer_Cash:createChildren()
 end
 
 function S4_ATM_Transfer_Cash:render()
-    ISPanel.initialise(self)
+    ISPanel.render(self)
 
     -- cash deposited
     local CashH = S4_UI.FH_M + S4_UI.FH_S

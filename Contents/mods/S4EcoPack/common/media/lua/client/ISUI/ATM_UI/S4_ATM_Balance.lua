@@ -69,7 +69,7 @@ function S4_ATM_Balance:createChildren()
 end
 
 function S4_ATM_Balance:render()
-    ISPanel.initialise(self)
+    ISPanel.render(self)
 
     local PanelW = self:getWidth() - 40
     local PanelH = S4_UI.FH_L + S4_UI.FH_M
@@ -85,7 +85,11 @@ function S4_ATM_Balance:render()
     local MoneyValue = string.format(getText("IGUI_S4_ATM_Money_Value"), FixMoney)
     local ValueW = getTextManager():MeasureStringX(UIFont.Large, MoneyValue)
     local ValueX = (self:getWidth() / 2) - (ValueW / 2)
-    self:drawText(MoneyValue, ValueX, self.PanelY + S4_UI.FH_M, 1, 1, 1, 0.8, UIFont.Large)
+    local r, g, b = 1, 1, 1
+    if self.Money < 0 then
+        r, g, b = 1, 0, 0
+    end
+    self:drawText(MoneyValue, ValueX, self.PanelY + S4_UI.FH_M, r, g, b, 0.8, UIFont.Large)
 end
 
 function S4_ATM_Balance:setMsg(Msg)

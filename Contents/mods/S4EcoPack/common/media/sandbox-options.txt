@@ -1,0 +1,153 @@
+VERSION = 1,
+
+option S4SandBox.SinglePlay = {
+	type = boolean, default = true, 
+	page = S4SandBox, translation = S4SandBox_SinglePlay,
+}
+option S4SandBox.AddonAuto = {
+	type = boolean, default = false, 
+	page = S4SandBox, translation = S4SandBox_AddonAuto,
+}
+option S4SandBox.MaxNegativeBalance = {
+	type = integer, min = 0, max = 10000000, default = 1000,
+	page = S4SandBox, translation = S4SandBox_MaxNegativeBalance,
+}
+
+option S4SandBox.AirDrop = {
+	type = boolean, default = true, 
+	page = S4SandBox, translation = S4SandBox_AirDrop,
+}
+option S4SandBox.AirDropChance = {
+	type = integer, min = 1, max = 100, default = 10,
+	page = S4SandBox, translation = S4SandBox_AirDropChance,
+}
+
+option S4SandBox.NetworkOneDayPrice = {
+	type = integer, min = 1, max = 10000000, default = 500,
+	page = S4SandBox, translation = S4SandBox_NetworkOneDayPrice,
+}
+option S4SandBox.NetPackDiscont7 = {
+	type = integer, min = 0, max = 100, default = 5,
+	page = S4SandBox, translation = S4SandBox_NetPackDiscont7,
+}
+option S4SandBox.NetPackDiscont31 = {
+	type = integer, min = 0, max = 100, default = 10,
+	page = S4SandBox, translation = S4SandBox_NetPackDiscont31,
+}
+option S4SandBox.NetPackDiscont365 = {
+	type = integer, min = 0, max = 100, default = 20,
+	page = S4SandBox, translation = S4SandBox_NetPackDiscont365,
+}
+/* 상점 관련 */
+option S4SandBox.DeliveryCommission = {
+	type = integer, min = 0, max = 10000000, default = 500,
+	page = S4SandBox, translation = S4SandBox_DeliveryCommission,
+}
+option S4SandBox.DeliveryTime = {
+	type = integer, min = 0, max = 10000000, default = 72,
+	page = S4SandBox, translation = S4SandBox_DeliveryTime,
+}
+option S4SandBox.QuickDeliveryCommission = {
+	type = integer, min = 0, max = 10000000, default = 2000,
+	page = S4SandBox, translation = S4SandBox_QuickDeliveryCommission,
+}
+option S4SandBox.QuickDeliveryTime = {
+	type = integer, min = 0, max = 10000000, default = 12,
+	page = S4SandBox, translation = S4SandBox_QuickDeliveryTime,
+}
+
+option S4SandBox.RestcokDate = {
+	type = integer, min = 1, max = 365, default = 7,
+	page = S4SandBox, translation = S4SandBox_RestcokDate,
+}
+option S4SandBox.RestockHours = {
+	type = integer, min = 1, max = 8760, default = 168,
+	page = S4SandBox, translation = S4SandBox_RestockHours,
+}
+
+option S4SandBox.Blackjack = {
+	type = boolean, default = true, 
+	page = S4SandBox, translation = S4SandBox_Blackjack,
+}
+/*
+option S4SandBox.SellAddStock = {
+	type = boolean, default = true, 
+	page = S4SandBox, translation = S4SandBox_SellAddStock,
+}
+*/
+
+/* 상점 등급 관련 */
+option S4Authority.SellCommissionBronze = {
+	type = integer, min = 0, max = 99, default = 20,
+	page = S4Authority, translation = S4Authority_SellCommissionBronze,
+}
+option S4Authority.SellCommissionSilver = {
+	type = integer, min = 0, max = 99, default = 15,
+	page = S4Authority, translation = S4Authority_SellCommissionSilver,
+}
+option S4Authority.SellCommissionGold = {
+	type = integer, min = 0, max = 99, default = 10,
+	page = S4Authority, translation = S4Authority_SellCommissionGold,
+}
+option S4Authority.SellCommissionPlatinum = {
+	type = integer, min = 0, max = 99, default = 5,
+	page = S4Authority, translation = S4Authority_SellCommissionPlatinum,
+}
+option S4Authority.SellCommissionDiamond = {
+	type = integer, min = 0, max = 99, default = 1,
+	page = S4Authority, translation = S4Authority_SellCommissionDiamond,
+}
+option S4Authority.SellCommissionVIP = {
+	type = integer, min = 0, max = 99, default = 0,
+	page = S4Authority, translation = S4Authority_SellCommissionVIP,
+}
+
+option S4Authority.BuyAuthority = {
+	type = boolean, default = false, 
+	page = S4Authority, translation = S4Authority_BuyAuthority,
+}
+option S4Authority.BuyAuthoritySilver = {
+	type = integer, min = 0, max = 10000000, default = 200000,
+	page = S4Authority, translation = S4Authority_BuyAuthoritySilver,
+}
+option S4Authority.BuyAuthorityGold = {
+	type = integer, min = 0, max = 10000000, default = 200000,
+	page = S4Authority, translation = S4Authority_BuyAuthorityGold,
+}
+option S4Authority.BuyAuthorityPlatinum = {
+	type = integer, min = 0, max = 10000000, default = 600000,
+	page = S4Authority, translation = S4Authority_BuyAuthorityPlatinum,
+}
+option S4Authority.BuyAuthorityDiamond = {
+	type = integer, min = 0, max = 10000000, default = 1000000,
+	page = S4Authority, translation = S4Authority_BuyAuthorityDiamond,
+}
+option S4Authority.BuyAuthorityVIP = {
+	type = integer, min = 0, max = 10000000, default = 2000000,
+	page = S4Authority, translation = S4Authority_BuyAuthorityVIP,
+}
+
+option S4Authority.SellAuthority = {
+	type = boolean, default = false, 
+	page = S4Authority, translation = S4Authority_SellAuthority,
+}
+option S4Authority.SellAuthoritySilver = {
+	type = integer, min = 0, max = 10000000, default = 200000,
+	page = S4Authority, translation = S4Authority_SellAuthoritySilver,
+}
+option S4Authority.SellAuthorityGold = {
+	type = integer, min = 0, max = 10000000, default = 200000,
+	page = S4Authority, translation = S4Authority_SellAuthorityGold,
+}
+option S4Authority.SellAuthorityPlatinum = {
+	type = integer, min = 0, max = 10000000, default = 600000,
+	page = S4Authority, translation = S4Authority_SellAuthorityPlatinum,
+}
+option S4Authority.SellAuthorityDiamond = {
+	type = integer, min = 0, max = 10000000, default = 1000000,
+	page = S4Authority, translation = S4Authority_SellAuthorityDiamond,
+}
+option S4Authority.SellAuthorityVIP = {
+	type = integer, min = 0, max = 10000000, default = 2000000,
+	page = S4Authority, translation = S4Authority_SellAuthorityVIP,
+}

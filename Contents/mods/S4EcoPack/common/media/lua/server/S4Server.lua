@@ -2,7 +2,7 @@
 S4Server = {}
 
 function S4Server.DayEvent()
-    if not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
 
     local UpdatModData = ModData.get("S4_CardLog")
     if UpdatModData then
@@ -43,15 +43,17 @@ end
 Events.EveryDays.Add(S4Server.DayEvent)
 
 function S4Server.HourEvent()
-    if not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
 
     local ServerModData = ModData.get("S4_ServerData")
     if not ServerModData then return end
 
-    local RestockHours = SandboxVars.S4SandBox.RestockHours
-    -- Backward compatibility: legacy setting was in days.
-    if not RestockHours and SandboxVars.S4SandBox.RestcokDate then
-        RestockHours = SandboxVars.S4SandBox.RestcokDate * 24
+    local RestockHours = 168
+    if SandboxVars and SandboxVars.S4SandBox then
+        RestockHours = SandboxVars.S4SandBox.RestockHours
+        if not RestockHours and SandboxVars.S4SandBox.RestcokDate then
+            RestockHours = SandboxVars.S4SandBox.RestcokDate * 24
+        end
     end
     if not RestockHours or RestockHours < 1 then return end
 

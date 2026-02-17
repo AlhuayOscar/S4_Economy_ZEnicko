@@ -32,7 +32,7 @@ end
 
 -- Object mode data storage function
 function S4_Utils.SnycObject(Object)
-    if not SandboxVars.S4SandBox.SinglePlay and isClient() then
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isClient() then
         Object:transmitModData()
     end
 end
@@ -390,18 +390,24 @@ end
 -- Fee calculation
 function S4_Utils.CheckCommission(SellAmount)
     local Commission = 0
+    if not SandboxVars or not SandboxVars.S4Authority then
+        -- Return default values if SandboxVars is missing
+        local defaults = {20, 15, 10, 5, 1, 0}
+        return defaults[SellAmount + 1] or 0
+    end
+
     if SellAmount == 0 then
-        Commission = SandboxVars.S4Authority.SellCommissionBronze
+        Commission = SandboxVars.S4Authority.SellCommissionBronze or 20
     elseif SellAmount == 1 then
-        Commission = SandboxVars.S4Authority.SellCommissionSilver
+        Commission = SandboxVars.S4Authority.SellCommissionSilver or 15
     elseif SellAmount == 2 then
-        Commission = SandboxVars.S4Authority.SellCommissionGold
+        Commission = SandboxVars.S4Authority.SellCommissionGold or 10
     elseif SellAmount == 3 then
-        Commission = SandboxVars.S4Authority.SellCommissionPlatinum
+        Commission = SandboxVars.S4Authority.SellCommissionPlatinum or 5
     elseif SellAmount == 4 then
-        Commission = SandboxVars.S4Authority.SellCommissionDiamond
+        Commission = SandboxVars.S4Authority.SellCommissionDiamond or 1
     elseif SellAmount == 5 then
-        Commission = SandboxVars.S4Authority.SellCommissionVIP
+        Commission = SandboxVars.S4Authority.SellCommissionVIP or 0
     end
     return Commission
 end

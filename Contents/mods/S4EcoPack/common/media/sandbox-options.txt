@@ -81,7 +81,7 @@ option S4SandBox.NewsMaxHours = {
 	type = integer, min = 1, max = 8760, default = 168,
 	page = S4SandBox, translation = S4SandBox_NewsMaxHours,
 }
-*/
+
 
 /* 상점 등급 관련 */
 option S4Authority.SellCommissionBronze = {

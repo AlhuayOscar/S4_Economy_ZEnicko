@@ -5,7 +5,7 @@
 S4ServerCommand = {}
 
 function S4ServerCommand.OnInitGlobalModData()
-    if not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
     -- Eco
     ModData.getOrCreate("S4_CardData")
     ModData.getOrCreate("S4_CardLog")
@@ -23,7 +23,7 @@ function S4ServerCommand.OnInitGlobalModData()
     ModData.getOrCreate("S4_PlayerXpData")
     -- Server Data
     ModData.getOrCreate("S4_ServerData")
-    if SandboxVars.S4SandBox.AddonAuto and S4_Shop_Data then
+    if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.AddonAuto and S4_Shop_Data then
         S4Shop.ShopDataAddon()
     end
 end
@@ -31,7 +31,7 @@ Events.OnInitGlobalModData.Add(S4ServerCommand.OnInitGlobalModData)
 
 -- Receive client commands
 local function S4ServerCommand_OnClientCommand(module, command, player, args)
-    if not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isClient() then return end
     
     if module == "S4ED" and S4Economy[command] then
         S4Economy[command](player, args)

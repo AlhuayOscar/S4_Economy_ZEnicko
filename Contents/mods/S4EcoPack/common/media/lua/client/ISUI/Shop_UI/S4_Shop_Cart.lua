@@ -341,10 +341,17 @@ function S4_Shop_Cart:BuySellAction()
                     end
                     if TotalPrice > 0 then
                         local DeliveryType = "Normal"
+                        local deliveryComm = 500
+                        local quickComm = 2000
+                        if SandboxVars and SandboxVars.S4SandBox then
+                            deliveryComm = SandboxVars.S4SandBox.DeliveryCommission or 500
+                            quickComm = SandboxVars.S4SandBox.QuickDeliveryCommission or 2000
+                        end
+
                         if self.QuickBox:isSelected(1) then
-                            TotalPrice = TotalPrice + SandboxVars.S4SandBox.DeliveryCommission
+                            TotalPrice = TotalPrice + deliveryComm
                         elseif self.QuickBox:isSelected(2) then
-                            TotalPrice = TotalPrice + SandboxVars.S4SandBox.QuickDeliveryCommission
+                            TotalPrice = TotalPrice + quickComm
                             DeliveryType = "Quick"
                         end
                         if (CardMoney - TotalPrice) >= getCardCreditLimit() then

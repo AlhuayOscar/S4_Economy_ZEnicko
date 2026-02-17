@@ -48,7 +48,7 @@ end
 Events.OnReceiveGlobalModData.Add(S4_Eco_Client.OnReceiveGlobalModData)
 
 function S4_Eco_Client.OnConnected()
-    if not SandboxVars.S4SandBox.SinglePlay and isServer() then
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isServer() then
         return
     end
     -- Economey
@@ -69,7 +69,7 @@ end
 Events.OnConnected.Add(S4_Eco_Client.OnConnected)
 
 function S4_Eco_Client.CreatePlayerData()
-    if not SandboxVars.S4SandBox.SinglePlay and isServer() then
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay and isServer() then
         return
     end
 
@@ -110,7 +110,7 @@ local Computer_Sprite = {"appliances_com_01_72", "appliances_com_01_73", "applia
 
 function S4_Eco_Client.ObjectEffect()
     local Multi = false
-    if not SandboxVars.S4SandBox.SinglePlay then
+    if SandboxVars and SandboxVars.S4SandBox and not SandboxVars.S4SandBox.SinglePlay then
         Multi = true
         if isServer() then
             return

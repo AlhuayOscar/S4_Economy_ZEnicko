@@ -286,9 +286,16 @@ function S4Shop.ShopBuy(player, args)
     local UserName = player:getUsername()
     local LogTime = args[1]
     local DisplayTime = S4_Utils.getLogTimeMin(LogTime)
-    local DeliveryTime = S4_Utils.setAddTime(DisplayTime, SandboxVars.S4SandBox.DeliveryTime)
+    local deliveryHours = 72
+    local quickDeliveryHours = 12
+    if SandboxVars and SandboxVars.S4SandBox then
+        deliveryHours = SandboxVars.S4SandBox.DeliveryTime or 72
+        quickDeliveryHours = SandboxVars.S4SandBox.QuickDeliveryTime or 12
+    end
+
+    local DeliveryTime = S4_Utils.setAddTime(DisplayTime, deliveryHours)
     if args[2] == "Quick" then
-        DeliveryTime = S4_Utils.setAddTime(DisplayTime, SandboxVars.S4SandBox.QuickDeliveryTime)
+        DeliveryTime = S4_Utils.setAddTime(DisplayTime, quickDeliveryHours)
     end
     local CardNum = args[3]
     local TotalPrice = args[4]

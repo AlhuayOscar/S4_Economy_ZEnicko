@@ -143,7 +143,7 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
     }
 
-    if SandboxVars.S4SandBox.Blackjack then
+    if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.Blackjack then
         S4_Category.ComputerIconData["BlackJack"] = {
             Name = "Black Jack",
             Icon = getTexture("media/textures/S4_Icon/Icon_64_BlackJack.png")

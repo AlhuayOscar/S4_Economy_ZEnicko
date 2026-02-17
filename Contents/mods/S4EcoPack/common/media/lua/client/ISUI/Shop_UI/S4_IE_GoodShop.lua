@@ -762,10 +762,15 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
-    local CNameKey = "IGUI_S4_ItemCat_" .. item.item
-    local CNameT = getText(CNameKey)
-    -- Robust fallback: if translation is the key itself or the key inside brackets
-    if CNameT == CNameKey or (CNameT == "[" .. CNameKey .. "]") then
+    local CNameT = getText("IGUI_S4_ItemCat_" .. item.item)
+    -- If S4 translation fails, try the standard translation key used by many mods
+    if CNameT == "IGUI_S4_ItemCat_" .. item.item or CNameT == "[IGUI_S4_ItemCat_" .. item.item .. "]" then
+        CNameT = getText("IGUI_ItemCat_" .. item.item)
+    end
+
+    -- Universal fallback: if the result still looks like a translation key (IGUI_...), 
+    -- strip the key and use the raw category name
+    if string.find(CNameT, "^IGUI_") or (string.find(CNameT, "^%[IGUI_") and string.find(CNameT, "%]$")) then
         CNameT = item.item
     end
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)

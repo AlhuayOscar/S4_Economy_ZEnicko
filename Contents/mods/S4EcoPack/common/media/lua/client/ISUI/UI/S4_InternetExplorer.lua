@@ -1,15 +1,15 @@
 require "ISUI/ISUIElement"
 S4_InternetExplorer = ISUIElement:derive("S4_InternetExplorer")
 
-local S4_IE = {
-    SNetwork = S4_IE_SNetwork,
-    IE = S4_IE_SNetwork,
-    News = S4_IE_KnoxNews,
-    GoodShop = S4_IE_GoodShop,
-    GoodShopAdmin = S4_IE_GoodShopAdmin,
-    BlackJack = S4_IE_BlackJack,
-    ZomBank = S4_IE_ZomBank,
-    Jobs = S4_IE_Jobs
+local S4_IE_Class = {
+    SNetwork = "S4_IE_SNetwork",
+    IE = "S4_IE_SNetwork",
+    News = "S4_IE_KnoxNews",
+    GoodShop = "S4_IE_GoodShop",
+    GoodShopAdmin = "S4_IE_GoodShopAdmin",
+    BlackJack = "S4_IE_BlackJack",
+    ZomBank = "S4_IE_ZomBank",
+    Jobs = "S4_IE_Jobs"
 }
 
 function S4_InternetExplorer:initialise()
@@ -18,7 +18,8 @@ end
 
 function S4_InternetExplorer:createChildren()
 
-    local PageClass = S4_IE[self.PageType]
+    local className = S4_IE_Class[self.PageType]
+    local PageClass = _G[className]
     if not PageClass and self.PageType == "News" then
         PageClass = S4_IE_KnoxNews
     end
@@ -161,7 +162,8 @@ function S4_InternetExplorer:ReloadUI()
         self.MainPage:close()
     end
 
-    local PageClass = S4_IE[self.PageType]
+    local className = S4_IE_Class[self.PageType]
+    local PageClass = _G[className]
     if not PageClass and self.PageType == "News" then
         PageClass = S4_IE_KnoxNews
     end

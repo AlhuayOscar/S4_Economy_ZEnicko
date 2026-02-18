@@ -20,6 +20,13 @@ end
 
 function S4_IE_Jobs:initialise()
     ISPanel.initialise(self)
+    print("S4_Jobs: Initialising...")
+end
+
+function S4_IE_Jobs:createChildren()
+    ISPanel.createChildren(self)
+    print("S4_Jobs: Creating Children...")
+    
     self.gridSize = 64
     self.gridGap = 10
     self.cols = 4
@@ -117,6 +124,10 @@ function S4_IE_Jobs:initialise()
 end
 
 function S4_IE_Jobs:render()
+    if not self.JobRenderLogged then
+        print("S4_Jobs: Rendering Grid...")
+        self.JobRenderLogged = true
+    end
     ISPanel.render(self)
     
     local x, y = 20, 20

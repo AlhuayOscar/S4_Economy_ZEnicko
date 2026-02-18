@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.0] - 2026-02-18
+
+## Feature: Dynamic Job System (Knox Careers)
+
+- **Comprehensive Job Grid:** Implemented an interactive UI with 8 distinct career paths:
+  - Call Center, Graphic Designer, Insurance Seller, Programmer, Banker, Cleaner, Journalist, and Spy.
+- **Generic Action Framework:** Refactored the underlying system to handle all jobs through a single data-driven Timed Action, supporting dynamic salaries and XP.
+- **Equipment & Dress Codes:**
+  - Implemented strict inventory requirements for each profession using verified vanilla Item IDs.
+  - Added clothing requirements (Suits, Ties, Formal Shirts) for corporate roles.
+  - Specialized gear checks: Firearm + Ammo (7+) for Cleaners/Spies, Electronics (Visors, CD Players, Pagers, Cordless Phones) for Programmers.
+  - Document requirements: Passports, Stock Certificates, Business Cards, Index Cards, and Press IDs.
+- **Dynamic Pain Mechanics:**
+  - **Risk-Based System:** Pain probability now scales with daily hours worked, player level (resilience), and negative stats (Fatigue, Hunger, Stress, Thirst).
+  - **Periodic Sounds:** Characters now groan in pain periodically during work if they are in poor condition or overworked.
+  - **Back Pain Injury:** High-risk sessions can lead to actual back pain injuries, with intensity scaling based on accumulated stress.
+- **Economic & Progression Balance:**
+  - **Difficulty Scaling:** Job XP thresholds now scale based on profession difficulty (e.g., Spy requires 40% more XP than Call Center).
+  - **Salary Balancing:** Adjusted base pay (Call Center nerfed to $125/2h) and high-risk bonuses (Spy/Cleaner/Journalist boosted up to 125%).
+  - payments are automated every 2 working hours and logged in the ZomBank system.
+
+
 ## [1.1.4] - 2026-02-17
 
 ## Feature: Random News Events & Custom Notifications

@@ -34,26 +34,52 @@ function S4_Action_Job_CallCenter:perform()
     local char = self.character
     local stats = char:getStats()
     
-    -- Apply Stats (Scale 0-1)
-    -- Apply Stats (Scale 0-1)
-    -- Hunger: Reduced by 25% (was 0.125) -> ~0.09 per hour
-    stats:setHunger(stats:getHunger() + (0.09 * hours))
+    -- Calculate Level and Multiplier
+    local pData = char:getModData()
+    local currentXP = pData.S4_Job_CallCenter_Hours or 0
+    local level = 1
+    if currentXP >= 13000 then level = 10
+    elseif currentXP >= 9000 then level = 9
+    elseif currentXP >= 6000 then level = 8
+    elseif currentXP >= 4000 then level = 7
+    elseif currentXP >= 2500 then level = 6
+    elseif currentXP >= 1600 then level = 5
+    elseif currentXP >= 900 then level = 4
+    elseif currentXP >= 400 then level = 3
+    elseif currentXP >= 150 then level = 2
+    end
     
-    -- Thirst: 25% for 4 hours -> 0.0625 per hour
-    stats:setThirst(stats:getThirst() + (0.0625 * hours))
+    local mult = 1.0
+    if level == 2 then mult = 0.9
+    elseif level == 3 then mult = 0.8
+    elseif level == 4 then mult = 0.7
+    elseif level == 5 then mult = 0.6
+    elseif level == 6 then mult = 0.5
+    elseif level == 7 then mult = 0.4
+    elseif level == 8 then mult = 0.6
+    elseif level == 9 then mult = 0.8
+    elseif level == 10 then mult = 1.0
+    end
+
+    -- Apply Stats (Scale 0-1) with Multiplier
+    -- Hunger: Reduced by 25% (was 0.125) -> ~0.09 per hour * mult
+    stats:setHunger(stats:getHunger() + (0.09 * hours * mult))
     
-    -- Fatigue: 50% for 4 hours -> 0.125 per hour
-    stats:setFatigue(stats:getFatigue() + (0.125 * hours))
+    -- Thirst: 25% for 4 hours -> 0.0625 per hour * mult
+    stats:setThirst(stats:getThirst() + (0.0625 * hours * mult))
     
-    -- Stress: 45% for 4 hours -> 0.1125 per hour
-    stats:setStress(stats:getStress() + (0.1125 * hours))
+    -- Fatigue: 50% for 4 hours -> 0.125 per hour * mult
+    stats:setFatigue(stats:getFatigue() + (0.125 * hours * mult))
     
-    -- Boredom: +10 per hour (0-100 scale)
-    stats:setBoredom(stats:getBoredom() + (10 * hours))
+    -- Stress: 45% for 4 hours -> 0.1125 per hour * mult
+    stats:setStress(stats:getStress() + (0.1125 * hours * mult))
     
-    -- Unhappiness: +5 per hour (0-100 scale)
+    -- Boredom: +10 per hour (0-100 scale) * mult
+    stats:setBoredom(stats:getBoredom() + (10 * hours * mult))
+    
+    -- Unhappiness: +5 per hour (0-100 scale) * mult
     local bodyDamage = char:getBodyDamage()
-    bodyDamage:setUnhappynessLevel(bodyDamage:getUnhappynessLevel() + (5 * hours))
+    bodyDamage:setUnhappynessLevel(bodyDamage:getUnhappynessLevel() + (5 * hours * mult))
     
     -- Job Leveling (Store on Player ModData)
     local xpGained = hours * 6 -- Equates to 6, 12, 18, 24 XP (Target: 5-25 range)

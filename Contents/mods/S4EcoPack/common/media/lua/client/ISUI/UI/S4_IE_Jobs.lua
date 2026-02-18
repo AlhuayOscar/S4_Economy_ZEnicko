@@ -111,63 +111,19 @@ function S4_IE_Jobs:StartCallCenterJob()
          return
     end
 
-    -- Create Buttons for duration (In-UI to avoid Z-order issues)
-    self:CreateDurationButtons()
-end
-
-function S4_IE_Jobs:CreateDurationButtons()
-    if self.DurationBtns then return end -- Already open
-    
-    self.DurationBtns = {}
-    local btnW, btnH = 100, 25
-    local startY = (self.height / 2) - ((btnH * 5) / 2)
-    local centerX = (self.width / 2) - (btnW / 2)
-    
-    -- Background blocker (optional, but good for UX)
-    -- Just treating it as a state implicitly
-    
-    for i=1, 4 do
-        local btn = ISButton:new(centerX, startY + (i-1)*(btnH+5), btnW, btnH, "Work " .. i .. " Hour(s)", self, S4_IE_Jobs.OnDurationClick)
-        btn.internal = i
-        btn:initialise()
-        btn:instantiate()
-        btn.borderColor = {r=1, g=1, b=1, a=1}
-        self:addChild(btn)
-        table.insert(self.DurationBtns, btn)
-    end
-    
-    -- Cancel Button
-    local cancelBtn = ISButton:new(centerX, startY + 4*(btnH+5), btnW, btnH, "Cancel", self, S4_IE_Jobs.CloseDurationMenu)
-    cancelBtn:initialise()
-    cancelBtn:instantiate()
-    cancelBtn.borderColor = {r=1, g=0, b=0, a=1}
-    self:addChild(cancelBtn)
-    table.insert(self.DurationBtns, cancelBtn)
-end
-
-function S4_IE_Jobs:CloseDurationMenu()
-    if self.DurationBtns then
-        for _, btn in ipairs(self.DurationBtns) do
-            self:removeChild(btn)
-        end
-        self.DurationBtns = nil
-    end
-end
-
-function S4_IE_Jobs:OnDurationClick(button)
-    self:CloseDurationMenu()
-    self:OnSelectTime(button.internal)
-end
-
-function S4_IE_Jobs:OnSelectTime(hours)
+    -- Close UI first as requested to access hours menu
     local player = self.player
-    -- Calculate stats per hour
-    -- Hunger: 12.5 per hour (Total 50 for 4 hours)
-    -- Thirst: 6.25 per hour (Total 25 for 4 hours)
-    -- Fatigue: 12.5 per hour (Total 50 for 4 hours)
-    -- Stress: 11.25 per hour (Total 45 for 4 hours)
-    
     local computer = self.S4_IE.ComUI.ComObj
+    self.S4_IE.ComUI:close()
+    
+    -- Open Context Menu
+    local context = ISContextMenu.get(0, getMouseX(), getMouseY())
+    context:addOption("Work 1 Hour", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 1)
+    context:addOption("Work 2 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 2)
+    context:addOption("Work 3 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 3)
+    context:addOption("Work 4 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 4)
+end
+
+function S4_IE_Jobs.OnSelectTimeStatic(player, computer, hours)
     ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours))
-    self.S4_IE:close() -- Close browser while working? Or keep open? Usually better to close or minimize.
 end

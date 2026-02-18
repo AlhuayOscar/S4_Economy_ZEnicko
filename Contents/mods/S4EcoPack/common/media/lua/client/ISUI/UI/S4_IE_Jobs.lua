@@ -45,20 +45,21 @@ function S4_IE_Jobs:initialise()
             requirements={
                 {types={"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer"}, name="Suit Jacket"},
                 {types={"Base.Trousers_Suit", "Base.Trousers_SuitWhite"}, name="Suit Trousers"},
-                {types={"Base.Shirt_FormalWhite", "Base.Shirt_FormalTINT"}, name="Formal Shirt"},
+                {types={"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short", "Base.Shirt_FormalTINT"}, name="Formal Shirt"},
                 {types={"Base.Tie_Full", "Base.Tie_Worn"}, name="Tie"},
-                {types={"Base.Pen", "Base.BluePen"}, name="Pen"}
+                {types={"Base.Pen", "Base.BluePen"}, name="Pen"},
+                {types={"Base.Notebook"}, name="Notebook"}
             }
         },
         {
             name="Programmer", id="Programmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3, salary=160,
             requirements={
-                {types={"Base.CreditCard"}, name="Business Card(CreditCard)"},
+                {types={"Base.BusinessCard", "Base.BusinessCard_Personal"}, name="Business Card"},
                 {types={"Base.DigitalWatch", "Base.AlarmClock2"}, name="Digital Watch"},
-                {types={"Radio.CDPlayer"}, name="CD Player"},
+                {types={"Base.CDplayer"}, name="CD Player"},
                 {types={"Base.Hat_VisorBlack", "Base.Hat_VisorRed", "Base.Hat_VisorWhite"}, name="Visor"},
                 {types={"Base.CordlessPhone"}, name="Cordless Phone"},
-                {types={"Base.Remote"}, name="Pager(Remote)"}
+                {types={"Base.Pager", "Base.Remote"}, name="Pager"}
             }
         },
         {
@@ -66,35 +67,35 @@ function S4_IE_Jobs:initialise()
             requirements={
                 {types={"Base.SuitJacket", "Base.SuitJacket_Tiny"}, name="Suit Jacket"},
                 {types={"Base.Tie_Full"}, name="Tie"},
-                {types={"Base.Shirt_FormalWhite"}, name="Formal Shirt"},
-                {types={"Base.Remote"}, name="Pager(Remote)"},
-                -- {types={"Base.Calculator"}, name="Calculator"}, -- Skipped (Non-vanilla?)
-                {types={"Base.SheetPaper"}, name="Index Card(Paper)"},
-                {types={"Base.Notebook"}, name="Paperwork(Notebook)"},
-                {types={"Base.Money"}, name="Stock Certificate(Money)"}
+                {types={"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short"}, name="Formal Shirt"},
+                {types={"Base.Pager", "Base.Remote"}, name="Pager"},
+                {types={"Base.Calculator"}, name="Calculator"},
+                {types={"Base.IndexCard"}, name="Index Card"},
+                {types={"Base.Paperwork"}, name="Paperwork"},
+                {types={"Base.StockCertificate"}, name="Stock Certificate"}
             }
         },
         {
-            name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5, salary=170,
+            name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5, salary=171,
             requirements={
                 {types={"Base.Bleach"}, name="Bleach"},
                 {types={"Base.BathTowel", "Base.DishCloth"}, name="Towel"},
                 {types={"Base.Garbagebag"}, name="Garbage Bag"},
-                {types={"Base.Remote"}, name="Pager(Remote)"},
+                {types={"Base.Pager", "Base.Remote"}, name="Pager"},
                 {types={"Base.CameraDisposable"}, name="Disposable Camera"},
                 {types={"Base.Cigarettes"}, name="Cigarettes"},
-                {types={"Base.CreditCard", "Base.Paper"}, name="Passport(ID)"},
+                {types={"Base.Passport"}, name="Passport"},
                 {customCheck="Firearm", name="Firearm & Ammo (7+)"}
             }
         },
         {
-            name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=195,
+            name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=196,
             requirements={
-                {types={"Base.Camera", "Base.Camcorder"}, name="Video Camera"},
-                {types={"Base.Shirt_FormalWhite"}, name="Formal Shirt"},
+                {types={"Base.Camcorder"}, name="Video Camera"},
+                {types={"Base.Shirt_FormalWhite", "Base.Shirt_FormalTINT"}, name="Formal Shirt"},
                 {types={"Base.Tie_Full"}, name="Tie"},
                 {types={"Radio.Microphone"}, name="Microphone"},
-                {types={"Base.CreditCard"}, name="Press Badge(Card)"}
+                {types={"Base.PressID", "Base.Card_Press", "Base.CreditCard"}, name="Press Badge"}
             }
         },
         {
@@ -103,10 +104,10 @@ function S4_IE_Jobs:initialise()
                 {types={"Base.Bleach"}, name="Bleach"},
                 {types={"Base.BathTowel", "Base.DishCloth"}, name="Towel"},
                 {types={"Base.Garbagebag"}, name="Garbage Bag"},
-                {types={"Base.Remote"}, name="Pager(Remote)"},
+                {types={"Base.Pager", "Base.Remote"}, name="Pager"},
                 {types={"Base.CameraDisposable"}, name="Disposable Camera"},
                 {types={"Base.Cigarettes"}, name="Cigarettes"},
-                {types={"Base.CreditCard", "Base.Paper"}, name="Passport(ID)"},
+                {types={"Base.Passport"}, name="Passport"},
                 {customCheck="Firearm", name="Firearm & Ammo (7+)"},
                 {types={"Base.Letter"}, name="Handwritten Letter"},
                 {types={"Base.Photograph"}, name="Photograph"}

@@ -26,125 +26,66 @@ function S4_IE_Jobs:initialise()
     self.rows = 3
     
     self.Jobs = {
-        {name="Call Center", id="CallCenter", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
-        {name="Graphic Designer", id="Designer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
-        {name="Insurance Seller", id="Insurance", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2},
-        {name="Programmer", id="Programmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3},
-        {name="Banker", id="Banker", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4},
-        {name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5},
-        {name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
-        {name="Spy", id="Spy", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4},
+        {
+            name="Call Center", id="CallCenter", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0, salary=125,
+            requirements={
+                {types={"Radio.Microphone", "Base.Phone", "Base.CordlessPhone"}, name="Microphone or Phone"},
+                {types={"Base.Headphones", "Base.Headphones_Red"}, name="Headphones"}
+            }
+        },
+        {
+            name="Graphic Designer", id="Designer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=140,
+            requirements={
+                {types={"Base.Pen", "Base.Pencil", "Base.RedPen", "Base.BluePen"}, name="Pen/Pencil"},
+                {types={"Base.SheetPaper", "Base.Notebook"}, name="Paper/Notebook"}
+            }
+        },
+        {
+            name="Insurance Seller", id="Insurance", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2, salary=130,
+            requirements={
+                {types={"Base.Pen", "Base.BluePen"}, name="Pen"},
+                {types={"Base.Notebook"}, name="Notebook"}
+            }
+        },
+        {
+            name="Programmer", id="Programmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3, salary=160,
+            requirements={
+                {types={"Base.DigitalWatch", "Base.AlarmClock2"}, name="Digital Watch"}
+            }
+        },
+        {
+            name="Banker", id="Banker", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4, salary=150,
+            requirements={
+                {types={"Base.Pen", "Base.RedPen"}, name="Pen"},
+                {types={"Base.Notebook", "Base.SheetPaper"}, name="Paper/Notebook"}
+            }
+        },
+        {
+            name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5, salary=110,
+            requirements={
+                {types={"Base.Bleach"}, name="Bleach"},
+                {types={"Base.DishCloth", "Base.BathTowel", "Base.KitchenTowel"}, name="Towel/Cloth"}
+            }
+        },
+        {
+            name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=135,
+            requirements={
+                {types={"Base.Camera", "Base.CameraDisposable"}, name="Camera"},
+                {types={"Base.Notebook"}, name="Notebook"},
+                {types={"Base.Pen", "Base.Pencil"}, name="Pen"}
+            }
+        },
+        {
+            name="Spy", id="Spy", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4, salary=180,
+            requirements={
+                {types={"Base.Camera"}, name="Camera"},
+                {types={"Radio.WalkieTalkie"}, name="Walkie Talkie"}
+            }
+        },
     }
 end
 
-function S4_IE_Jobs:render()
-    ISPanel.render(self)
-    
-    local x, y = 20, 20
-    local index = 1
-    
-    -- Draw Job Grid
-    for r = 1, self.rows do
-        for c = 1, self.cols do
-            local job = self.Jobs[index]
-            
-            if job then
-                -- Box background
-                self:drawRect(x, y, self.gridSize, self.gridSize, 1, 0.9, 0.9, 0.9)
-                self:drawRectBorder(x, y, self.gridSize, self.gridSize, 1, 0.5, 0.5, 0.5)
-                
-                -- Icon
-                local tex = getTexture(job.icon)
-                if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end
-                
-                if tex then
-                    self:drawTextureScaled(tex, x + 8, y + 8, 48, 48, 1)
-                else
-                    self:drawTextCentre(job.name, x + 32, y + 24, 0, 0, 0, 1, UIFont.Small)
-                end
-                
-                -- Hover effect
-                if self:isMouseOverBox(x, y, self.gridSize, self.gridSize) then
-                     self:drawRect(x, y, self.gridSize, self.gridSize, 0.2, 0, 0, 1)
-                     
-                     -- Tooltip Data
-                     local pData = self.player:getModData()
-                     local xp = pData["S4_Job_" .. job.id .. "_Hours"] or 0
-                     local details = self:GetJobLevelDetails(xp, job.difficulty)
-                     
-                     -- Tooltip Logic
-                     local tooltipH = 70
-                     local tooltipY = self.height - tooltipH - 10
-                     
-                     self:drawText("Job: " .. job.name, 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
-                     self:drawText("Rank: " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
-                     
-                     -- Progress Bar
-                     local barW = 150
-                     local barH = 10
-                     local barX = 20
-                     local barY = tooltipY + 45
-                     
-                     local progress = 0
-                     if details.max then
-                        progress = (xp - details.min) / (details.max - details.min)
-                        if progress > 1 then progress = 1 end
-                        if progress < 0 then progress = 0 end
-                     else
-                        progress = 1
-                     end
-                     
-                     self:drawRect(barX, barY, barW, barH, 1, 0.8, 0.8, 0.8)
-                     self:drawRectBorder(barX, barY, barW, barH, 1, 0.3, 0.3, 0.3)
-                     self:drawRect(barX, barY, barW * progress, barH, 1, 0.2, 0.8, 0.2)
-                     
-                     self:drawText("Lv " .. details.level, barX + barW + 10, barY - 2, 0, 0, 0, 1, UIFont.Small)
-                     
-                     if details.max then
-                        local remaining = math.ceil(details.max - xp)
-                        self:drawText("Next Level: " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
-                     else
-                        self:drawText("Max Level Reached", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
-                     end
-                end
-            end
-            
-            x = x + self.gridSize + self.gridGap
-            index = index + 1
-        end
-        x = 20
-        y = y + self.gridSize + self.gridGap
-    end
-end
-
-function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
-    -- Base thresholds extended by Difficulty
-    local function t(val) return math.ceil(val * difficulty) end
-    
-    local thresholds = {
-        t(150), t(400), t(900), t(1600), t(2500), 
-        t(4000), t(6000), t(9000), t(13000)
-    }
-    
-    local ranks = {
-        "Intern", "Junior", "Senior", "Supervisor", "Manager",
-        "Team Leader", "Dept. Head", "Director", "VP", "CEO"
-    }
-
-    if xp < thresholds[1] then return {level=1, min=0, max=thresholds[1], rank=ranks[1]} end
-    for i=1, 8 do
-        if xp < thresholds[i+1] then
-            return {level=i+1, min=thresholds[i], max=thresholds[i+1], rank=ranks[i+1]}
-        end
-    end
-    return {level=10, min=thresholds[9], max=nil, rank=ranks[10]} 
-end
-
-function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
-    local mx = self:getMouseX()
-    local my = self:getMouseY()
-    return mx >= x and mx <= x + w and my >= y and my <= y + h
-end
+-- ... render ... getJobLevelDetails ... isMouseOverBox ... 
 
 function S4_IE_Jobs:onMouseDown(x, y)
     local startX, startY = 20, 20
@@ -156,32 +97,39 @@ function S4_IE_Jobs:onMouseDown(x, y)
         local job = self.Jobs[index]
         
         if job then
-            if job.id == "CallCenter" then
-                self:StartCallCenterJob()
-            else
-                self.S4_IE.ComUI:AddMsgBox("Job Info", nil, "Coming Soon:", job.name .. " is under construction.", "")
-            end
+            self:StartSelectedJob(job)
         end
     end
 end
 
-function S4_IE_Jobs:StartCallCenterJob()
+function S4_IE_Jobs:StartSelectedJob(job)
     local player = self.player
     local inv = player:getInventory()
     
-    -- Requirements
-    -- 1. Microphone or Phone
-    local hasMic = inv:containsTypeRecurse("Radio.Microphone") or inv:containsTypeRecurse("Base.Phone") or inv:containsTypeRecurse("Base.CordlessPhone")
-    -- 2. Headphones (Big or Red)
-    local hasHeadphones = inv:containsTypeRecurse("Base.Headphones") or inv:containsTypeRecurse("Base.Headphones_Red")
-    
-    if not hasMic or not hasHeadphones then
-        self.S4_IE.ComUI:AddMsgBox("Job Error", nil, "Missing Equipment:", "Microphone/Phone + Headphones", "Required")
-        return
+    -- Check Requirements
+    if job.requirements then
+        local missing = {}
+        for _, req in ipairs(job.requirements) do
+            local hasItem = false
+            for _, typeName in ipairs(req.types) do
+                if inv:containsTypeRecurse(typeName) then
+                    hasItem = true
+                    break
+                end
+            end
+            if not hasItem then
+                table.insert(missing, req.name)
+            end
+        end
+        
+        if #missing > 0 then
+            local msg = table.concat(missing, ", ")
+            self.S4_IE.ComUI:AddMsgBox("Job Error", nil, "Missing Equipment:", msg, "Required for " .. job.name)
+            return
+        end
     end
     
-    -- Check Fatigue (Must be < 50 to start? "el grado minimo que debe ser -50")
-    -- Interpretation: Must not be too tired.
+    -- Check Fatigue
     local stats = player:getStats()
     if stats:getFatigue() > 0.5 then
          self.S4_IE.ComUI:AddMsgBox("Job Error", nil, "Too Tired to Work", "You need rest.", "")
@@ -193,17 +141,17 @@ function S4_IE_Jobs:StartCallCenterJob()
     local computer = self.S4_IE.ComUI.ComObj
     self.S4_IE.ComUI:close()
     
-    -- Open Context Menu - Offset by 60px to prevent accidental selection
+    -- Open Context Menu
     local context = ISContextMenu.get(0, getMouseX() + 60, getMouseY())
-    local data1 = {player=player, computer=computer, hours=1}
-    local data2 = {player=player, computer=computer, hours=2}
-    local data3 = {player=player, computer=computer, hours=3}
-    local data4 = {player=player, computer=computer, hours=4}
+    -- Pass job data to the context option
+    local function makeData(h)
+        return {player=player, computer=computer, hours=h, job=job}
+    end
     
-    context:addOption("Work 1 Hour", data1, S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 2 Hours", data2, S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 3 Hours", data3, S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 4 Hours", data4, S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 1 Hour ($" .. math.floor(job.salary/2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 2 Hours ($" .. job.salary .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 3 Hours ($" .. math.floor(job.salary*1.5) .. ")", makeData(3), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 4 Hours ($" .. job.salary*2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
 end
 
 function S4_IE_Jobs.OnSelectTimeStatic(data)

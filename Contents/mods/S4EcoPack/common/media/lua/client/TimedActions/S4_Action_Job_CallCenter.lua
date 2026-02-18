@@ -11,8 +11,14 @@ function S4_Action_Job_CallCenter:calculatePainRisk()
     local pData = char:getModData()
     local gameTime = GameTime:getInstance()
     local currentDay = gameTime:getDay()
-    local lastDay = pData.S4_Job_CallCenter_LastDay or -1
-    local dailyHours = pData.S4_Job_CallCenter_DailyHours or 0
+    
+    local jobId = self.job.id
+    local hoursKey = "S4_Job_" .. jobId .. "_Hours"
+    local lastDayKey = "S4_Job_" .. jobId .. "_LastDay"
+    local dailyHoursKey = "S4_Job_" .. jobId .. "_DailyHours"
+    
+    local lastDay = pData[lastDayKey] or -1
+    local dailyHours = pData[dailyHoursKey] or 0
     
     -- Reset check (simulation)
     if currentDay ~= lastDay then dailyHours = 0 end
@@ -32,7 +38,7 @@ function S4_Action_Job_CallCenter:calculatePainRisk()
     
     -- 3. Level Factor (Higher levels = Less risk)
     -- Calculate Level
-    local currentXP = pData.S4_Job_CallCenter_Hours or 0
+    local currentXP = pData[hoursKey] or 0
     local level = 1
     if currentXP >= 13000 then level = 10
     elseif currentXP >= 9000 then level = 9
@@ -103,20 +109,29 @@ function S4_Action_Job_CallCenter:perform()
     local hours = self.hours
     local char = self.character
     local stats = char:getStats()
-    
-    -- Calculate Level and Multiplier
     local pData = char:getModData()
-    local currentXP = pData.S4_Job_CallCenter_Hours or 0
+    
+    local jobId = self.job.id
+    local jobName = self.job.name
+    local jobSalary2h = self.job.salary or 125
+    local difficulty = self.job.difficulty or 1.0
+    
+    local hoursKey = "S4_Job_" .. jobId .. "_Hours"
+    local currentXP = pData[hoursKey] or 0
+    
+    -- Calculate Level (Generic function ideally, but local here)
+    -- Scaling thresholds by difficulty
+    local function t(v) return math.ceil(v * difficulty) end
     local level = 1
-    if currentXP >= 13000 then level = 10
-    elseif currentXP >= 9000 then level = 9
-    elseif currentXP >= 6000 then level = 8
-    elseif currentXP >= 4000 then level = 7
-    elseif currentXP >= 2500 then level = 6
-    elseif currentXP >= 1600 then level = 5
-    elseif currentXP >= 900 then level = 4
-    elseif currentXP >= 400 then level = 3
-    elseif currentXP >= 150 then level = 2
+    if currentXP >= t(13000) then level = 10
+    elseif currentXP >= t(9000) then level = 9
+    elseif currentXP >= t(6000) then level = 8
+    elseif currentXP >= t(4000) then level = 7
+    elseif currentXP >= t(2500) then level = 6
+    elseif currentXP >= t(1600) then level = 5
+    elseif currentXP >= t(900) then level = 4
+    elseif currentXP >= t(400) then level = 3
+    elseif currentXP >= t(150) then level = 2
     end
     
     local mult = 1.0
@@ -154,17 +169,20 @@ function S4_Action_Job_CallCenter:perform()
     -- Job Leveling (Store on Player ModData)
     local xpGained = hours * 6 -- Equates to 6, 12, 18, 24 XP (Target: 5-25 range)
     -- pData is local Java ModData, distinct from S4_PlayerData global table
-    pData.S4_Job_CallCenter_Hours = currentXP + xpGained
+    pData[hoursKey] = currentXP + xpGained
     
     -- Payment Logic
     local gameTime = GameTime:getInstance()
     local currentDay = gameTime:getDay()
-    local lastDay = pData.S4_Job_CallCenter_LastDay or -1
-    local dailyHours = pData.S4_Job_CallCenter_DailyHours or 0
+    local lastDayKey = "S4_Job_" .. jobId .. "_LastDay"
+    local dailyHoursKey = "S4_Job_" .. jobId .. "_DailyHours"
+    
+    local lastDay = pData[lastDayKey] or -1
+    local dailyHours = pData[dailyHoursKey] or 0
     
     if currentDay ~= lastDay then
         dailyHours = 0
-        pData.S4_Job_CallCenter_LastDay = currentDay
+        pData[lastDayKey] = currentDay
     end
     
     dailyHours = dailyHours + hours
@@ -173,7 +191,7 @@ function S4_Action_Job_CallCenter:perform()
     if dailyHours >= 2 then
         local payments = math.floor(dailyHours / 2)
         if payments > 0 then
-            paymentAmount = payments * 200
+            paymentAmount = payments * jobSalary2h
             dailyHours = dailyHours % 2 -- Remainder
             
             -- Send Payment Command
@@ -190,13 +208,13 @@ function S4_Action_Job_CallCenter:perform()
                       if S4_Utils and S4_Utils.getLogTime then
                           ts = S4_Utils.getLogTime()
                       end
-                      local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, "Call Center Zomboids Co.", username}
+                      local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, jobName .. " Co.", username}
                       sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
                  end
             end
         end
     end
-    pData.S4_Job_CallCenter_DailyHours = dailyHours
+    pData[dailyHoursKey] = dailyHours
     
     -- Back Pain Inducer: Calculated Risk
     local painRisk = self:calculatePainRisk()
@@ -222,16 +240,14 @@ function S4_Action_Job_CallCenter:perform()
     end
     
     -- Payment (Placeholder $10/hr removed, using daily wage)
-    local msg = "Job Complete: " .. hours .. "h (XP: " .. xpGained .. ")"
+    local msg = jobName .. ": " .. hours .. "h (XP: " .. xpGained .. ")"
     if paymentAmount > 0 then
         msg = msg .. " Paid: $" .. paymentAmount
     else
         -- Calculate remaining hours needed for next payment
         local needed = 2 - dailyHours
         if needed < 0 then needed = 0 end -- Should not happen due to modulo, but safe check
-        msg = msg .. " (Paid Daily: Need " .. needed .. "h more)" -- Wait, modulo resets it.
-        -- If dailyHours became 1 (after 3 hours total -> 2 paid, 1 remaining).
-        -- dailyHours is correct remainder.
+        msg = msg .. " (Accumulated: " .. dailyHours .. "h / Next Pay in " .. needed .. "h)"
     end
     
     -- Display message safely
@@ -245,12 +261,13 @@ function S4_Action_Job_CallCenter:perform()
     ISBaseTimedAction.perform(self)
 end
 
-function S4_Action_Job_CallCenter:new(character, computer, hours)
+function S4_Action_Job_CallCenter:new(character, computer, hours, job)
     local o = {}
     setmetatable(o, self)
     self.__index = self
     o.character = character
     o.computer = computer
+    o.job = job or {id="CallCenter", name="Call Center", salary=125, difficulty=1.0} -- Default fallback
     o.stopOnWalk = true
     o.stopOnRun = true
     o.hours = hours

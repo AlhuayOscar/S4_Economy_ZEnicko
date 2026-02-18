@@ -14,7 +14,7 @@ end
 function S4_Action_Job_CallCenter:start()
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Mid")
-    -- self.sound = self.character:getEmitter():playSound("ReadBook") -- Optional sound
+    self:setOverrideHandModels(nil, nil)
 end
 
 function S4_Action_Job_CallCenter:stop()
@@ -60,9 +60,13 @@ function S4_Action_Job_CallCenter:perform()
     -- Payment (Placeholder $10/hr)
     -- In future, integrate with S4 Economy bank transfer
     -- For now, just log XP
-    local msg = "Job Complete: " .. hours .. "h (Total XP: " .. pData.S4_Job_CallCenter_Hours .. ")"
-    if char:isPlayer() then -- Only clear validation
+    local msg = "Job Complete: " .. hours .. "h (Total XP: " .. (pData.S4_Job_CallCenter_Hours or 0) .. ")"
+    
+    -- Display message safely
+    if char.setHaloNote then
         char:setHaloNote(msg)
+    elseif HaloTextHelper then
+         HaloTextHelper.addText(char, msg, HaloTextHelper.getColorGreen())
     end
     
     -- Finish

@@ -118,12 +118,20 @@ function S4_IE_Jobs:StartCallCenterJob()
     
     -- Open Context Menu
     local context = ISContextMenu.get(0, getMouseX(), getMouseY())
-    context:addOption("Work 1 Hour", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 1)
-    context:addOption("Work 2 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 2)
-    context:addOption("Work 3 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 3)
-    context:addOption("Work 4 Hours", nil, S4_IE_Jobs.OnSelectTimeStatic, player, computer, 4)
+    local data1 = {player=player, computer=computer, hours=1}
+    local data2 = {player=player, computer=computer, hours=2}
+    local data3 = {player=player, computer=computer, hours=3}
+    local data4 = {player=player, computer=computer, hours=4}
+    
+    context:addOption("Work 1 Hour", data1, S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 2 Hours", data2, S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 3 Hours", data3, S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption("Work 4 Hours", data4, S4_IE_Jobs.OnSelectTimeStatic)
 end
 
-function S4_IE_Jobs.OnSelectTimeStatic(player, computer, hours)
+function S4_IE_Jobs.OnSelectTimeStatic(data)
+    local player = data.player
+    local computer = data.computer
+    local hours = data.hours
     ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours))
 end

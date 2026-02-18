@@ -355,8 +355,12 @@ function S4Shop.ShopBuy(player, args)
     PlayerShopModData.Delivery[DeliveryTime].XYZCode = DeliveryAddress
     PlayerShopModData.Delivery[DeliveryTime].List = {}
     for ItemName, Amount in pairs(ItemList) do
-        PlayerShopModData.Delivery[DeliveryTime].List[ItemName] = Amount
-        ShopModData[ItemName].Stock = ShopModData[ItemName].Stock - Amount
+        if ShopModData[ItemName] then
+            PlayerShopModData.Delivery[DeliveryTime].List[ItemName] = Amount
+            ShopModData[ItemName].Stock = ShopModData[ItemName].Stock - Amount
+        else
+            print("[S4Shop] Warning: Item not found in ShopModData during purchase: " .. tostring(ItemName))
+        end
     end
     PlayerShopModData.BuyTotal = PlayerShopModData.BuyTotal + TotalPrice
     PlayerShopModData.Cart = {}

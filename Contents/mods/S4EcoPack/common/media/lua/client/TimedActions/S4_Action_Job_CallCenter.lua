@@ -60,12 +60,19 @@ function S4_Action_Job_CallCenter:update()
     self.character:faceThisObject(self.computer)
     self.character:SetVariable("LootPosition", "Mid")
     
-    -- Pain Sound Logic (Check triggered by start calculation)
-    if self.shouldPlayPain and not self.soundPlayed and ZombRand(100) == 0 then
-        local sound = "MalePain"
-        if self.character:isFemale() then sound = "FemalePain" end
-        self.character:getEmitter():playSound(sound)
-        self.soundPlayed = true
+    -- Periodic Pain Sound (Every 10-30 in-game minutes)
+    self.tickCounter = self.tickCounter + 1
+    if self.tickCounter >= self.nextSoundTick then
+        -- Play sound based on calculated risk
+        if ZombRand(100) < self.painRisk then
+            local sound = "MalePain"
+            if self.character:isFemale() then sound = "FemalePain" end
+            self.character:getEmitter():playSound(sound)
+        end
+        
+        -- Reset timer for next sound
+        self.tickCounter = 0
+        self.nextSoundTick = ZombRand(50, 150) -- 50-150 ticks (approx 10-30 in-game mins at 300 ticks/hr)
     end
 end
 
@@ -75,10 +82,10 @@ function S4_Action_Job_CallCenter:start()
     self:setOverrideHandModels(nil, nil)
     self.sound = self.character:getEmitter():playSound("S4_Typing")
     
-    -- Calculate Risk for Sound
-    local risk = self:calculatePainRisk()
-    self.shouldPlayPain = ZombRand(100) < risk
-    self.soundPlayed = false
+    -- Initialize Pain Sound Timer
+    self.painRisk = self:calculatePainRisk()
+    self.tickCounter = 0
+    self.nextSoundTick = ZombRand(50, 150)
 end
 
 function S4_Action_Job_CallCenter:stop()

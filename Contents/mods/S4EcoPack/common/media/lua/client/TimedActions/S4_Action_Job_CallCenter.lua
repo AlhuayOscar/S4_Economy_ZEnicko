@@ -119,12 +119,14 @@ function S4_Action_Job_CallCenter:perform()
             if globalPlayerData then
                  local username = char:getUsername()
                  local myData = globalPlayerData[username]
-                 if myData and myData.MainCard then
+                 if myData and myData.MainCard and sendClientCommand then
                       local args = {myData.MainCard, paymentAmount}
                       sendClientCommand(char, "S4ED", "AddMoney", args)
                       
                       -- Log
-                      local logArgs = {myData.MainCard, gameTime:getTimestamp(), "Salary", paymentAmount, "Call Center Zomboids Co.", username}
+                      local ts = 0
+                      if getGameTime() then ts = getGameTime():getTimestamp() end
+                      local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, "Call Center Zomboids Co.", username}
                       sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
                  end
             end
@@ -134,8 +136,16 @@ function S4_Action_Job_CallCenter:perform()
     
     -- Back Pain Inducer: Level <= 3 and DailyHours > 4
     if level <= 3 and dailyHours > 4 then
-        local lowerTorsoIndex = BodyPartType.Torso_Lower
-        local bodyPart = bodyDamage:getBodyPart(lowerTorsoIndex)
+        local bodyPart = nil
+        local parts = bodyDamage:getBodyParts()
+        for i=0, parts:size()-1 do
+            local part = parts:get(i)
+            if part:getType():toString() == "Torso_Lower" then
+                bodyPart = part
+                break
+            end
+        end
+        
         if bodyPart then
              local currentPain = bodyPart:getAdditionalPain()
              bodyPart:setAdditionalPain(currentPain + 15) -- Mild pain

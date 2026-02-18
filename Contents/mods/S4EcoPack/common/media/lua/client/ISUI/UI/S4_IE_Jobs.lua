@@ -27,13 +27,13 @@ function S4_IE_Jobs:initialise()
     
     self.Jobs = {
         {name="Call Center", id="CallCenter", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
-        {name="Burger Flipper", id="BurgerFlipper", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=0.8}, -- Easier, faster leveling
-        {name="Mechanic", id="Mechanic", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2}, -- Harder
-        {name="Security", id="Security", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
-        {name="Doctor", id="Doctor", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5}, -- Hardest
-        {name="Farmer", id="Farmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
-        {name="Teacher", id="Teacher", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
-        {name="Chef", id="Chef", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3},
+        {name="Graphic Designer", id="Designer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
+        {name="Insurance Seller", id="Insurance", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2},
+        {name="Programmer", id="Programmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3},
+        {name="Banker", id="Banker", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4},
+        {name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5},
+        {name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
+        {name="Spy", id="Spy", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4},
     }
 end
 

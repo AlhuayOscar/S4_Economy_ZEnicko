@@ -34,4 +34,12 @@ module Base {
             looped = true,
         }
     }
+
+    sound S4_QoL_ButtonPush {
+        category = Object,
+        clip {
+            file = media/sound/QoL/buttonPush.mp3,
+            volume = 0.6,
+        }
+    }
 }

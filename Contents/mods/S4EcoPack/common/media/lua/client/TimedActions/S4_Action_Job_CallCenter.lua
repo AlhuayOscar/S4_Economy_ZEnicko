@@ -124,8 +124,9 @@ function S4_Action_Job_CallCenter:perform()
                       sendClientCommand(char, "S4ED", "AddMoney", args)
                       
                       -- Log
+                      -- Log
                       local ts = 0
-                      if getGameTime() then ts = getGameTime():getTimestamp() end
+                      if gameTime then ts = gameTime:getTimestamp() end
                       local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, "Call Center Zomboids Co.", username}
                       sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
                  end

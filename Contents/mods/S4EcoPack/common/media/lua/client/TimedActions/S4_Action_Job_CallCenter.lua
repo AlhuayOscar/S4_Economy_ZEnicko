@@ -32,108 +32,8 @@ local function getWorldAgeHours()
     return 0
 end
 
-local function getNextShiftBonusKey(jobId)
-    return "S4_Job_" .. tostring(jobId or "Designer") .. "_NextShiftBonus"
-end
-
-function S4_Action_Job_CallCenter:rollDesignerEventId()
-    if self.forcedEventId then
-        return self.forcedEventId
-    end
-
-    -- 50% chance to have an event at all.
-    if ZombRand(100) >= 50 then
-        return nil
-    end
-
-    -- Weighted inside the 50% bucket:
-    -- 40% -> 20% absolute, 20% -> 10% absolute, 10% -> 5% absolute, 4% -> 2% absolute.
-    local roll = ZombRand(100)
-    if roll < 40 then
-        return "bad_feedback"
-    elseif roll < 60 then
-        return "tools_broken"
-    elseif roll < 70 then
-        return "tip"
-    elseif roll < 74 then
-        return "speciality_recommendation"
-    end
-    return nil
-end
-
 function S4_Action_Job_CallCenter:isValid()
     return true
-end
-
-function S4_Action_Job_CallCenter:calculatePainRisk()
-    local char = self.character
-    local pData = char:getModData()
-    local gameTime = GameTime:getInstance()
-    local currentDay = gameTime:getDay()
-
-    local jobId = self.job.id
-    local hoursKey = "S4_Job_" .. jobId .. "_Hours"
-    local lastDayKey = "S4_Job_" .. jobId .. "_LastDay"
-    local dailyHoursKey = "S4_Job_" .. jobId .. "_DailyHours"
-
-    local lastDay = pData[lastDayKey] or -1
-    local dailyHours = pData[dailyHoursKey] or 0
-
-    -- Reset check (simulation)
-    if currentDay ~= lastDay then
-        dailyHours = 0
-    end
-
-    -- Base Risk
-    local risk = 10
-
-    -- 1. Daily Hours Factor (Every 2 hours adds 15% risk)
-    risk = risk + (math.floor(dailyHours / 2) * 15)
-
-    -- 2. Stats Factor
-    local stats = char:getStats()
-    risk = risk + (stats:getHunger() * 30) -- 0-1 scale
-    risk = risk + (stats:getFatigue() * 50) -- Fatigue is major factor
-    risk = risk + (stats:getStress() * 25)
-    risk = risk + (stats:getThirst() * 15)
-
-    -- 3. Level Factor (Higher levels = Less risk)
-    -- Calculate Level
-    local currentXP = pData[hoursKey] or 0
-    local level = 1
-    if currentXP >= 13000 then
-        level = 10
-    elseif currentXP >= 9000 then
-        level = 9
-    elseif currentXP >= 6000 then
-        level = 8
-    elseif currentXP >= 4000 then
-        level = 7
-    elseif currentXP >= 2500 then
-        level = 6
-    elseif currentXP >= 1600 then
-        level = 5
-    elseif currentXP >= 900 then
-        level = 4
-    elseif currentXP >= 400 then
-        level = 3
-    elseif currentXP >= 150 then
-        level = 2
-    end
-
-    -- Factor: Level 1 = 1.0x, Level 10 = 0.5x (Examples)
-    -- Let's say Level 10 is very resilient.
-    local resilience = (level - 1) * 5 -- 0 to 45 reduction?
-    risk = risk - resilience
-
-    if risk < 0 then
-        risk = 0
-    end
-    if risk > 90 then
-        risk = 90
-    end -- Cap at 90%
-
-    return risk
 end
 
 function S4_Action_Job_CallCenter:update()
@@ -169,22 +69,6 @@ function S4_Action_Job_CallCenter:update()
         self.currentTime = 0
     end
 
-    -- Periodic Pain Sound (Every 10-30 in-game minutes)
-    self.tickCounter = self.tickCounter + 1
-    if self.tickCounter >= self.nextSoundTick then
-        -- Play sound based on calculated risk
-        if ZombRand(100) < self.painRisk then
-            local sound = "MalePain"
-            if self.character:isFemale() then
-                sound = "FemalePain"
-            end
-            self.character:getEmitter():playSound(sound)
-        end
-
-        -- Reset timer for next sound
-        self.tickCounter = 0
-        self.nextSoundTick = ZombRand(50, 150) -- 50-150 ticks (approx 10-30 in-game mins at 300 ticks/hr)
-    end
 end
 
 function S4_Action_Job_CallCenter:start()
@@ -199,10 +83,6 @@ function S4_Action_Job_CallCenter:start()
     self.endWorldHours = now + initialRemaining
     self.remainingGameHours = initialRemaining
 
-    -- Initialize Pain Sound Timer
-    self.painRisk = self:calculatePainRisk()
-    self.tickCounter = 0
-    self.nextSoundTick = ZombRand(50, 150)
 end
 
 function S4_Action_Job_CallCenter:stop()
@@ -239,9 +119,6 @@ function S4_Action_Job_CallCenter:perform()
     local jobSalary2h = self.job.salary or 125
     local difficulty = self.job.difficulty or 1.0
     local shiftKey = getShiftKey(jobId)
-    local paymentMult = 1.0
-    local flatPaymentBonus = 0
-    local eventHaloLines = {}
 
     local hoursKey = "S4_Job_" .. jobId .. "_Hours"
     local currentXP = pData[hoursKey] or 0
@@ -350,66 +227,15 @@ function S4_Action_Job_CallCenter:perform()
 
     dailyHours = dailyHours + hours
     local paymentAmount = 0
-    local basePaymentAmount = 0
 
     if dailyHours >= 2 then
         local payments = math.floor(dailyHours / 2)
         if payments > 0 then
             paymentAmount = payments * jobSalary2h
-            basePaymentAmount = paymentAmount
             dailyHours = dailyHours % 2 -- Remainder
         end
     end
     pData[dailyHoursKey] = dailyHours
-
-    -- Designer special events
-    if jobId == "Designer" then
-        local nextShiftBonusKey = getNextShiftBonusKey(jobId)
-        local pendingNextShiftBonus = pData[nextShiftBonusKey] or 0
-        if pendingNextShiftBonus > 0 then
-            paymentMult = paymentMult * (1 + pendingNextShiftBonus)
-            table.insert(eventHaloLines, {
-                text = "Evento: bonus especial +" .. tostring(math.floor(pendingNextShiftBonus * 100)) .. "%",
-                color = "green"
-            })
-            pData[nextShiftBonusKey] = nil
-        end
-
-        local eventId = self:rollDesignerEventId()
-        if eventId == "bad_feedback" then
-            paymentMult = paymentMult * 0.5
-            table.insert(eventHaloLines, {
-                text = "Evento: No le gusto tu trabajo (-50%)",
-                color = "red"
-            })
-        elseif eventId == "tools_broken" then
-            paymentMult = paymentMult * 0.8
-            table.insert(eventHaloLines, {
-                text = "Evento: Herramientas rotas (-20%)",
-                color = "red"
-            })
-        elseif eventId == "tip" then
-            local tipBonus = math.floor((jobSalary2h * 0.5) * 0.15)
-            flatPaymentBonus = flatPaymentBonus + tipBonus
-            table.insert(eventHaloLines, {
-                text = "Evento: Propina +$" .. tostring(tipBonus),
-                color = "green"
-            })
-        elseif eventId == "speciality_recommendation" then
-            pData[nextShiftBonusKey] = 0.20
-            table.insert(eventHaloLines, {
-                text = "Evento: Proximo shift +20%",
-                color = "green"
-            })
-        end
-    end
-
-    if paymentAmount > 0 or flatPaymentBonus > 0 then
-        paymentAmount = math.floor((paymentAmount * paymentMult) + flatPaymentBonus)
-        if paymentAmount < 0 then
-            paymentAmount = 0
-        end
-    end
 
     if paymentAmount > 0 then
         local globalPlayerData = ModData.get("S4_PlayerData")
@@ -427,29 +253,6 @@ function S4_Action_Job_CallCenter:perform()
                 local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, jobName .. " Co.", username}
                 sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
             end
-        end
-    end
-
-    -- Back Pain Inducer: Calculated Risk
-    local painRisk = self:calculatePainRisk()
-    if ZombRand(100) < painRisk then
-        local bodyPart = nil
-        local parts = bodyDamage:getBodyParts()
-        for i = 0, parts:size() - 1 do
-            local part = parts:get(i)
-            if part and part.getType then
-                local typeVal = part:getType()
-                if typeVal and tostring(typeVal) == "Torso_Lower" then
-                    bodyPart = part
-                    break
-                end
-            end
-        end
-
-        if bodyPart then
-            local currentPain = bodyPart:getAdditionalPain()
-            local intensity = 10 + (painRisk / 3) -- Base 10 + scaling
-            bodyPart:setAdditionalPain(currentPain + intensity)
         end
     end
 
@@ -480,52 +283,14 @@ function S4_Action_Job_CallCenter:perform()
         end
     end
 
-    local function pushHaloDelayed(text, color, delaySeconds)
-        if delaySeconds <= 0 or not Events or not Events.OnTick then
-            pushHalo(text, color)
-            return
-        end
-
-        local fps = PerformanceSettings.getLockFPS()
-        if not fps or fps <= 0 then
-            fps = 30
-        end
-        local targetTicks = math.floor(delaySeconds * fps)
-        if targetTicks < 1 then
-            targetTicks = 1
-        end
-
-        local ticks = 0
-        local tickHandler = nil
-        tickHandler = function()
-            ticks = ticks + 1
-            if ticks >= targetTicks then
-                pushHalo(text, color)
-                Events.OnTick.Remove(tickHandler)
-            end
-        end
-        Events.OnTick.Add(tickHandler)
-    end
-
-    local eventDelaySeconds = 0
-    local eventDelayStep = 2
-    for _, line in ipairs(eventHaloLines) do
-        pushHaloDelayed(line.text, line.color, eventDelaySeconds)
-        eventDelaySeconds = eventDelaySeconds + eventDelayStep
-    end
-    -- Keep payment summary last so it remains visible after event penalties.
-    if eventDelaySeconds > 0 then
-        pushHaloDelayed(msg, "green", eventDelaySeconds)
-    else
-        pushHalo(msg, "green")
-    end
+    pushHalo(msg, "green")
 
     -- Finish
     pData[shiftKey] = nil
     ISBaseTimedAction.perform(self)
 end
 
-function S4_Action_Job_CallCenter:new(character, computer, hours, job, savedShift, forcedEventId)
+function S4_Action_Job_CallCenter:new(character, computer, hours, job, savedShift)
     local o = {}
     setmetatable(o, self)
     self.__index = self
@@ -545,7 +310,6 @@ function S4_Action_Job_CallCenter:new(character, computer, hours, job, savedShif
     o.totalTime = calculateTicksForIngameHours(hours)
     o.maxTime = o.totalTime
     o.savedShift = savedShift
-    o.forcedEventId = forcedEventId
     o.resumeShift = false
     if savedShift and savedShift.totalHours then
         o.hours = savedShift.totalHours
@@ -560,10 +324,6 @@ function S4_Action_Job_CallCenter:new(character, computer, hours, job, savedShif
     if character:isTimedActionInstant() then
         o.maxTime = 1;
     end
-
-    -- Sound Probability (20%)
-    o.soundChance = ZombRand(100) < 20
-    o.soundPlayed = false
 
     return o
 end

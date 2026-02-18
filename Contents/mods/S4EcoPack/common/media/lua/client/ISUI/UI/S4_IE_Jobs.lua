@@ -1,5 +1,4 @@
 require "ISUI/ISPanel"
-require "ISUI/ISButton"
 
 S4_IE_Jobs = ISPanel:derive("S4_IE_Jobs")
 
@@ -26,9 +25,6 @@ function S4_IE_Jobs:new(S4_IE, x, y, width, height)
         b = 0,
         a = 1
     }
-    o.DebugForcedEventId = nil
-    o.DebugForcedEventLabel = "none"
-    o.isDebugJobs = false
     return o
 end
 
@@ -245,17 +241,6 @@ function S4_IE_Jobs:createChildren()
         }}
     }}
 
-    self.isDebugJobs = self.player:isAccessLevel("admin") or getDebug()
-    if self.isDebugJobs then
-        local by = self.height - 34
-        self.debugEventBtn = ISButton:new(20, by, 150, 22, "DEBUG Event: None", self, S4_IE_Jobs.onDebugCycleEvent)
-        self.debugEventBtn:initialise()
-        self:addChild(self.debugEventBtn)
-
-        self.debugEventClearBtn = ISButton:new(176, by, 70, 22, "Clear", self, S4_IE_Jobs.onDebugClearEvent)
-        self.debugEventClearBtn:initialise()
-        self:addChild(self.debugEventClearBtn)
-    end
 end
 
 function S4_IE_Jobs:render()
@@ -347,43 +332,6 @@ function S4_IE_Jobs:render()
         y = y + self.gridSize + self.gridGap
     end
 
-    if self.isDebugJobs then
-        local current = self.DebugForcedEventLabel or "none"
-        self:drawText("DEBUG Designer Event: " .. current, 255, self.height - 29, 0.1, 0.1, 0.1, 1, UIFont.Small)
-    end
-end
-
-function S4_IE_Jobs:onDebugCycleEvent()
-    local order = {"none", "bad_feedback", "tools_broken", "tip", "speciality_recommendation"}
-    local idx = 1
-    for i, v in ipairs(order) do
-        if v == (self.DebugForcedEventId or "none") then
-            idx = i
-            break
-        end
-    end
-    local nextIdx = idx + 1
-    if nextIdx > #order then
-        nextIdx = 1
-    end
-    local value = order[nextIdx]
-    if value == "none" then
-        self.DebugForcedEventId = nil
-        self.DebugForcedEventLabel = "none"
-        self.debugEventBtn:setTitle("DEBUG Event: None")
-    else
-        self.DebugForcedEventId = value
-        self.DebugForcedEventLabel = value
-        self.debugEventBtn:setTitle("DEBUG Event: " .. value)
-    end
-end
-
-function S4_IE_Jobs:onDebugClearEvent()
-    self.DebugForcedEventId = nil
-    self.DebugForcedEventLabel = "none"
-    if self.debugEventBtn then
-        self.debugEventBtn:setTitle("DEBUG Event: None")
-    end
 end
 
 function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
@@ -521,9 +469,8 @@ function S4_IE_Jobs:StartSelectedJob(job)
     local pData = player:getModData()
     local shiftKey = "S4_JobShift_" .. tostring(job.id)
     local savedShift = pData[shiftKey]
-    local isMainEasyJob = (job.id == "CallCenter" or job.id == "Designer")
 
-    if isMainEasyJob and savedShift and savedShift.totalHours then
+    if savedShift and savedShift.totalHours then
         local remainingHours = savedShift.remainingGameHours or 0
         if remainingHours <= 0 and savedShift.remainingTime and savedShift.totalTime and savedShift.totalTime > 0 then
             remainingHours = (savedShift.totalHours * (savedShift.remainingTime / savedShift.totalTime))
@@ -549,8 +496,7 @@ function S4_IE_Jobs:StartSelectedJob(job)
             player = player,
             computer = computer,
             hours = h,
-            job = job,
-            forcedEventId = (job.id == "Designer") and self.DebugForcedEventId or nil
+            job = job
         }
     end
 
@@ -571,10 +517,8 @@ function S4_IE_Jobs.OnSelectTimeStatic(data)
     local shiftKey = "S4_JobShift_" .. tostring(job.id)
     local savedShift = pData[shiftKey]
     local maxShiftHours = 4
-    local isMainEasyJob = (job.id == "CallCenter" or job.id == "Designer")
-    local forcedEventId = data.forcedEventId
 
-    if isMainEasyJob and savedShift and savedShift.totalHours then
+    if savedShift and savedShift.totalHours then
         local prevTotal = savedShift.totalHours or 0
         local prevRemaining = savedShift.remainingGameHours or 0
 
@@ -599,8 +543,7 @@ function S4_IE_Jobs.OnSelectTimeStatic(data)
         }
 
         pData[shiftKey] = nil
-        ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, mergedShift.totalHours, job, mergedShift,
-            forcedEventId))
+        ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, mergedShift.totalHours, job, mergedShift))
         if player.setHaloNote then
             if addHours > 0 then
                 local msg = string.format("%s: +%.1fh added (%.1fh total)", job.name, addHours, newTotal)
@@ -616,8 +559,8 @@ function S4_IE_Jobs.OnSelectTimeStatic(data)
     end
 
     pData[shiftKey] = nil
-    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours, job, nil, forcedEventId))
-    if isMainEasyJob and player.setHaloNote then
+    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours, job, nil))
+    if player.setHaloNote then
         player:setHaloNote(string.format("%s: new shift %.1fh.", job.name, hours))
     end
 end
@@ -627,7 +570,7 @@ function S4_IE_Jobs.OnResumeShiftStatic(data)
     local computer = data.computer
     local job = data.job
     local savedShift = data.savedShift
-    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, savedShift.totalHours, job, savedShift, nil))
+    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, savedShift.totalHours, job, savedShift))
 end
 
 function S4_IE_Jobs.OnDiscardSavedShiftStatic(data)

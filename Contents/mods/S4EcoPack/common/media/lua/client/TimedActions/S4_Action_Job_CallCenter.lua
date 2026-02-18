@@ -15,6 +15,7 @@ function S4_Action_Job_CallCenter:start()
     self:setActionAnim("Loot")
     self.character:SetVariable("LootPosition", "Mid")
     self:setOverrideHandModels(nil, nil)
+    self.sound = self.character:getEmitter():playSound("S4_Typing")
 end
 
 function S4_Action_Job_CallCenter:stop()

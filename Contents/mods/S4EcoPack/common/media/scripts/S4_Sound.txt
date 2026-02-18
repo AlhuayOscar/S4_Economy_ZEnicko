@@ -26,4 +26,12 @@ module Base {
             volume = 0.5,
         }
     }
+    sound S4_Typing {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/typing.mp3,
+            volume = 0.5,
+            looped = true,
+        }
+    }
 }

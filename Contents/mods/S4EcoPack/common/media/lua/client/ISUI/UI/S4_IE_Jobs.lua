@@ -90,7 +90,12 @@ function S4_IE_Jobs:GetCallCenterRank(xp)
     elseif xp < 400 then return "Junior (Lvl 2)", 400
     elseif xp < 900 then return "Senior (Lvl 3)", 900
     elseif xp < 1600 then return "Supervisor (Lvl 4)", 1600
-    else return "Manager (Lvl 5)", nil end
+    elseif xp < 2500 then return "Manager (Lvl 5)", 2500
+    elseif xp < 4000 then return "Team Leader (Lvl 6)", 4000
+    elseif xp < 6000 then return "Dept. Head (Lvl 7)", 6000
+    elseif xp < 9000 then return "Director (Lvl 8)", 9000
+    elseif xp < 13000 then return "VP (Lvl 9)", 13000
+    else return "CEO (Lvl 10)", nil end
 end
 
 function S4_IE_Jobs:isMouseOverBox(x, y, w, h)

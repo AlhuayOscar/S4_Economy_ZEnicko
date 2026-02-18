@@ -12,8 +12,8 @@ function S4_Action_Job_CallCenter:update()
     
     -- Random ambient sound (20% chance per job, checked periodically)
     if self.soundChance and not self.soundPlayed and ZombRand(100) == 0 then
-        local sound = "MaleZombieIdle"
-        if self.character:isFemale() then sound = "FemaleZombieIdle" end
+        local sound = "MalePain"
+        if self.character:isFemale() then sound = "FemalePain" end
         self.character:getEmitter():playSound(sound)
         self.soundPlayed = true
     end
@@ -132,12 +132,27 @@ function S4_Action_Job_CallCenter:perform()
     end
     pData.S4_Job_CallCenter_DailyHours = dailyHours
     
+    -- Back Pain Inducer: Level <= 3 and DailyHours > 4
+    if level <= 3 and dailyHours > 4 then
+        local lowerTorsoIndex = BodyPartType.Torso_Lower
+        local bodyPart = bodyDamage:getBodyPart(lowerTorsoIndex)
+        if bodyPart then
+             local currentPain = bodyPart:getAdditionalPain()
+             bodyPart:setAdditionalPain(currentPain + 15) -- Mild pain
+        end
+    end
+    
     -- Payment (Placeholder $10/hr removed, using daily wage)
     local msg = "Job Complete: " .. hours .. "h (XP: " .. xpGained .. ")"
     if paymentAmount > 0 then
         msg = msg .. " Paid: $" .. paymentAmount
     else
-        msg = msg .. " (Total Today: " .. (pData.S4_Job_CallCenter_DailyHours + (paymentAmount/200)*2) .. "h)" -- Approximate display
+        -- Calculate remaining hours needed for next payment
+        local needed = 2 - dailyHours
+        if needed < 0 then needed = 0 end -- Should not happen due to modulo, but safe check
+        msg = msg .. " (Paid Daily: Need " .. needed .. "h more)" -- Wait, modulo resets it.
+        -- If dailyHours became 1 (after 3 hours total -> 2 paid, 1 remaining).
+        -- dailyHours is correct remainder.
     end
     
     -- Display message safely

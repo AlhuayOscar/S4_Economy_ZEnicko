@@ -125,8 +125,10 @@ function S4_Action_Job_CallCenter:perform()
                       
                       -- Log
                       -- Log
-                      local ts = 0
-                      if gameTime then ts = gameTime:getTimestamp() end
+                      local ts = "0000-00-00 00:00:00"
+                      if S4_Utils and S4_Utils.getLogTime then
+                          ts = S4_Utils.getLogTime()
+                      end
                       local logArgs = {myData.MainCard, ts, "Salary", paymentAmount, "Call Center Zomboids Co.", username}
                       sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
                  end
@@ -141,9 +143,12 @@ function S4_Action_Job_CallCenter:perform()
         local parts = bodyDamage:getBodyParts()
         for i=0, parts:size()-1 do
             local part = parts:get(i)
-            if part:getType():toString() == "Torso_Lower" then
-                bodyPart = part
-                break
+            if part and part.getType then
+                local typeVal = part:getType()
+                if typeVal and tostring(typeVal) == "Torso_Lower" then
+                    bodyPart = part
+                    break
+                end
             end
         end
         

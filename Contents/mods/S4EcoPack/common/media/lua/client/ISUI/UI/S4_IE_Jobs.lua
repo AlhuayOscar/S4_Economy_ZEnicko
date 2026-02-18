@@ -49,8 +49,14 @@ function S4_IE_Jobs:render()
                 if tex then
                     self:drawTextureScaled(tex, x + 8, y + 8, 48, 48, 1)
                 else
-                     self:drawTextCentre("Call", x + 32, y + 16, 0, 0, 0, 1, UIFont.Small)
-                     self:drawTextCentre("Center", x + 32, y + 32, 0, 0, 0, 1, UIFont.Small)
+                     -- Manual centering to avoid nil error on drawTextCentre
+                     local text1 = "Call"
+                     local text2 = "Center"
+                     local font = UIFont.Small
+                     local w1 = getTextManager():MeasureStringX(font, text1)
+                     local w2 = getTextManager():MeasureStringX(font, text2)
+                     self:drawText(text1, x + (self.gridSize/2) - (w1/2), y + 16, 0, 0, 0, 1, font)
+                     self:drawText(text2, x + (self.gridSize/2) - (w2/2), y + 32, 0, 0, 0, 1, font)
                 end
                 
                 -- Hover effect

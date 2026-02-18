@@ -65,14 +65,46 @@ function S4_IE_Jobs:render()
                      
                      local pData = self.player:getModData()
                      local xp = pData.S4_Job_CallCenter_Hours or 0
-                     local rank, nextXp = self:GetCallCenterRank(xp)
+                     local details = self:GetCallCenterLevelDetails(xp)
                      
-                     self:drawText("Job: Call Center", 20, self.height - 55, 0, 0, 0, 1, UIFont.Medium)
-                     self:drawText("Rank: " .. rank, 20, self.height - 35, 0, 0, 0.6, 1, UIFont.Small)
-                     if nextXp then
-                        self:drawText("XP: " .. xp .. " / " .. nextXp, 20, self.height - 20, 0, 0, 0.6, 1, UIFont.Small)
+                     -- Tooltip Background
+                     local tooltipH = 70
+                     local tooltipY = self.height - tooltipH - 10
+                     -- self:drawRect(15, tooltipY, 200, tooltipH, 0.8, 0, 0, 0) -- Optional bg
+                     
+                     self:drawText("Job: Call Center", 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
+                     self:drawText("Rank: " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
+                     
+                     -- Progress Bar
+                     local barW = 150
+                     local barH = 10
+                     local barX = 20
+                     local barY = tooltipY + 45
+                     
+                     local progress = 0
+                     if details.max then
+                        progress = (xp - details.min) / (details.max - details.min)
+                        if progress > 1 then progress = 1 end
+                        if progress < 0 then progress = 0 end
                      else
-                        self:drawText("XP: " .. xp .. " (Max Rank)", 20, self.height - 20, 0, 0, 0.6, 1, UIFont.Small)
+                        progress = 1
+                     end
+                     
+                     -- Draw Bar Background
+                     self:drawRect(barX, barY, barW, barH, 1, 0.8, 0.8, 0.8)
+                     self:drawRectBorder(barX, barY, barW, barH, 1, 0.3, 0.3, 0.3)
+                     -- Draw Progress
+                     self:drawRect(barX, barY, barW * progress, barH, 1, 0.2, 0.8, 0.2)
+                     
+                     -- Draw Level Number
+                     self:drawText("Lv " .. details.level, barX + barW + 10, barY - 2, 0, 0, 0, 1, UIFont.Small)
+                     
+                     -- Draw XP Remaining
+                     if details.max then
+                        local remaining = details.max - xp
+                        self:drawText("Next Level: " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
+                     else
+                        self:drawText("Max Level Reached", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
                      end
                 end
             end
@@ -85,17 +117,17 @@ function S4_IE_Jobs:render()
     end
 end
 
-function S4_IE_Jobs:GetCallCenterRank(xp)
-    if xp < 150 then return "Intern (Lvl 1)", 150
-    elseif xp < 400 then return "Junior (Lvl 2)", 400
-    elseif xp < 900 then return "Senior (Lvl 3)", 900
-    elseif xp < 1600 then return "Supervisor (Lvl 4)", 1600
-    elseif xp < 2500 then return "Manager (Lvl 5)", 2500
-    elseif xp < 4000 then return "Team Leader (Lvl 6)", 4000
-    elseif xp < 6000 then return "Dept. Head (Lvl 7)", 6000
-    elseif xp < 9000 then return "Director (Lvl 8)", 9000
-    elseif xp < 13000 then return "VP (Lvl 9)", 13000
-    else return "CEO (Lvl 10)", nil end
+function S4_IE_Jobs:GetCallCenterLevelDetails(xp)
+    if xp < 150 then return {level=1, min=0, max=150, rank="Intern"}
+    elseif xp < 400 then return {level=2, min=150, max=400, rank="Junior"}
+    elseif xp < 900 then return {level=3, min=400, max=900, rank="Senior"}
+    elseif xp < 1600 then return {level=4, min=900, max=1600, rank="Supervisor"}
+    elseif xp < 2500 then return {level=5, min=1600, max=2500, rank="Manager"}
+    elseif xp < 4000 then return {level=6, min=2500, max=4000, rank="Team Leader"}
+    elseif xp < 6000 then return {level=7, min=4000, max=6000, rank="Dept. Head"}
+    elseif xp < 9000 then return {level=8, min=6000, max=9000, rank="Director"}
+    elseif xp < 13000 then return {level=9, min=9000, max=13000, rank="VP"}
+    else return {level=10, min=13000, max=nil, rank="CEO"} end
 end
 
 function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
@@ -140,8 +172,8 @@ function S4_IE_Jobs:StartCallCenterJob()
     local computer = self.S4_IE.ComUI.ComObj
     self.S4_IE.ComUI:close()
     
-    -- Open Context Menu
-    local context = ISContextMenu.get(0, getMouseX(), getMouseY())
+    -- Open Context Menu - Offset by 20px to prevent accidental selection
+    local context = ISContextMenu.get(0, getMouseX() + 20, getMouseY() + 20)
     local data1 = {player=player, computer=computer, hours=1}
     local data2 = {player=player, computer=computer, hours=2}
     local data3 = {player=player, computer=computer, hours=3}

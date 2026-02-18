@@ -241,7 +241,6 @@ function S4_Action_Job_CallCenter:perform()
     local shiftKey = getShiftKey(jobId)
     local paymentMult = 1.0
     local flatPaymentBonus = 0
-    local eventNotes = {}
     local eventHaloLines = {}
 
     local hoursKey = "S4_Job_" .. jobId .. "_Hours"
@@ -369,7 +368,6 @@ function S4_Action_Job_CallCenter:perform()
         local pendingNextShiftBonus = pData[nextShiftBonusKey] or 0
         if pendingNextShiftBonus > 0 then
             paymentMult = paymentMult * (1 + pendingNextShiftBonus)
-            table.insert(eventNotes, "Speciality bonus +" .. tostring(math.floor(pendingNextShiftBonus * 100)) .. "%")
             table.insert(eventHaloLines, {
                 text = "Evento: bonus especial +" .. tostring(math.floor(pendingNextShiftBonus * 100)) .. "%",
                 color = "green"
@@ -380,14 +378,12 @@ function S4_Action_Job_CallCenter:perform()
         local eventId = self:rollDesignerEventId()
         if eventId == "bad_feedback" then
             paymentMult = paymentMult * 0.5
-            table.insert(eventNotes, "No le gusto tu trabajo (-50% pago)")
             table.insert(eventHaloLines, {
                 text = "Evento: No le gusto tu trabajo (-50%)",
                 color = "red"
             })
         elseif eventId == "tools_broken" then
             paymentMult = paymentMult * 0.8
-            table.insert(eventNotes, "Se te rompieron herramientas (-20% pago)")
             table.insert(eventHaloLines, {
                 text = "Evento: Herramientas rotas (-20%)",
                 color = "red"
@@ -395,14 +391,12 @@ function S4_Action_Job_CallCenter:perform()
         elseif eventId == "tip" then
             local tipBonus = math.floor((jobSalary2h * 0.5) * 0.15)
             flatPaymentBonus = flatPaymentBonus + tipBonus
-            table.insert(eventNotes, "Dejaron propina (+$" .. tostring(tipBonus) .. ")")
             table.insert(eventHaloLines, {
                 text = "Evento: Propina +$" .. tostring(tipBonus),
                 color = "green"
             })
         elseif eventId == "speciality_recommendation" then
             pData[nextShiftBonusKey] = 0.20
-            table.insert(eventNotes, "Recomendacion: proximo shift +20%")
             table.insert(eventHaloLines, {
                 text = "Evento: Proximo shift +20%",
                 color = "green"
@@ -471,9 +465,6 @@ function S4_Action_Job_CallCenter:perform()
         end -- Should not happen due to modulo, but safe check
         msg = msg .. " (Accumulated: " .. dailyHours .. "h / Next Pay in " .. needed .. "h)"
     end
-    if #eventNotes > 0 then
-        msg = msg .. " | " .. table.concat(eventNotes, " | ")
-    end
 
     -- Display message safely
     local function pushHalo(text, color)
@@ -489,15 +480,44 @@ function S4_Action_Job_CallCenter:perform()
         end
     end
 
-    pushHalo(msg, "green")
-    for _, line in ipairs(eventHaloLines) do
-        pushHalo(line.text, line.color)
+    local function pushHaloDelayed(text, color, delaySeconds)
+        if delaySeconds <= 0 or not Events or not Events.OnTick then
+            pushHalo(text, color)
+            return
+        end
+
+        local fps = PerformanceSettings.getLockFPS()
+        if not fps or fps <= 0 then
+            fps = 30
+        end
+        local targetTicks = math.floor(delaySeconds * fps)
+        if targetTicks < 1 then
+            targetTicks = 1
+        end
+
+        local ticks = 0
+        local tickHandler = nil
+        tickHandler = function()
+            ticks = ticks + 1
+            if ticks >= targetTicks then
+                pushHalo(text, color)
+                Events.OnTick.Remove(tickHandler)
+            end
+        end
+        Events.OnTick.Add(tickHandler)
     end
-    local deltaFromEvents = paymentAmount - basePaymentAmount
-    if deltaFromEvents < 0 then
-        pushHalo("Ajuste eventos: -$" .. tostring(math.abs(deltaFromEvents)), "red")
-    elseif deltaFromEvents > 0 then
-        pushHalo("Ajuste eventos: +$" .. tostring(deltaFromEvents), "green")
+
+    local eventDelaySeconds = 0
+    local eventDelayStep = 2
+    for _, line in ipairs(eventHaloLines) do
+        pushHaloDelayed(line.text, line.color, eventDelaySeconds)
+        eventDelaySeconds = eventDelaySeconds + eventDelayStep
+    end
+    -- Keep payment summary last so it remains visible after event penalties.
+    if eventDelaySeconds > 0 then
+        pushHaloDelayed(msg, "green", eventDelaySeconds)
+    else
+        pushHalo(msg, "green")
     end
 
     -- Finish

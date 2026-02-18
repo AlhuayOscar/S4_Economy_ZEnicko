@@ -161,6 +161,11 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
     }
 
+    S4_Category.ComputerIconData["Jobs"] = {
+        Name = "Jobs",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
+    }
+
     if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.Blackjack then
         S4_Category.ComputerIconData["BlackJack"] = {
             Name = "Black Jack",
@@ -573,6 +578,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:addChild(self.BlackJack)
             self:AddTaskBar(self.BlackJack)
         end
+    elseif internal == "Jobs" then
+        if self.Jobs then
+            if not self.Jobs:isVisible() then
+                self.Jobs:setVisible(true)
+            end
+            self.Jobs:bringToTop()
+        else
+            self.Jobs = S4_InternetExplorer:new(self)
+            self.Jobs:initialise()
+            self.Jobs.TitleName = "Knox Jobs - Internet Explorer"
+            self.Jobs.AddressText = "http://hind.com/Jobs/home"
+            self.Jobs.PageType = internal
+            self:addChild(self.Jobs)
+            self:AddTaskBar(self.Jobs)
+        end
+        self.TopApp = self.Jobs
     end
 end
 

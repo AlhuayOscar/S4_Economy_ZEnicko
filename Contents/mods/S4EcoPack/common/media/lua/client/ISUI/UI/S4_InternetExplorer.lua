@@ -8,7 +8,8 @@ local S4_IE = {
     GoodShop = S4_IE_GoodShop,
     GoodShopAdmin = S4_IE_GoodShopAdmin,
     BlackJack = S4_IE_BlackJack,
-    ZomBank = S4_IE_ZomBank
+    ZomBank = S4_IE_ZomBank,
+    Jobs = S4_IE_Jobs
 }
 
 function S4_InternetExplorer:initialise()

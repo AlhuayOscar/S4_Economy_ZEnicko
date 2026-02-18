@@ -1,0 +1,74 @@
+require "TimedActions/ISBaseTimedAction"
+
+S4_Action_Job_CallCenter = ISBaseTimedAction:derive("S4_Action_Job_CallCenter")
+
+function S4_Action_Job_CallCenter:isValid()
+    return true
+end
+
+function S4_Action_Job_CallCenter:update()
+    self.character:FaceDirection("S") -- Face south or towards computer?
+    -- Maybe just use anim
+    self.character:SetVariable("LootPosition", "Mid")
+end
+
+function S4_Action_Job_CallCenter:start()
+    self:setActionAnim("Loot")
+    self.character:SetVariable("LootPosition", "Mid")
+    -- self.sound = self.character:getEmitter():playSound("ReadBook") -- Optional sound
+end
+
+function S4_Action_Job_CallCenter:stop()
+    if self.sound then
+        self.character:getEmitter():stopSound(self.sound)
+    end
+    ISBaseTimedAction.stop(self)
+end
+
+function S4_Action_Job_CallCenter:perform()
+    if self.sound then
+        self.character:getEmitter():stopSound(self.sound)
+    end
+    
+    local hours = self.hours
+    local char = self.character
+    local stats = char:getStats()
+    
+    -- Apply Stats (Scale 0-1)
+    -- Hunger: 50% for 4 hours -> 0.125 per hour
+    stats:setHunger(stats:getHunger() + (0.125 * hours))
+    
+    -- Thirst: 25% for 4 hours -> 0.0625 per hour
+    stats:setThirst(stats:getThirst() + (0.0625 * hours))
+    
+    -- Fatigue: 50% for 4 hours -> 0.125 per hour
+    stats:setFatigue(stats:getFatigue() + (0.125 * hours))
+    
+    -- Stress: 45% for 4 hours -> 0.1125 per hour
+    stats:setStress(stats:getStress() + (0.1125 * hours))
+    
+    -- Job Leveling (Store on Player ModData)
+    local pData = char:getModData()
+    pData.S4_Job_CallCenter_Hours = (pData.S4_Job_CallCenter_Hours or 0) + hours
+    
+    -- Payment (Placeholder $10/hr)
+    -- In future, integrate with S4 Economy bank transfer
+    -- For now, just log XP
+    HaloTextHelper.addText(char, "Job Complete: " .. hours .. "h (Total XP: " .. pData.S4_Job_CallCenter_Hours .. ")", HaloTextHelper.getColorGreen())
+    
+    -- Finish
+    ISBaseTimedAction.perform(self)
+end
+
+function S4_Action_Job_CallCenter:new(character, hours)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    o.character = character
+    o.stopOnWalk = true
+    o.stopOnRun = true
+    o.hours = hours
+    o.maxTime = hours * 300 -- 300 ticks per hour (approx 10s IRL)
+    if character:isTimedActionInstant() then o.maxTime = 1; end
+    return o
+end

@@ -34,8 +34,9 @@ function S4_Action_Job_CallCenter:perform()
     local stats = char:getStats()
     
     -- Apply Stats (Scale 0-1)
-    -- Hunger: 50% for 4 hours -> 0.125 per hour
-    stats:setHunger(stats:getHunger() + (0.125 * hours))
+    -- Apply Stats (Scale 0-1)
+    -- Hunger: Reduced by 25% (was 0.125) -> ~0.09 per hour
+    stats:setHunger(stats:getHunger() + (0.09 * hours))
     
     -- Thirst: 25% for 4 hours -> 0.0625 per hour
     stats:setThirst(stats:getThirst() + (0.0625 * hours))
@@ -54,13 +55,14 @@ function S4_Action_Job_CallCenter:perform()
     bodyDamage:setUnhappynessLevel(bodyDamage:getUnhappynessLevel() + (5 * hours))
     
     -- Job Leveling (Store on Player ModData)
+    local xpGained = hours * 6 -- Equates to 6, 12, 18, 24 XP (Target: 5-25 range)
     local pData = char:getModData()
-    pData.S4_Job_CallCenter_Hours = (pData.S4_Job_CallCenter_Hours or 0) + hours
+    pData.S4_Job_CallCenter_Hours = (pData.S4_Job_CallCenter_Hours or 0) + xpGained
     
     -- Payment (Placeholder $10/hr)
     -- In future, integrate with S4 Economy bank transfer
     -- For now, just log XP
-    local msg = "Job Complete: " .. hours .. "h (Total XP: " .. (pData.S4_Job_CallCenter_Hours or 0) .. ")"
+    local msg = "Job Complete: " .. hours .. "h (XP Gained: " .. xpGained .. " | Total: " .. pData.S4_Job_CallCenter_Hours .. ")"
     
     -- Display message safely
     if char.setHaloNote then

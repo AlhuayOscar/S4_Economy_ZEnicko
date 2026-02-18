@@ -62,7 +62,18 @@ function S4_IE_Jobs:render()
                 -- Hover effect
                 if self:isMouseOverBox(x, y, self.gridSize, self.gridSize) then
                      self:drawRect(x, y, self.gridSize, self.gridSize, 0.2, 0, 0, 1)
-                     self:drawText("Call Center Part Time", 20, self.height - 40, 0, 0, 0, 1, UIFont.Small)
+                     
+                     local pData = self.player:getModData()
+                     local xp = pData.S4_Job_CallCenter_Hours or 0
+                     local rank, nextXp = self:GetCallCenterRank(xp)
+                     
+                     self:drawText("Job: Call Center", 20, self.height - 55, 0, 0, 0, 1, UIFont.Medium)
+                     self:drawText("Rank: " .. rank, 20, self.height - 35, 0, 0, 0.6, 1, UIFont.Small)
+                     if nextXp then
+                        self:drawText("XP: " .. xp .. " / " .. nextXp, 20, self.height - 20, 0, 0, 0.6, 1, UIFont.Small)
+                     else
+                        self:drawText("XP: " .. xp .. " (Max Rank)", 20, self.height - 20, 0, 0, 0.6, 1, UIFont.Small)
+                     end
                 end
             end
             
@@ -72,6 +83,14 @@ function S4_IE_Jobs:render()
         x = 20
         y = y + self.gridSize + self.gridGap
     end
+end
+
+function S4_IE_Jobs:GetCallCenterRank(xp)
+    if xp < 150 then return "Intern (Lvl 1)", 150
+    elseif xp < 400 then return "Junior (Lvl 2)", 400
+    elseif xp < 900 then return "Senior (Lvl 3)", 900
+    elseif xp < 1600 then return "Supervisor (Lvl 4)", 1600
+    else return "Manager (Lvl 5)", nil end
 end
 
 function S4_IE_Jobs:isMouseOverBox(x, y, w, h)

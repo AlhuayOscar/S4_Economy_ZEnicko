@@ -6,12 +6,62 @@ function S4_Action_Job_CallCenter:isValid()
     return true
 end
 
+function S4_Action_Job_CallCenter:calculatePainRisk()
+    local char = self.character
+    local pData = char:getModData()
+    local gameTime = GameTime:getInstance()
+    local currentDay = gameTime:getDay()
+    local lastDay = pData.S4_Job_CallCenter_LastDay or -1
+    local dailyHours = pData.S4_Job_CallCenter_DailyHours or 0
+    
+    -- Reset check (simulation)
+    if currentDay ~= lastDay then dailyHours = 0 end
+    
+    -- Base Risk
+    local risk = 10
+    
+    -- 1. Daily Hours Factor (Every 2 hours adds 15% risk)
+    risk = risk + (math.floor(dailyHours / 2) * 15)
+    
+    -- 2. Stats Factor
+    local stats = char:getStats()
+    risk = risk + (stats:getHunger() * 30)   -- 0-1 scale
+    risk = risk + (stats:getFatigue() * 50)  -- Fatigue is major factor
+    risk = risk + (stats:getStress() * 25)
+    risk = risk + (stats:getThirst() * 15)
+    
+    -- 3. Level Factor (Higher levels = Less risk)
+    -- Calculate Level
+    local currentXP = pData.S4_Job_CallCenter_Hours or 0
+    local level = 1
+    if currentXP >= 13000 then level = 10
+    elseif currentXP >= 9000 then level = 9
+    elseif currentXP >= 6000 then level = 8
+    elseif currentXP >= 4000 then level = 7
+    elseif currentXP >= 2500 then level = 6
+    elseif currentXP >= 1600 then level = 5
+    elseif currentXP >= 900 then level = 4
+    elseif currentXP >= 400 then level = 3
+    elseif currentXP >= 150 then level = 2
+    end
+    
+    -- Factor: Level 1 = 1.0x, Level 10 = 0.5x (Examples)
+    -- Let's say Level 10 is very resilient.
+    local resilience = (level - 1) * 5 -- 0 to 45 reduction?
+    risk = risk - resilience
+    
+    if risk < 0 then risk = 0 end
+    if risk > 90 then risk = 90 end -- Cap at 90%
+    
+    return risk
+end
+
 function S4_Action_Job_CallCenter:update()
     self.character:faceThisObject(self.computer)
     self.character:SetVariable("LootPosition", "Mid")
     
-    -- Random ambient sound (20% chance per job, checked periodically)
-    if self.soundChance and not self.soundPlayed and ZombRand(100) == 0 then
+    -- Pain Sound Logic (Check triggered by start calculation)
+    if self.shouldPlayPain and not self.soundPlayed and ZombRand(100) == 0 then
         local sound = "MalePain"
         if self.character:isFemale() then sound = "FemalePain" end
         self.character:getEmitter():playSound(sound)
@@ -24,6 +74,11 @@ function S4_Action_Job_CallCenter:start()
     self.character:SetVariable("LootPosition", "Mid")
     self:setOverrideHandModels(nil, nil)
     self.sound = self.character:getEmitter():playSound("S4_Typing")
+    
+    -- Calculate Risk for Sound
+    local risk = self:calculatePainRisk()
+    self.shouldPlayPain = ZombRand(100) < risk
+    self.soundPlayed = false
 end
 
 function S4_Action_Job_CallCenter:stop()
@@ -124,7 +179,6 @@ function S4_Action_Job_CallCenter:perform()
                       sendClientCommand(char, "S4ED", "AddMoney", args)
                       
                       -- Log
-                      -- Log
                       local ts = "0000-00-00 00:00:00"
                       if S4_Utils and S4_Utils.getLogTime then
                           ts = S4_Utils.getLogTime()
@@ -137,8 +191,9 @@ function S4_Action_Job_CallCenter:perform()
     end
     pData.S4_Job_CallCenter_DailyHours = dailyHours
     
-    -- Back Pain Inducer: Level <= 3 and DailyHours > 4
-    if level <= 3 and dailyHours > 4 then
+    -- Back Pain Inducer: Calculated Risk
+    local painRisk = self:calculatePainRisk()
+    if ZombRand(100) < painRisk then
         local bodyPart = nil
         local parts = bodyDamage:getBodyParts()
         for i=0, parts:size()-1 do
@@ -154,7 +209,8 @@ function S4_Action_Job_CallCenter:perform()
         
         if bodyPart then
              local currentPain = bodyPart:getAdditionalPain()
-             bodyPart:setAdditionalPain(currentPain + 15) -- Mild pain
+             local intensity = 10 + (painRisk / 3) -- Base 10 + scaling
+             bodyPart:setAdditionalPain(currentPain + intensity)
         end
     end
     

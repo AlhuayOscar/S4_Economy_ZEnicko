@@ -43,63 +43,104 @@ function S4_IE_Jobs:initialise()
         {
             name="Insurance Seller", id="Insurance", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2, salary=130,
             requirements={
-                {types={"Base.Pen", "Base.BluePen"}, name="Pen"},
-                {types={"Base.Notebook"}, name="Notebook"}
+                {types={"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer"}, name="Suit Jacket"},
+                {types={"Base.Trousers_Suit", "Base.Trousers_SuitWhite"}, name="Suit Trousers"},
+                {types={"Base.Shirt_FormalWhite", "Base.Shirt_FormalTINT"}, name="Formal Shirt"},
+                {types={"Base.Tie_Full", "Base.Tie_Worn"}, name="Tie"},
+                {types={"Base.Pen", "Base.BluePen"}, name="Pen"}
             }
         },
         {
             name="Programmer", id="Programmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3, salary=160,
             requirements={
-                {types={"Base.DigitalWatch", "Base.AlarmClock2"}, name="Digital Watch"}
+                {types={"Base.CreditCard"}, name="Business Card(CreditCard)"},
+                {types={"Base.DigitalWatch", "Base.AlarmClock2"}, name="Digital Watch"},
+                {types={"Radio.CDPlayer"}, name="CD Player"},
+                {types={"Base.Hat_VisorBlack", "Base.Hat_VisorRed", "Base.Hat_VisorWhite"}, name="Visor"},
+                {types={"Base.CordlessPhone"}, name="Cordless Phone"},
+                {types={"Base.Remote"}, name="Pager(Remote)"}
             }
         },
         {
             name="Banker", id="Banker", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4, salary=150,
             requirements={
-                {types={"Base.Pen", "Base.RedPen"}, name="Pen"},
-                {types={"Base.Notebook", "Base.SheetPaper"}, name="Paper/Notebook"}
+                {types={"Base.SuitJacket", "Base.SuitJacket_Tiny"}, name="Suit Jacket"},
+                {types={"Base.Tie_Full"}, name="Tie"},
+                {types={"Base.Shirt_FormalWhite"}, name="Formal Shirt"},
+                {types={"Base.Remote"}, name="Pager(Remote)"},
+                -- {types={"Base.Calculator"}, name="Calculator"}, -- Skipped (Non-vanilla?)
+                {types={"Base.SheetPaper"}, name="Index Card(Paper)"},
+                {types={"Base.Notebook"}, name="Paperwork(Notebook)"},
+                {types={"Base.Money"}, name="Stock Certificate(Money)"}
             }
         },
         {
-            name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5, salary=110,
+            name="Cleaner", id="Cleaner", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5, salary=170,
             requirements={
                 {types={"Base.Bleach"}, name="Bleach"},
-                {types={"Base.DishCloth", "Base.BathTowel", "Base.KitchenTowel"}, name="Towel/Cloth"}
+                {types={"Base.BathTowel", "Base.DishCloth"}, name="Towel"},
+                {types={"Base.Garbagebag"}, name="Garbage Bag"},
+                {types={"Base.Remote"}, name="Pager(Remote)"},
+                {types={"Base.CameraDisposable"}, name="Disposable Camera"},
+                {types={"Base.Cigarettes"}, name="Cigarettes"},
+                {types={"Base.CreditCard", "Base.Paper"}, name="Passport(ID)"},
+                {customCheck="Firearm", name="Firearm & Ammo (7+)"}
             }
         },
         {
-            name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=135,
+            name="Journalist", id="Journalist", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1, salary=195,
             requirements={
-                {types={"Base.Camera", "Base.CameraDisposable"}, name="Camera"},
-                {types={"Base.Notebook"}, name="Notebook"},
-                {types={"Base.Pen", "Base.Pencil"}, name="Pen"}
+                {types={"Base.Camera", "Base.Camcorder"}, name="Video Camera"},
+                {types={"Base.Shirt_FormalWhite"}, name="Formal Shirt"},
+                {types={"Base.Tie_Full"}, name="Tie"},
+                {types={"Radio.Microphone"}, name="Microphone"},
+                {types={"Base.CreditCard"}, name="Press Badge(Card)"}
             }
         },
         {
-            name="Spy", id="Spy", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4, salary=180,
+            name="Spy", id="Spy", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.4, salary=405,
             requirements={
-                {types={"Base.Camera"}, name="Camera"},
-                {types={"Radio.WalkieTalkie"}, name="Walkie Talkie"}
+                {types={"Base.Bleach"}, name="Bleach"},
+                {types={"Base.BathTowel", "Base.DishCloth"}, name="Towel"},
+                {types={"Base.Garbagebag"}, name="Garbage Bag"},
+                {types={"Base.Remote"}, name="Pager(Remote)"},
+                {types={"Base.CameraDisposable"}, name="Disposable Camera"},
+                {types={"Base.Cigarettes"}, name="Cigarettes"},
+                {types={"Base.CreditCard", "Base.Paper"}, name="Passport(ID)"},
+                {customCheck="Firearm", name="Firearm & Ammo (7+)"},
+                {types={"Base.Letter"}, name="Handwritten Letter"},
+                {types={"Base.Photograph"}, name="Photograph"}
             }
         },
     }
 end
 
--- ... render ... getJobLevelDetails ... isMouseOverBox ... 
+-- ... render ... isMouseOverBox ... onMouseDown ...
 
-function S4_IE_Jobs:onMouseDown(x, y)
-    local startX, startY = 20, 20
-    local col = math.floor((x - startX) / (self.gridSize + self.gridGap))
-    local row = math.floor((y - startY) / (self.gridSize + self.gridGap))
-    
-    if col >= 0 and col < self.cols and row >= 0 and row < self.rows then
-        local index = (row * self.cols) + col + 1
-        local job = self.Jobs[index]
-        
-        if job then
-            self:StartSelectedJob(job)
+function S4_IE_Jobs:CheckFirearm(inv)
+    -- Find any firearm and check ammo
+    local items = inv:getItems()
+    for i=0, items:size()-1 do
+        local item = items:get(i)
+        if item:IsWeapon() and item:isAimedFirearm() then
+            -- Found gun, check ammo
+            local ammoType = item:getAmmoType()
+            if ammoType then
+                local ammoCount = inv:getItemCountRecurse(ammoType)
+                if ammoCount >= 7 then
+                    return true
+                end
+                -- Also check loaded ammo?
+                if item:getCurrentAmmoCount() >= 7 then
+                    return true
+                end
+            elseif item:getAmmo() or item:getCurrentAmmoCount() >= 7 then
+                 -- For guns without separate ammo items (unlikely in PZ)
+                 return true
+            end
         end
     end
+    return false
 end
 
 function S4_IE_Jobs:StartSelectedJob(job)
@@ -111,12 +152,18 @@ function S4_IE_Jobs:StartSelectedJob(job)
         local missing = {}
         for _, req in ipairs(job.requirements) do
             local hasItem = false
-            for _, typeName in ipairs(req.types) do
-                if inv:containsTypeRecurse(typeName) then
-                    hasItem = true
-                    break
+            
+            if req.customCheck == "Firearm" then
+                hasItem = self:CheckFirearm(inv)
+            elseif req.types then
+                for _, typeName in ipairs(req.types) do
+                    if inv:containsTypeRecurse(typeName) then
+                        hasItem = true
+                        break
+                    end
                 end
             end
+            
             if not hasItem then
                 table.insert(missing, req.name)
             end

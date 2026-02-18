@@ -9,6 +9,14 @@ end
 function S4_Action_Job_CallCenter:update()
     self.character:faceThisObject(self.computer)
     self.character:SetVariable("LootPosition", "Mid")
+    
+    -- Random ambient sound (20% chance per job, checked periodically)
+    if self.soundChance and not self.soundPlayed and ZombRand(100) == 0 then
+        local sound = "MaleZombieIdle"
+        if self.character:isFemale() then sound = "FemaleZombieIdle" end
+        self.character:getEmitter():playSound(sound)
+        self.soundPlayed = true
+    end
 end
 
 function S4_Action_Job_CallCenter:start()
@@ -83,13 +91,54 @@ function S4_Action_Job_CallCenter:perform()
     
     -- Job Leveling (Store on Player ModData)
     local xpGained = hours * 6 -- Equates to 6, 12, 18, 24 XP (Target: 5-25 range)
-    local pData = char:getModData()
-    pData.S4_Job_CallCenter_Hours = (pData.S4_Job_CallCenter_Hours or 0) + xpGained
+    -- pData is local Java ModData, distinct from S4_PlayerData global table
+    pData.S4_Job_CallCenter_Hours = currentXP + xpGained
     
-    -- Payment (Placeholder $10/hr)
-    -- In future, integrate with S4 Economy bank transfer
-    -- For now, just log XP
-    local msg = "Job Complete: " .. hours .. "h (XP Gained: " .. xpGained .. " | Total: " .. pData.S4_Job_CallCenter_Hours .. ")"
+    -- Payment Logic
+    local gameTime = GameTime:getInstance()
+    local currentDay = gameTime:getDay()
+    local lastDay = pData.S4_Job_CallCenter_LastDay or -1
+    local dailyHours = pData.S4_Job_CallCenter_DailyHours or 0
+    
+    if currentDay ~= lastDay then
+        dailyHours = 0
+        pData.S4_Job_CallCenter_LastDay = currentDay
+    end
+    
+    dailyHours = dailyHours + hours
+    local paymentAmount = 0
+    
+    if dailyHours >= 2 then
+        local payments = math.floor(dailyHours / 2)
+        if payments > 0 then
+            paymentAmount = payments * 200
+            dailyHours = dailyHours % 2 -- Remainder
+            
+            -- Send Payment Command
+            local globalPlayerData = ModData.get("S4_PlayerData")
+            if globalPlayerData then
+                 local username = char:getUsername()
+                 local myData = globalPlayerData[username]
+                 if myData and myData.MainCard then
+                      local args = {myData.MainCard, paymentAmount}
+                      sendClientCommand(char, "S4ED", "AddMoney", args)
+                      
+                      -- Log
+                      local logArgs = {myData.MainCard, gameTime:getTimestamp(), "Salary", paymentAmount, "Call Center Zomboids Co.", username}
+                      sendClientCommand(char, "S4ED", "AddCardLog", logArgs)
+                 end
+            end
+        end
+    end
+    pData.S4_Job_CallCenter_DailyHours = dailyHours
+    
+    -- Payment (Placeholder $10/hr removed, using daily wage)
+    local msg = "Job Complete: " .. hours .. "h (XP: " .. xpGained .. ")"
+    if paymentAmount > 0 then
+        msg = msg .. " Paid: $" .. paymentAmount
+    else
+        msg = msg .. " (Total Today: " .. (pData.S4_Job_CallCenter_DailyHours + (paymentAmount/200)*2) .. "h)" -- Approximate display
+    end
     
     -- Display message safely
     if char.setHaloNote then
@@ -113,5 +162,10 @@ function S4_Action_Job_CallCenter:new(character, computer, hours)
     o.hours = hours
     o.maxTime = hours * 300 -- 300 ticks per hour (approx 10s IRL)
     if character:isTimedActionInstant() then o.maxTime = 1; end
+    
+    -- Sound Probability (20%)
+    o.soundChance = ZombRand(100) < 20
+    o.soundPlayed = false
+    
     return o
 end

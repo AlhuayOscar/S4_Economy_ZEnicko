@@ -172,8 +172,8 @@ function S4_IE_Jobs:StartCallCenterJob()
     local computer = self.S4_IE.ComUI.ComObj
     self.S4_IE.ComUI:close()
     
-    -- Open Context Menu - Offset by 20px to prevent accidental selection
-    local context = ISContextMenu.get(0, getMouseX() + 20, getMouseY() + 20)
+    -- Open Context Menu - Offset by 60px to prevent accidental selection
+    local context = ISContextMenu.get(0, getMouseX() + 60, getMouseY())
     local data1 = {player=player, computer=computer, hours=1}
     local data2 = {player=player, computer=computer, hours=2}
     local data3 = {player=player, computer=computer, hours=3}

@@ -116,7 +116,130 @@ function S4_IE_Jobs:initialise()
     }
 end
 
--- ... render ... isMouseOverBox ... onMouseDown ...
+function S4_IE_Jobs:render()
+    ISPanel.render(self)
+    
+    local x, y = 20, 20
+    local index = 1
+    
+    -- Draw Job Grid
+    for r = 1, self.rows do
+        for c = 1, self.cols do
+            local job = self.Jobs[index]
+            
+            if job then
+                -- Box background
+                self:drawRect(x, y, self.gridSize, self.gridSize, 1, 0.9, 0.9, 0.9)
+                self:drawRectBorder(x, y, self.gridSize, self.gridSize, 1, 0.5, 0.5, 0.5)
+                
+                -- Icon
+                local tex = getTexture(job.icon)
+                if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end
+                
+                if tex then
+                    self:drawTextureScaled(tex, x + 8, y + 8, 48, 48, 1)
+                else
+                    self:drawTextCentre(job.name, x + 32, y + 24, 0, 0, 0, 1, UIFont.Small)
+                end
+                
+                -- Hover effect
+                if self:isMouseOverBox(x, y, self.gridSize, self.gridSize) then
+                     self:drawRect(x, y, self.gridSize, self.gridSize, 0.2, 0, 0, 1)
+                     
+                     -- Tooltip Data
+                     local pData = self.player:getModData()
+                     local xp = pData["S4_Job_" .. job.id .. "_Hours"] or 0
+                     local details = self:GetJobLevelDetails(xp, job.difficulty)
+                     
+                     -- Tooltip Logic
+                     local tooltipH = 70
+                     local tooltipY = self.height - tooltipH - 10
+                     
+                     self:drawText("Job: " .. job.name, 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
+                     self:drawText("Rank: " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
+                     
+                     -- Progress Bar
+                     local barW = 150
+                     local barH = 10
+                     local barX = 20
+                     local barY = tooltipY + 45
+                     
+                     local progress = 0
+                     if details.max then
+                        progress = (xp - details.min) / (details.max - details.min)
+                        if progress > 1 then progress = 1 end
+                        if progress < 0 then progress = 0 end
+                     else
+                        progress = 1
+                     end
+                     
+                     self:drawRect(barX, barY, barW, barH, 1, 0.8, 0.8, 0.8)
+                     self:drawRectBorder(barX, barY, barW, barH, 1, 0.3, 0.3, 0.3)
+                     self:drawRect(barX, barY, barW * progress, barH, 1, 0.2, 0.8, 0.2)
+                     
+                     self:drawText("Lv " .. details.level, barX + barW + 10, barY - 2, 0, 0, 0, 1, UIFont.Small)
+                     
+                     if details.max then
+                        local remaining = math.ceil(details.max - xp)
+                        self:drawText("Next Level: " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
+                     else
+                        self:drawText("Max Level Reached", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
+                     end
+                end
+            end
+            
+            x = x + self.gridSize + self.gridGap
+            index = index + 1
+        end
+        x = 20
+        y = y + self.gridSize + self.gridGap
+    end
+end
+
+function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
+    -- Base thresholds extended by Difficulty
+    local function t(val) return math.ceil(val * difficulty) end
+    
+    local thresholds = {
+        t(150), t(400), t(900), t(1600), t(2500), 
+        t(4000), t(6000), t(9000), t(13000)
+    }
+    
+    local ranks = {
+        "Intern", "Junior", "Senior", "Supervisor", "Manager",
+        "Team Leader", "Dept. Head", "Director", "VP", "CEO"
+    }
+
+    if xp < thresholds[1] then return {level=1, min=0, max=thresholds[1], rank=ranks[1]} end
+    for i=1, 8 do
+        -- Check if it exists in table
+        if thresholds[i+1] and xp < thresholds[i+1] then
+            return {level=i+1, min=thresholds[i], max=thresholds[i+1], rank=ranks[i+1]}
+        end
+    end
+    return {level=10, min=thresholds[9] or 13000, max=nil, rank=ranks[10]} 
+end
+
+function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
+    local mx = self:getMouseX()
+    local my = self:getMouseY()
+    return mx >= x and mx <= x + w and my >= y and my <= y + h
+end
+
+function S4_IE_Jobs:onMouseDown(x, y)
+    local startX, startY = 20, 20
+    local col = math.floor((x - startX) / (self.gridSize + self.gridGap))
+    local row = math.floor((y - startY) / (self.gridSize + self.gridGap))
+    
+    if col >= 0 and col < self.cols and row >= 0 and row < self.rows then
+        local index = (row * self.cols) + col + 1
+        local job = self.Jobs[index]
+        
+        if job then
+            self:StartSelectedJob(job)
+        end
+    end
+end
 
 function S4_IE_Jobs:CheckFirearm(inv)
     -- Find any firearm and check ammo
@@ -206,5 +329,6 @@ function S4_IE_Jobs.OnSelectTimeStatic(data)
     local player = data.player
     local computer = data.computer
     local hours = data.hours
-    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours))
+    local job = data.job
+    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours, job))
 end

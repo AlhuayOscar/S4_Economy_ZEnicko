@@ -111,12 +111,52 @@ function S4_IE_Jobs:StartCallCenterJob()
          return
     end
 
-    -- Create context menu for duration (1 to 4 hours)
-    local context = ISContextMenu.get(0, getMouseX(), getMouseY())
-    context:addOption("Work 1 Hour", self, self.OnSelectTime, 1)
-    context:addOption("Work 2 Hours", self, self.OnSelectTime, 2)
-    context:addOption("Work 3 Hours", self, self.OnSelectTime, 3)
-    context:addOption("Work 4 Hours", self, self.OnSelectTime, 4)
+    -- Create Buttons for duration (In-UI to avoid Z-order issues)
+    self:CreateDurationButtons()
+end
+
+function S4_IE_Jobs:CreateDurationButtons()
+    if self.DurationBtns then return end -- Already open
+    
+    self.DurationBtns = {}
+    local btnW, btnH = 100, 25
+    local startY = (self.height / 2) - ((btnH * 5) / 2)
+    local centerX = (self.width / 2) - (btnW / 2)
+    
+    -- Background blocker (optional, but good for UX)
+    -- Just treating it as a state implicitly
+    
+    for i=1, 4 do
+        local btn = ISButton:new(centerX, startY + (i-1)*(btnH+5), btnW, btnH, "Work " .. i .. " Hour(s)", self, S4_IE_Jobs.OnDurationClick)
+        btn.internal = i
+        btn:initialise()
+        btn:instantiate()
+        btn.borderColor = {r=1, g=1, b=1, a=1}
+        self:addChild(btn)
+        table.insert(self.DurationBtns, btn)
+    end
+    
+    -- Cancel Button
+    local cancelBtn = ISButton:new(centerX, startY + 4*(btnH+5), btnW, btnH, "Cancel", self, S4_IE_Jobs.CloseDurationMenu)
+    cancelBtn:initialise()
+    cancelBtn:instantiate()
+    cancelBtn.borderColor = {r=1, g=0, b=0, a=1}
+    self:addChild(cancelBtn)
+    table.insert(self.DurationBtns, cancelBtn)
+end
+
+function S4_IE_Jobs:CloseDurationMenu()
+    if self.DurationBtns then
+        for _, btn in ipairs(self.DurationBtns) do
+            self:removeChild(btn)
+        end
+        self.DurationBtns = nil
+    end
+end
+
+function S4_IE_Jobs:OnDurationClick(button)
+    self:CloseDurationMenu()
+    self:OnSelectTime(button.internal)
 end
 
 function S4_IE_Jobs:OnSelectTime(hours)

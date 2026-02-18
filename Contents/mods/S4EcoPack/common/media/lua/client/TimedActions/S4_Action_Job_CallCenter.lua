@@ -60,7 +60,10 @@ function S4_Action_Job_CallCenter:perform()
     -- Payment (Placeholder $10/hr)
     -- In future, integrate with S4 Economy bank transfer
     -- For now, just log XP
-    HaloTextHelper.addText(char, "Job Complete: " .. hours .. "h (Total XP: " .. pData.S4_Job_CallCenter_Hours .. ")", HaloTextHelper.getColorGreen())
+    local msg = "Job Complete: " .. hours .. "h (Total XP: " .. pData.S4_Job_CallCenter_Hours .. ")"
+    if char:isPlayer() then -- Only clear validation
+        char:setHaloNote(msg)
+    end
     
     -- Finish
     ISBaseTimedAction.perform(self)

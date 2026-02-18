@@ -429,6 +429,6 @@ function S4Shop.SyncShop(player, args)
         sendServerCommand(player, "S4SD", "SyncResult", {success = false, hadChanges = false})
         return
     end
-    local success, hadChanges = applyShopDataFromLua(true, true)
+    local success, hadChanges = applyShopDataFromLua(true, false)
     sendServerCommand(player, "S4SD", "SyncResult", {success = success, hadChanges = hadChanges})
 end

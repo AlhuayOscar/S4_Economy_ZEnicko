@@ -24,6 +24,17 @@ function S4_IE_Jobs:initialise()
     self.gridGap = 10
     self.cols = 4
     self.rows = 3
+    
+    self.Jobs = {
+        {name="Call Center", id="CallCenter", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
+        {name="Burger Flipper", id="BurgerFlipper", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=0.8}, -- Easier, faster leveling
+        {name="Mechanic", id="Mechanic", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.2}, -- Harder
+        {name="Security", id="Security", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
+        {name="Doctor", id="Doctor", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.5}, -- Hardest
+        {name="Farmer", id="Farmer", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.0},
+        {name="Teacher", id="Teacher", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.1},
+        {name="Chef", id="Chef", icon="media/textures/S4_Icon/Icon_64_CallCenter.png", difficulty=1.3},
+    }
 end
 
 function S4_IE_Jobs:render()
@@ -35,44 +46,37 @@ function S4_IE_Jobs:render()
     -- Draw Job Grid
     for r = 1, self.rows do
         for c = 1, self.cols do
-            -- Box background
-            self:drawRect(x, y, self.gridSize, self.gridSize, 1, 0.9, 0.9, 0.9)
-            self:drawRectBorder(x, y, self.gridSize, self.gridSize, 1, 0.5, 0.5, 0.5)
+            local job = self.Jobs[index]
             
-            -- First Item: Call Center
-            if index == 1 then
-                -- Draw Icon
-                -- User requested Microphone Icon from S4_Icon
-                local tex = getTexture("media/textures/S4_Icon/Icon_64_CallCenter.png") 
-                if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end -- Fallback
-
+            if job then
+                -- Box background
+                self:drawRect(x, y, self.gridSize, self.gridSize, 1, 0.9, 0.9, 0.9)
+                self:drawRectBorder(x, y, self.gridSize, self.gridSize, 1, 0.5, 0.5, 0.5)
+                
+                -- Icon
+                local tex = getTexture(job.icon)
+                if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end
+                
                 if tex then
                     self:drawTextureScaled(tex, x + 8, y + 8, 48, 48, 1)
                 else
-                     -- Manual centering to avoid nil error on drawTextCentre
-                     local text1 = "Call"
-                     local text2 = "Center"
-                     local font = UIFont.Small
-                     local w1 = getTextManager():MeasureStringX(font, text1)
-                     local w2 = getTextManager():MeasureStringX(font, text2)
-                     self:drawText(text1, x + (self.gridSize/2) - (w1/2), y + 16, 0, 0, 0, 1, font)
-                     self:drawText(text2, x + (self.gridSize/2) - (w2/2), y + 32, 0, 0, 0, 1, font)
+                    self:drawTextCentre(job.name, x + 32, y + 24, 0, 0, 0, 1, UIFont.Small)
                 end
                 
                 -- Hover effect
                 if self:isMouseOverBox(x, y, self.gridSize, self.gridSize) then
                      self:drawRect(x, y, self.gridSize, self.gridSize, 0.2, 0, 0, 1)
                      
+                     -- Tooltip Data
                      local pData = self.player:getModData()
-                     local xp = pData.S4_Job_CallCenter_Hours or 0
-                     local details = self:GetCallCenterLevelDetails(xp)
+                     local xp = pData["S4_Job_" .. job.id .. "_Hours"] or 0
+                     local details = self:GetJobLevelDetails(xp, job.difficulty)
                      
-                     -- Tooltip Background
+                     -- Tooltip Logic
                      local tooltipH = 70
                      local tooltipY = self.height - tooltipH - 10
-                     -- self:drawRect(15, tooltipY, 200, tooltipH, 0.8, 0, 0, 0) -- Optional bg
                      
-                     self:drawText("Job: Call Center", 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
+                     self:drawText("Job: " .. job.name, 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
                      self:drawText("Rank: " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
                      
                      -- Progress Bar
@@ -90,18 +94,14 @@ function S4_IE_Jobs:render()
                         progress = 1
                      end
                      
-                     -- Draw Bar Background
                      self:drawRect(barX, barY, barW, barH, 1, 0.8, 0.8, 0.8)
                      self:drawRectBorder(barX, barY, barW, barH, 1, 0.3, 0.3, 0.3)
-                     -- Draw Progress
                      self:drawRect(barX, barY, barW * progress, barH, 1, 0.2, 0.8, 0.2)
                      
-                     -- Draw Level Number
                      self:drawText("Lv " .. details.level, barX + barW + 10, barY - 2, 0, 0, 0, 1, UIFont.Small)
                      
-                     -- Draw XP Remaining
                      if details.max then
-                        local remaining = details.max - xp
+                        local remaining = math.ceil(details.max - xp)
                         self:drawText("Next Level: " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
                      else
                         self:drawText("Max Level Reached", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
@@ -117,17 +117,27 @@ function S4_IE_Jobs:render()
     end
 end
 
-function S4_IE_Jobs:GetCallCenterLevelDetails(xp)
-    if xp < 150 then return {level=1, min=0, max=150, rank="Intern"}
-    elseif xp < 400 then return {level=2, min=150, max=400, rank="Junior"}
-    elseif xp < 900 then return {level=3, min=400, max=900, rank="Senior"}
-    elseif xp < 1600 then return {level=4, min=900, max=1600, rank="Supervisor"}
-    elseif xp < 2500 then return {level=5, min=1600, max=2500, rank="Manager"}
-    elseif xp < 4000 then return {level=6, min=2500, max=4000, rank="Team Leader"}
-    elseif xp < 6000 then return {level=7, min=4000, max=6000, rank="Dept. Head"}
-    elseif xp < 9000 then return {level=8, min=6000, max=9000, rank="Director"}
-    elseif xp < 13000 then return {level=9, min=9000, max=13000, rank="VP"}
-    else return {level=10, min=13000, max=nil, rank="CEO"} end
+function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
+    -- Base thresholds extended by Difficulty
+    local function t(val) return math.ceil(val * difficulty) end
+    
+    local thresholds = {
+        t(150), t(400), t(900), t(1600), t(2500), 
+        t(4000), t(6000), t(9000), t(13000)
+    }
+    
+    local ranks = {
+        "Intern", "Junior", "Senior", "Supervisor", "Manager",
+        "Team Leader", "Dept. Head", "Director", "VP", "CEO"
+    }
+
+    if xp < thresholds[1] then return {level=1, min=0, max=thresholds[1], rank=ranks[1]} end
+    for i=1, 8 do
+        if xp < thresholds[i+1] then
+            return {level=i+1, min=thresholds[i], max=thresholds[i+1], rank=ranks[i+1]}
+        end
+    end
+    return {level=10, min=thresholds[9], max=nil, rank=ranks[10]} 
 end
 
 function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
@@ -137,10 +147,21 @@ function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
 end
 
 function S4_IE_Jobs:onMouseDown(x, y)
-    -- Check if clicked first box
-    local boxX, boxY = 20, 20
-    if x >= boxX and x <= boxX + self.gridSize and y >= boxY and y <= boxY + self.gridSize then
-        self:StartCallCenterJob()
+    local startX, startY = 20, 20
+    local col = math.floor((x - startX) / (self.gridSize + self.gridGap))
+    local row = math.floor((y - startY) / (self.gridSize + self.gridGap))
+    
+    if col >= 0 and col < self.cols and row >= 0 and row < self.rows then
+        local index = (row * self.cols) + col + 1
+        local job = self.Jobs[index]
+        
+        if job then
+            if job.id == "CallCenter" then
+                self:StartCallCenterJob()
+            else
+                self.S4_IE.ComUI:AddMsgBox("Job Info", nil, "Coming Soon:", job.name .. " is under construction.", "")
+            end
+        end
     end
 end
 

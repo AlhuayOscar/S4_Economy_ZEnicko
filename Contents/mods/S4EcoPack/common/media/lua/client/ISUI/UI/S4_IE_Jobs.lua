@@ -127,6 +127,7 @@ function S4_IE_Jobs:OnSelectTime(hours)
     -- Fatigue: 12.5 per hour (Total 50 for 4 hours)
     -- Stress: 11.25 per hour (Total 45 for 4 hours)
     
-    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, hours))
+    local computer = self.S4_IE.ComUI.ComObj
+    ISTimedActionQueue.add(S4_Action_Job_CallCenter:new(player, computer, hours))
     self.S4_IE:close() -- Close browser while working? Or keep open? Usually better to close or minimize.
 end

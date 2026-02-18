@@ -7,8 +7,7 @@ function S4_Action_Job_CallCenter:isValid()
 end
 
 function S4_Action_Job_CallCenter:update()
-    self.character:FaceDirection("S") -- Face south or towards computer?
-    -- Maybe just use anim
+    self.character:faceThisObject(self.computer)
     self.character:SetVariable("LootPosition", "Mid")
 end
 
@@ -47,6 +46,13 @@ function S4_Action_Job_CallCenter:perform()
     -- Stress: 45% for 4 hours -> 0.1125 per hour
     stats:setStress(stats:getStress() + (0.1125 * hours))
     
+    -- Boredom: +10 per hour (0-100 scale)
+    stats:setBoredom(stats:getBoredom() + (10 * hours))
+    
+    -- Unhappiness: +5 per hour (0-100 scale)
+    local bodyDamage = char:getBodyDamage()
+    bodyDamage:setUnhappynessLevel(bodyDamage:getUnhappynessLevel() + (5 * hours))
+    
     -- Job Leveling (Store on Player ModData)
     local pData = char:getModData()
     pData.S4_Job_CallCenter_Hours = (pData.S4_Job_CallCenter_Hours or 0) + hours
@@ -60,11 +66,12 @@ function S4_Action_Job_CallCenter:perform()
     ISBaseTimedAction.perform(self)
 end
 
-function S4_Action_Job_CallCenter:new(character, hours)
+function S4_Action_Job_CallCenter:new(character, computer, hours)
     local o = {}
     setmetatable(o, self)
     self.__index = self
     o.character = character
+    o.computer = computer
     o.stopOnWalk = true
     o.stopOnRun = true
     o.hours = hours

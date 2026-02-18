@@ -43,7 +43,7 @@ function S4_IE_Jobs:render()
             if index == 1 then
                 -- Draw Icon
                 -- User requested Microphone Icon from S4_Icon
-                local tex = getTexture("media/textures/S4_Icon/Icon_64_Microphone.png") 
+                local tex = getTexture("media/textures/S4_Icon/Icon_64_CallCenter.png") 
                 if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end -- Fallback
 
                 if tex then

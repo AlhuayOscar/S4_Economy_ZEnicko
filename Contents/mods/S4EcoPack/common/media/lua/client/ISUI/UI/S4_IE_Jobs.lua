@@ -41,17 +41,20 @@ function S4_IE_Jobs:render()
             
             -- First Item: Call Center
             if index == 1 then
-                -- Draw Icon (Placeholder: Telephone or similar)
-                local tex = getTexture("Item_Telephone") or getTexture("media/textures/Item_Phone.png")
+                -- Draw Icon
+                -- User requested Microphone Icon from S4_Icon
+                local tex = getTexture("media/textures/S4_Icon/Icon_64_Microphone.png") 
+                if not tex then tex = getTexture("media/textures/S4_Icon/Icon_64_Network.png") end -- Fallback
+
                 if tex then
                     self:drawTextureScaled(tex, x + 8, y + 8, 48, 48, 1)
                 else
-                     self:drawTextCenter("Call", x + 32, y + 16, 0, 0, 0, 1, UIFont.Small)
-                     self:drawTextCenter("Center", x + 32, y + 32, 0, 0, 0, 1, UIFont.Small)
+                     self:drawTextCentre("Call", x + 32, y + 16, 0, 0, 0, 1, UIFont.Small)
+                     self:drawTextCentre("Center", x + 32, y + 32, 0, 0, 0, 1, UIFont.Small)
                 end
                 
                 -- Hover effect
-                if self:isMouseOver(x, y, self.gridSize, self.gridSize) then
+                if self:isMouseOverBox(x, y, self.gridSize, self.gridSize) then
                      self:drawRect(x, y, self.gridSize, self.gridSize, 0.2, 0, 0, 1)
                      self:drawText("Call Center Part Time", 20, self.height - 40, 0, 0, 0, 1, UIFont.Small)
                 end
@@ -65,7 +68,7 @@ function S4_IE_Jobs:render()
     end
 end
 
-function S4_IE_Jobs:isMouseOver(x, y, w, h)
+function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
     local mx = self:getMouseX()
     local my = self:getMouseY()
     return mx >= x and mx <= x + w and my >= y and my <= y + h

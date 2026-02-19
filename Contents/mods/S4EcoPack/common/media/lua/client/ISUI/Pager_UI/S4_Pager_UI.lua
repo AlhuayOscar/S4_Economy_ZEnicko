@@ -25,6 +25,10 @@ local function buildMission()
     return S4_Pager_System.buildMission(MISSION_POINTS, MISSION_OBJECTIVES)
 end
 
+local function buildMissionByIndex(index)
+    return S4_Pager_System.buildMissionByIndex(MISSION_POINTS, MISSION_OBJECTIVES, index)
+end
+
 local function randomStartLabel()
     return S4_Pager_System.randomStartLabel(START_BUTTON_LABELS)
 end
@@ -103,6 +107,14 @@ local function isWithinMissionPhotoRange(player, mission, range)
     return S4_Pager_System.isWithinMissionPhotoRange(player, mission, range)
 end
 
+local function isPlayerOnMissionSpot(player, mission)
+    return S4_Pager_System.isPlayerOnMissionSpot(player, mission)
+end
+
+local function getMissionSpotState(player, mission)
+    return S4_Pager_System.getMissionSpotState(player, mission)
+end
+
 function S4_Pager_UI.GetCameraPhotoTarget(player)
     return S4_Pager_System.getCameraPhotoTarget(player)
 end
@@ -162,6 +174,7 @@ function S4_Pager_UI:new(player, x, y, width, height)
         o.texture = getTexture("media/textures/PagerUI.PNG")
     end
     o.pendingMission = nil
+    o.pendingMissionIndex = 1
     return o
 end
 
@@ -176,7 +189,7 @@ function S4_Pager_UI:createChildren()
     self.startBtn:initialise()
     self:addChild(self.startBtn)
 
-    self.rollBtn = ISButton:new(126, self.height - 44, 140, 28, "DEBUG: New Contract", self, S4_Pager_UI.onRollMission)
+    self.rollBtn = ISButton:new(126, self.height - 44, 140, 28, "Next Contract", self, S4_Pager_UI.onRollMission)
     self.rollBtn:initialise()
     self:addChild(self.rollBtn)
 
@@ -220,7 +233,7 @@ function S4_Pager_UI:refreshData()
 
     self.activeMission = nil
     if not self.pendingMission then
-        self.pendingMission = buildMission()
+        self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
     end
     applyFixedPointToPending(self)
     self.startBtn:setTitle(randomStartLabel())
@@ -238,7 +251,14 @@ function S4_Pager_UI:refreshData()
 end
 
 function S4_Pager_UI:onRollMission()
-    self.pendingMission = buildMission()
+    local total = #MISSION_POINTS
+    if total > 0 then
+        self.pendingMissionIndex = (self.pendingMissionIndex or 1) + 1
+        if self.pendingMissionIndex > total then
+            self.pendingMissionIndex = 1
+        end
+    end
+    self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
     applyFixedPointToPending(self)
 end
 
@@ -249,6 +269,7 @@ function S4_Pager_UI:onStartMission()
     local startAt = nowWorldHours()
     local m = {
         status = "active",
+        missionName = self.pendingMission.missionName,
         startWorldHours = startAt,
         endWorldHours = startAt + self.pendingMission.durationHours,
         durationHours = self.pendingMission.durationHours,
@@ -257,6 +278,11 @@ function S4_Pager_UI:onStartMission()
         targetX = self.pendingMission.targetX,
         targetY = self.pendingMission.targetY,
         targetZ = self.pendingMission.targetZ,
+        areaMinX = self.pendingMission.areaMinX,
+        areaMaxX = self.pendingMission.areaMaxX,
+        areaMinY = self.pendingMission.areaMinY,
+        areaMaxY = self.pendingMission.areaMaxY,
+        hiddenPadding = self.pendingMission.hiddenPadding,
         killGoal = math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
         killsDone = 0,
         photoDropped = false
@@ -367,24 +393,46 @@ function S4_Pager_UI:render()
         if left < 0 then
             left = 0
         end
+        local contractTitle = self.activeMission.missionName or self.activeMission.objective or "Mission"
+        local coordsText = "Coords: " .. tostring(self.activeMission.targetX) .. "," ..
+                               tostring(self.activeMission.targetY)
+        local spotState = getMissionSpotState(self.player, self.activeMission)
         self:drawText("Duration: " .. string.format("%.1f", self.activeMission.durationHours) .. "h", 20, 82, 1, 1, 1,
             1, UIFont.Small)
         self:drawText("Time left: " .. string.format("%.1f", left) .. "h", 20, 104, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Objective: " .. tostring(self.activeMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Location: " .. tostring(self.activeMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Contract: " .. tostring(contractTitle), 20, 126, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Objective: " .. tostring(self.activeMission.objective), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Location: " .. tostring(self.activeMission.location), 20, 170, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Targets: " .. tostring(self.activeMission.killsDone or 0) .. "/" ..
-                          tostring(self.activeMission.killGoal or 1), 20, 170, 1, 0.9, 0.8, 1, UIFont.Small)
-        self:drawText("Coords: " .. tostring(self.activeMission.targetX) .. "," .. tostring(self.activeMission.targetY),
-            20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
+                          tostring(self.activeMission.killGoal or 1), 20, 192, 1, 0.9, 0.8, 1, UIFont.Small)
+        self:drawText(coordsText, 20, 214, 1, 0.7, 0.7, 1, UIFont.Small)
+        if spotState == "on_spot" then
+            local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
+            self:drawText("On Spot", 26 + w, 214, 0.2, 0.95, 0.2, 1, UIFont.Small)
+        elseif spotState == "near" then
+            local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
+            self:drawText("You're near", 26 + w, 214, 0.95, 0.85, 0.2, 1, UIFont.Small)
+        end
     elseif self.pendingMission then
+        local contractTitle = self.pendingMission.missionName or self.pendingMission.objective or "Mission"
+        local coordsText = "Coords: " .. tostring(self.pendingMission.targetX) .. "," ..
+                               tostring(self.pendingMission.targetY)
+        local spotState = getMissionSpotState(self.player, self.pendingMission)
         self:drawText("Duration: " .. tostring(self.pendingMission.durationHours) .. "h", 20, 82, 1, 1, 1, 1,
             UIFont.Small)
-        self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 104, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 126, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 148, 1, 0.9, 0.8, 1,
+        self:drawText("Contract: " .. tostring(contractTitle), 20, 104, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 170, 1, 0.9, 0.8, 1,
             UIFont.Small)
-        self:drawText("Coords: " .. tostring(self.pendingMission.targetX) .. "," ..
-                          tostring(self.pendingMission.targetY), 20, 170, 1, 0.7, 0.7, 1, UIFont.Small)
+        self:drawText(coordsText, 20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
+        if spotState == "on_spot" then
+            local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
+            self:drawText("On Spot", 26 + w, 192, 0.2, 0.95, 0.2, 1, UIFont.Small)
+        elseif spotState == "near" then
+            local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
+            self:drawText("You're near", 26 + w, 192, 0.95, 0.85, 0.2, 1, UIFont.Small)
+        end
     end
 end
 

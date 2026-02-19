@@ -21,6 +21,18 @@ S4_Jobs_Lore.MISSION_POINTS = {{
     z = 0,
     location = "Rosewood - Clinic"
 }, {
+    x = 8220,
+    y = 11840,
+    z = 0,
+    location = "Rosewood - Log Center (Construction)",
+    missionName = "Rosewood Log Center in construction spotted",
+    objective = "Rosewood Log Center in construction spotted",
+    areaMinX = 8207,
+    areaMaxX = 8258,
+    areaMinY = 11801,
+    areaMaxY = 11887,
+    hiddenPadding = 16
+}, {
     x = 12530,
     y = 1470,
     z = 0,

@@ -50,15 +50,119 @@ end
 
 function S4_Pager_System.buildMission(points, objectives)
     local point = S4_Pager_System.randomMissionPoint(points)
+    local objective = point.objective or objectives[ZombRand(1, #objectives + 1)]
     return {
-        durationHours = ZombRand(2, 9),
-        objective = objectives[ZombRand(1, #objectives + 1)],
+        missionName = point.missionName or objective,
+        durationHours = point.durationHours or ZombRand(2, 9),
+        objective = objective,
         location = point.location,
         targetX = point.x,
         targetY = point.y,
         targetZ = point.z or 0,
-        zombieCount = ZombRand(1, 4)
+        zombieCount = point.zombieCount or ZombRand(1, 4),
+        areaMinX = point.areaMinX,
+        areaMaxX = point.areaMaxX,
+        areaMinY = point.areaMinY,
+        areaMaxY = point.areaMaxY,
+        hiddenPadding = point.hiddenPadding
     }
+end
+
+function S4_Pager_System.buildMissionByIndex(points, objectives, index)
+    if not points or #points == 0 then
+        return nil
+    end
+    local i = math.floor(index or 1)
+    if i < 1 then
+        i = 1
+    end
+    i = ((i - 1) % #points) + 1
+    local point = points[i]
+    local objective = point.objective or objectives[ZombRand(1, #objectives + 1)]
+    return {
+        missionName = point.missionName or objective,
+        durationHours = point.durationHours or ZombRand(2, 9),
+        objective = objective,
+        location = point.location,
+        targetX = point.x,
+        targetY = point.y,
+        targetZ = point.z or 0,
+        zombieCount = point.zombieCount or ZombRand(1, 4),
+        areaMinX = point.areaMinX,
+        areaMaxX = point.areaMaxX,
+        areaMinY = point.areaMinY,
+        areaMaxY = point.areaMaxY,
+        hiddenPadding = point.hiddenPadding
+    }
+end
+
+function S4_Pager_System.isPlayerOnMissionSpot(player, mission)
+    if not player or not mission then
+        return false
+    end
+    local px = math.floor(player:getX())
+    local py = math.floor(player:getY())
+    local pz = math.floor(player:getZ())
+    local mz = math.floor(mission.targetZ or 0)
+    if pz ~= mz then
+        return false
+    end
+
+    if mission.areaMinX and mission.areaMaxX and mission.areaMinY and mission.areaMaxY then
+        return px >= mission.areaMinX and px <= mission.areaMaxX and py >= mission.areaMinY and py <= mission.areaMaxY
+    end
+
+    local tx = mission.targetX or 0
+    local ty = mission.targetY or 0
+    local dx = px - tx
+    local dy = py - ty
+    return (dx * dx + dy * dy) <= 4
+end
+
+function S4_Pager_System.getMissionSpotState(player, mission)
+    if not player or not mission then
+        return "far"
+    end
+
+    local px = math.floor(player:getX())
+    local py = math.floor(player:getY())
+    local pz = math.floor(player:getZ())
+    local mz = math.floor(mission.targetZ or 0)
+    if pz ~= mz then
+        return "far"
+    end
+
+    if S4_Pager_System.isPlayerOnMissionSpot(player, mission) then
+        return "on_spot"
+    end
+
+    local padding = tonumber(mission.hiddenPadding) or 16
+    if padding < 12 then
+        padding = 12
+    elseif padding > 20 then
+        padding = 20
+    end
+
+    if mission.areaMinX and mission.areaMaxX and mission.areaMinY and mission.areaMaxY then
+        local minX = mission.areaMinX - padding
+        local maxX = mission.areaMaxX + padding
+        local minY = mission.areaMinY - padding
+        local maxY = mission.areaMaxY + padding
+        if px >= minX and px <= maxX and py >= minY and py <= maxY then
+            return "near"
+        end
+        return "far"
+    end
+
+    local tx = mission.targetX or 0
+    local ty = mission.targetY or 0
+    local dx = px - tx
+    local dy = py - ty
+    local rr = padding
+    if (dx * dx + dy * dy) <= (rr * rr) then
+        return "near"
+    end
+    return "far"
 end
 
 function S4_Pager_System.randomStartLabel(labels)

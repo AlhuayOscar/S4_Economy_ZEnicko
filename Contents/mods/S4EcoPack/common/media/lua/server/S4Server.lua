@@ -168,40 +168,45 @@ function S4Server.SpawnMissionZombie(player, args)
     local x = math.floor(tonumber(args.x) or -1)
     local y = math.floor(tonumber(args.y) or -1)
     local z = math.floor(tonumber(args.z) or 0)
+    local count = math.max(1, math.floor(tonumber(args.count) or 1))
     if x < 0 or y < 0 then
         return
     end
 
-    local spawned = false
+    local spawnedCount = 0
 
     if addZombie then
-        local ok1 = pcall(function()
-            addZombie(x, y, z, nil)
-        end)
-        if ok1 then
-            spawned = true
-        end
-        if not spawned then
-            local ok2 = pcall(function()
-                addZombie(x, y, z, 0)
+        for i = 1, count do
+            local sx = x + ZombRand(-2, 3)
+            local sy = y + ZombRand(-2, 3)
+            local ok1 = pcall(function()
+                addZombie(sx, sy, z, nil)
             end)
-            if ok2 then
-                spawned = true
+            if ok1 then
+                spawnedCount = spawnedCount + 1
+            else
+                local ok2 = pcall(function()
+                    addZombie(sx, sy, z, 0)
+                end)
+                if ok2 then
+                    spawnedCount = spawnedCount + 1
+                end
             end
         end
     end
 
-    if (not spawned) and addZombiesInOutfit then
+    if spawnedCount <= 0 and addZombiesInOutfit then
         local ok3 = pcall(function()
-            addZombiesInOutfit(x, y, z, 1, "Generic01", nil, false, false, false, false)
+            addZombiesInOutfit(x, y, z, count, "Generic01", nil, false, false, false, false)
         end)
         if ok3 then
-            spawned = true
+            spawnedCount = count
         end
     end
 
     if isDebugEnabled and isDebugEnabled() then
-        print(string.format("[S4_Pager] SpawnMissionZombie at %d,%d,%d result=%s", x, y, z, tostring(spawned)))
+        print(string.format("[S4_Pager] SpawnMissionZombie at %d,%d,%d count=%d spawned=%d", x, y, z, count,
+            spawnedCount))
     end
 end
 

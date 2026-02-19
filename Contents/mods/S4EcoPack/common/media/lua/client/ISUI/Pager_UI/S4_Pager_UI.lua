@@ -71,7 +71,8 @@ local function buildMission()
         location = point.location,
         targetX = point.x,
         targetY = point.y,
-        targetZ = point.z or 0
+        targetZ = point.z or 0,
+        zombieCount = ZombRand(1, 4) -- 1..3
     }
 end
 
@@ -122,57 +123,86 @@ local function addMissionMapMarker(x, y)
     return ok
 end
 
-local function spawnMissionZombieAt(x, y, z)
+local function spawnMissionZombieAt(x, y, z, count)
     if not x or not y then
-        return false
+        return 0
     end
     x = math.floor(x)
     y = math.floor(y)
     z = math.floor(z or 0)
+    count = math.max(1, math.floor(count or 1))
 
-    local spawned = false
+    local spawnedCount = 0
 
     if addZombie then
-        local ok1 = pcall(function()
-            addZombie(x, y, z, nil)
-        end)
-        if ok1 then
-            spawned = true
-        end
-        if not spawned then
-            local ok2 = pcall(function()
-                addZombie(x, y, z, 0)
+        for i = 1, count do
+            local sx = x + ZombRand(-2, 3)
+            local sy = y + ZombRand(-2, 3)
+            local ok1 = pcall(function()
+                addZombie(sx, sy, z, nil)
             end)
-            if ok2 then
-                spawned = true
+            if ok1 then
+                spawnedCount = spawnedCount + 1
+            else
+                local ok2 = pcall(function()
+                    addZombie(sx, sy, z, 0)
+                end)
+                if ok2 then
+                    spawnedCount = spawnedCount + 1
+                end
             end
         end
     end
 
-    if spawned then
-        return true
+    if spawnedCount > 0 then
+        return spawnedCount
     end
 
     if createHordeFromTo then
         local okHorde = pcall(function()
-            createHordeFromTo(x, y, x, y, 1)
+            createHordeFromTo(x, y, x, y, count)
         end)
         if okHorde then
-            return true
+            return count
         end
     end
 
     if sendClientCommand then
         pcall(function()
-            sendClientCommand("S4SMD", "SpawnMissionZombie", {x = x, y = y, z = z})
+            sendClientCommand("S4SMD", "SpawnMissionZombie", {
+                x = x,
+                y = y,
+                z = z,
+                count = count
+            })
         end)
-        return true
+        return count
     end
 
     if isDebugEnabled and isDebugEnabled() then
         print(string.format("[S4_Pager] Failed local zombie spawn at %d,%d,%d", x, y, z))
     end
-    return false
+    return 0
+end
+
+local function completeMission(player, reasonText, r, g, b)
+    if not player then
+        return
+    end
+    local pData = player:getModData()
+    local mission = pData and pData.S4PagerMission or nil
+    if not mission or mission.status ~= "active" then
+        return
+    end
+    mission.status = "completed"
+    pData.S4PagerMission = nil
+    clearMissionMapMarkers()
+    if player.setHaloNote then
+        player:setHaloNote(reasonText or "Pager mission complete", r or 80, g or 220, b or 80, 300)
+    end
+    if S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
+        S4_Pager_UI.instance:refreshData()
+    end
 end
 
 function S4_Pager_UI:showForPlayer(player)
@@ -305,16 +335,19 @@ function S4_Pager_UI:onStartMission()
         location = self.pendingMission.location,
         targetX = self.pendingMission.targetX,
         targetY = self.pendingMission.targetY,
-        targetZ = self.pendingMission.targetZ
+        targetZ = self.pendingMission.targetZ,
+        killGoal = math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
+        killsDone = 0
     }
     self.player:getModData().S4PagerMission = m
 
     local markerOk = addMissionMapMarker(m.targetX, m.targetY)
-    local zombieOk = spawnMissionZombieAt(m.targetX, m.targetY, m.targetZ)
+    local spawnedCount = spawnMissionZombieAt(m.targetX, m.targetY, m.targetZ, m.killGoal)
+    local zombieOk = spawnedCount > 0
 
     if self.player.setHaloNote then
         if markerOk and zombieOk then
-            self.player:setHaloNote("Pager mission started: Lugar de mision marcado", 80, 220, 80, 300)
+            self.player:setHaloNote(string.format("Mission started: %d targets", m.killGoal), 80, 220, 80, 300)
         elseif markerOk then
             self.player:setHaloNote("Pager mission started: marca en mapa creada", 80, 220, 80, 300)
         else
@@ -408,15 +441,19 @@ function S4_Pager_UI:render()
         self:drawText("Time left: " .. string.format("%.1f", left) .. "h", 20, 104, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Objective: " .. tostring(self.activeMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.activeMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Targets: " .. tostring(self.activeMission.killsDone or 0) .. "/" ..
+                          tostring(self.activeMission.killGoal or 1), 20, 170, 1, 0.9, 0.8, 1, UIFont.Small)
         self:drawText("Coords: " .. tostring(self.activeMission.targetX) .. "," .. tostring(self.activeMission.targetY),
-            20, 170, 1, 0.7, 0.7, 1, UIFont.Small)
+            20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
     elseif self.pendingMission then
         self:drawText("Duration: " .. tostring(self.pendingMission.durationHours) .. "h", 20, 82, 1, 1, 1, 1,
             UIFont.Small)
         self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 104, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 126, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 148, 1, 0.9, 0.8, 1,
+            UIFont.Small)
         self:drawText("Coords: " .. tostring(self.pendingMission.targetX) .. "," ..
-                          tostring(self.pendingMission.targetY), 20, 148, 1, 0.7, 0.7, 1, UIFont.Small)
+                          tostring(self.pendingMission.targetY), 20, 170, 1, 0.7, 0.7, 1, UIFont.Small)
     end
 end
 
@@ -437,15 +474,52 @@ function S4_Pager_UI.UpdateMissionState()
         return
     end
     if nowWorldHours() >= mission.endWorldHours then
-        mission.status = "completed"
         pData.S4PagerMission = nil
         clearMissionMapMarkers()
         if player.setHaloNote then
-            player:setHaloNote("Pager mission complete", 80, 220, 80, 300)
+            player:setHaloNote("Pager mission failed: out of time", 220, 80, 80, 300)
+        end
+        if S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
+            S4_Pager_UI.instance:refreshData()
         end
     end
 end
 Events.EveryOneMinute.Add(S4_Pager_UI.UpdateMissionState)
+
+function S4_Pager_UI.OnZombieDead(zombie)
+    local player = getSpecificPlayer(0)
+    if not player or not zombie then
+        return
+    end
+    local pData = player:getModData()
+    local mission = pData and pData.S4PagerMission or nil
+    if not mission or mission.status ~= "active" then
+        return
+    end
+
+    local zx = zombie:getX()
+    local zy = zombie:getY()
+    local tx = mission.targetX or 0
+    local ty = mission.targetY or 0
+    local dx = zx - tx
+    local dy = zy - ty
+    local inMissionArea = (dx * dx + dy * dy) <= (20 * 20)
+    if not inMissionArea then
+        return
+    end
+
+    mission.killsDone = math.min((mission.killsDone or 0) + 1, mission.killGoal or 1)
+    if player.setHaloNote then
+        player:setHaloNote(string.format("Targets: %d/%d", mission.killsDone, mission.killGoal or 1), 80, 220, 80, 180)
+    end
+
+    if mission.killsDone >= (mission.killGoal or 1) then
+        completeMission(player, "Pager mission complete", 80, 220, 80)
+    elseif S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
+        S4_Pager_UI.instance:refreshData()
+    end
+end
+Events.OnZombieDead.Add(S4_Pager_UI.OnZombieDead)
 
 local function OnGameStartPagerMissionSymbol()
     ensureMapSymbolDefinition()

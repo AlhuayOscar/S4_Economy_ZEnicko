@@ -64,7 +64,10 @@ function S4_Pager_System.buildMission(points, objectives)
         areaMaxX = point.areaMaxX,
         areaMinY = point.areaMinY,
         areaMaxY = point.areaMaxY,
-        hiddenPadding = point.hiddenPadding
+        hiddenPadding = point.hiddenPadding,
+        requireMask = point.requireMask,
+        requireBulletVest = point.requireBulletVest,
+        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct
     }
 end
 
@@ -92,7 +95,10 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
         areaMaxX = point.areaMaxX,
         areaMinY = point.areaMinY,
         areaMaxY = point.areaMaxY,
-        hiddenPadding = point.hiddenPadding
+        hiddenPadding = point.hiddenPadding,
+        requireMask = point.requireMask,
+        requireBulletVest = point.requireBulletVest,
+        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct
     }
 end
 
@@ -109,7 +115,11 @@ function S4_Pager_System.isPlayerOnMissionSpot(player, mission)
     end
 
     if mission.areaMinX and mission.areaMaxX and mission.areaMinY and mission.areaMaxY then
-        return px >= mission.areaMinX and px <= mission.areaMaxX and py >= mission.areaMinY and py <= mission.areaMaxY
+        local minX = math.min(mission.areaMinX, mission.areaMaxX)
+        local maxX = math.max(mission.areaMinX, mission.areaMaxX)
+        local minY = math.min(mission.areaMinY, mission.areaMaxY)
+        local maxY = math.max(mission.areaMinY, mission.areaMaxY)
+        return px >= minX and px <= maxX and py >= minY and py <= maxY
     end
 
     local tx = mission.targetX or 0
@@ -137,17 +147,17 @@ function S4_Pager_System.getMissionSpotState(player, mission)
     end
 
     local padding = tonumber(mission.hiddenPadding) or 16
-    if padding < 12 then
-        padding = 12
-    elseif padding > 20 then
-        padding = 20
+    if padding < 1 then
+        padding = 1
+    elseif padding > 50 then
+        padding = 50
     end
 
     if mission.areaMinX and mission.areaMaxX and mission.areaMinY and mission.areaMaxY then
-        local minX = mission.areaMinX - padding
-        local maxX = mission.areaMaxX + padding
-        local minY = mission.areaMinY - padding
-        local maxY = mission.areaMaxY + padding
+        local minX = math.min(mission.areaMinX, mission.areaMaxX) - padding
+        local maxX = math.max(mission.areaMinX, mission.areaMaxX) + padding
+        local minY = math.min(mission.areaMinY, mission.areaMaxY) - padding
+        local maxY = math.max(mission.areaMinY, mission.areaMaxY) + padding
         if px >= minX and px <= maxX and py >= minY and py <= maxY then
             return "near"
         end
@@ -681,6 +691,98 @@ function S4_Pager_System.createValuablePhotoInInventory(player, mission, sourceL
     return true
 end
 
+local function getItemTextLower(item)
+    if not item then
+        return ""
+    end
+    local parts = {}
+    if item.getFullType then
+        parts[#parts + 1] = tostring(item:getFullType() or "")
+    end
+    if item.getType then
+        parts[#parts + 1] = tostring(item:getType() or "")
+    end
+    if item.getDisplayCategory then
+        parts[#parts + 1] = tostring(item:getDisplayCategory() or "")
+    end
+    if item.getDisplayName then
+        parts[#parts + 1] = tostring(item:getDisplayName() or "")
+    end
+    return table.concat(parts, " "):lower()
+end
+
+local function checkMissionGearRequirements(player, mission)
+    if not player then
+        return true, true
+    end
+
+    local needMask = mission and mission.requireMask
+    local needVest = mission and mission.requireBulletVest
+    if not needMask and not needVest then
+        return true, true
+    end
+
+    local hasMask = not needMask
+    local hasVest = not needVest
+    local hasHalloweenMask = false
+    local worn = player.getWornItems and player:getWornItems() or nil
+    if not worn or not worn.size then
+        return hasMask, hasVest
+    end
+
+    for i = 0, worn:size() - 1 do
+        local entry = nil
+        if worn.get then
+            entry = worn:get(i)
+        end
+        if not entry and worn.getItemByIndex then
+            entry = worn:getItemByIndex(i)
+        end
+
+        local item = entry
+        local location = ""
+        if entry and entry.getItem then
+            item = entry:getItem()
+        end
+        if entry and entry.getLocation then
+            location = tostring(entry:getLocation() or ""):lower()
+        end
+        if item then
+            local t = getItemTextLower(item)
+
+            if needMask and not hasMask then
+                if t:find("mask", 1, true) or location:find("mask", 1, true) then
+                    hasMask = true
+                elseif item.hasTag and (item:hasTag("Mask") or item:hasTag("GasMask")) then
+                    hasMask = true
+                end
+            end
+
+            if not hasHalloweenMask then
+                local fullType = item.getFullType and tostring(item:getFullType() or "") or ""
+                if fullType:sub(1, #"Base.Hat_HalloweenMask") == "Base.Hat_HalloweenMask" then
+                    hasHalloweenMask = true
+                end
+            end
+
+            if needVest and not hasVest then
+                local bulletVestByName = (t:find("bullet", 1, true) and t:find("vest", 1, true)) or
+                                             t:find("bulletproof", 1, true) or t:find("armor vest", 1, true)
+                local bulletVestByTag = item.hasTag and (item:hasTag("BulletProof") or item:hasTag("BulletproofVest"))
+                if bulletVestByName or bulletVestByTag then
+                    hasVest = true
+                end
+            end
+        end
+
+        if hasMask and hasVest and hasHalloweenMask then
+            break
+        end
+    end
+
+    return hasMask, hasVest, hasHalloweenMask
+end
+
 function S4_Pager_System.completeMission(player, opts)
     if not player then
         return false
@@ -708,10 +810,48 @@ function S4_Pager_System.completeMission(player, opts)
         location = mission.location,
         completedWorldHours = nowWorldHoursFn()
     }
+    S4_Pager_System.stopMissionPersistentAudio(player)
+
+    local rewardAmount = ZombRand(200, 501)
+    local finalReward = rewardAmount
+    local penaltyPct = tonumber(mission.nonCompliantPenaltyPct) or 50
+    if penaltyPct < 0 then
+        penaltyPct = 0
+    elseif penaltyPct > 100 then
+        penaltyPct = 100
+    end
+    local hasMask, hasVest, hasHalloweenMask = checkMissionGearRequirements(player, mission)
+    local penaltyApplied = false
+    if (mission.requireMask or mission.requireBulletVest) and not (hasMask and hasVest) then
+        finalReward = math.floor(rewardAmount * (100 - penaltyPct) / 100)
+        penaltyApplied = true
+    end
+
+    local halloweenBonusPct = 45
+    local halloweenBonusApplied = false
+    if hasHalloweenMask then
+        finalReward = math.floor(finalReward * (100 + halloweenBonusPct) / 100)
+        halloweenBonusApplied = true
+    end
+
+    local rewardLogTime = (S4_Utils and S4_Utils.getLogTime) and S4_Utils.getLogTime() or nil
+    if sendClientCommand then
+        pcall(function()
+            sendClientCommand("S4ED", "AddMissionReward", {finalReward, rewardLogTime})
+        end)
+    end
+
     mission.status = "completed"
     pData.S4PagerMission = nil
     if player.setHaloNote then
         player:setHaloNote(opts.reasonText or "Pager mission complete", opts.r or 80, opts.g or 220, opts.b or 80, 300)
+        if penaltyApplied then
+            player:setHaloNote(string.format("Penalizacion -%d%% por equipo incompleto", penaltyPct), 220, 90, 90, 300)
+        end
+        if halloweenBonusApplied then
+            player:setHaloNote(string.format("Bonus +%d%% por Halloween Mask", halloweenBonusPct), 80, 220, 80, 300)
+        end
+        player:setHaloNote(string.format("Mission reward +$%d (Main Card)", finalReward), 80, 220, 80, 260)
     end
     return true
 end
@@ -724,6 +864,7 @@ function S4_Pager_System.updateMissionState(player, opts)
     local pData = player:getModData()
     local mission = pData and pData.S4PagerMission or nil
     if not mission or mission.status ~= "active" then
+        S4_Pager_System.stopMissionPersistentAudio(player)
         return
     end
 
@@ -742,6 +883,7 @@ function S4_Pager_System.updateMissionState(player, opts)
 
     local nowWorldHoursFn = opts.nowWorldHoursFn or S4_Pager_System.nowWorldHours
     if nowWorldHoursFn() >= mission.endWorldHours then
+        S4_Pager_System.stopMissionPersistentAudio(player)
         pData.S4PagerMission = nil
         if opts.clearMissionMapMarkersFn then
             opts.clearMissionMapMarkersFn()
@@ -843,6 +985,245 @@ function S4_Pager_System.onPlayerUpdateValuableHalo(player, opts)
     md.S4WorkValuableSeen[code] = true
     if player.setHaloNote then
         player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
+    end
+end
+
+local function isFirearmOrLoudWeapon(weapon)
+    if not weapon then
+        return false
+    end
+
+    local isRanged = false
+    if weapon.isRanged then
+        local ok, v = pcall(function()
+            return weapon:isRanged()
+        end)
+        if ok and v then
+            isRanged = true
+        end
+    end
+    if isRanged then
+        return true
+    end
+
+    local soundRadius = 0
+    if weapon.getSoundRadius then
+        local ok, v = pcall(function()
+            return weapon:getSoundRadius()
+        end)
+        if ok and v then
+            soundRadius = tonumber(v) or 0
+        end
+    end
+    return soundRadius >= 30
+end
+
+local ROBBERY_SHOUT_LINES = {"Everybody to the floor!!!", "Don't make me repeat it!",
+                             "Suckers, you'll gonna learn now...", "This isn't your mama, Get the F* Down", "Get Down!"}
+
+local function sayRobberyLine(player)
+    if not player then
+        return
+    end
+    local line = ROBBERY_SHOUT_LINES[ZombRand(1, #ROBBERY_SHOUT_LINES + 1)]
+    if not line then
+        return
+    end
+    if player.Say then
+        pcall(function()
+            player:Say(line)
+        end)
+    elseif player.setHaloNote then
+        player:setHaloNote(line, 230, 230, 230, 180)
+    end
+end
+
+local function startMissionPersistentAudio(player, mission)
+    if not player or not mission or mission.razormindStarted then
+        return
+    end
+    local emitter = player.getEmitter and player:getEmitter() or nil
+    local ok, sid = false, nil
+    if emitter and emitter.playSound then
+        ok, sid = pcall(function()
+            return emitter:playSound("RazormindTest")
+        end)
+    end
+    if (not ok or not sid) and player.playSound then
+        ok, sid = pcall(function()
+            return player:playSound("RazormindTest")
+        end)
+    end
+    if ok and sid then
+        mission.razormindStarted = true
+        local md = player:getModData()
+        md.S4PagerRazormindSoundId = sid
+    end
+end
+
+local function stopMissionPersistentAudio(player)
+    if not player then
+        return
+    end
+    local md = player:getModData()
+    local emitter = player.getEmitter and player:getEmitter() or nil
+    if emitter and md.S4PagerRazormindSoundId and emitter.stopSound then
+        pcall(function()
+            emitter:stopSound(md.S4PagerRazormindSoundId)
+        end)
+    end
+    md.S4PagerRazormindSoundId = nil
+    md.S4PagerRobberyIntroPending = nil
+    md.S4PagerRobberyIntroSoundId = nil
+    md.S4PagerRobberyIntroStartMs = nil
+    md.S4PagerRobberyIntroEndHours = nil
+end
+
+function S4_Pager_System.stopMissionPersistentAudio(player)
+    stopMissionPersistentAudio(player)
+end
+
+function S4_Pager_System.triggerRobberyAlarm(player, mission)
+    if not player or not mission then
+        return false
+    end
+    local md = player:getModData()
+    local nowMs = getTimestampMs and getTimestampMs() or 0
+    local alarmEnd = md.S4PagerAlarmEndMs or 0
+    local nextAllowed = md.S4PagerAlarmNextAllowedMs or 0
+
+    if alarmEnd > nowMs then
+        return false
+    end
+    if nowMs < nextAllowed then
+        return false
+    end
+
+    local endMs = nowMs + 10000
+    local cooldownMs = ZombRand(20000, 30001)
+    md.S4PagerAlarmEndMs = endMs
+    md.S4PagerAlarmNextAllowedMs = endMs + cooldownMs
+
+    local emitter = player.getEmitter and player:getEmitter() or nil
+    if not emitter then
+        return false
+    end
+
+    if emitter.playSound then
+        if not mission.robberyIntroPlayed then
+            local okIntro, introSid = pcall(function()
+                return emitter:playSound("ThisisARobbery")
+            end)
+            if okIntro and introSid then
+                md.S4PagerRobberyIntroSoundId = introSid
+            end
+            md.S4PagerRobberyIntroStartMs = nowMs
+            md.S4PagerRobberyIntroEndHours = S4_Pager_System.nowWorldHours() + (4 / 3600)
+            md.S4PagerRobberyIntroPending = true
+            mission.robberyIntroPlayed = true
+        end
+        local ok, sid = pcall(function()
+            return emitter:playSound("AlarmGoesBoom")
+        end)
+        if ok and sid then
+            md.S4PagerAlarmSoundId = sid
+        end
+    end
+
+    return true
+end
+
+function S4_Pager_System.stopRobberyAlarm(player)
+    if not player then
+        return
+    end
+    local md = player:getModData()
+    local emitter = player.getEmitter and player:getEmitter() or nil
+    if emitter and md.S4PagerAlarmSoundId and emitter.stopSound then
+        pcall(function()
+            emitter:stopSound(md.S4PagerAlarmSoundId)
+        end)
+    end
+    md.S4PagerAlarmSoundId = nil
+    md.S4PagerAlarmEndMs = nil
+end
+
+function S4_Pager_System.onWeaponNoise(player, weapon, opts)
+    if not player then
+        return
+    end
+    opts = opts or {}
+    local pData = player:getModData()
+    local mission = pData and pData.S4PagerMission or nil
+    if not mission or mission.status ~= "active" then
+        return
+    end
+    local spotState = opts.getMissionSpotStateFn and opts.getMissionSpotStateFn(player, mission) or "far"
+    if spotState ~= "on_spot" then
+        return
+    end
+    if isFirearmOrLoudWeapon(weapon) then
+        S4_Pager_System.triggerRobberyAlarm(player, mission)
+    end
+end
+
+function S4_Pager_System.updateRobberyAlarm(player, opts)
+    if not player then
+        return
+    end
+    opts = opts or {}
+    local md = player:getModData()
+    local nowMs = getTimestampMs and getTimestampMs() or 0
+
+    local pData = player:getModData()
+    local mission = pData and pData.S4PagerMission or nil
+    local shoutNow = false
+    if player.isShouting then
+        local ok, v = pcall(function()
+            return player:isShouting()
+        end)
+        shoutNow = ok and v or false
+    end
+
+    if mission and mission.status == "active" and opts.getMissionSpotStateFn then
+        local spotState = opts.getMissionSpotStateFn(player, mission)
+        if spotState == "on_spot" and shoutNow and not md.S4PagerShoutingPrev then
+            sayRobberyLine(player)
+            S4_Pager_System.triggerRobberyAlarm(player, mission)
+        end
+    end
+    md.S4PagerShoutingPrev = shoutNow
+
+    if mission and mission.status == "active" and mission.robberyIntroPlayed and (not mission.razormindStarted) then
+        local introFinished = false
+        if md.S4PagerRobberyIntroPending then
+            introFinished = true
+            local emitter = player.getEmitter and player:getEmitter() or nil
+            if emitter and md.S4PagerRobberyIntroSoundId and emitter.isPlaying then
+                local okPlaying, isPlaying = pcall(function()
+                    return emitter:isPlaying(md.S4PagerRobberyIntroSoundId)
+                end)
+                if okPlaying and isPlaying then
+                    introFinished = false
+                end
+            elseif md.S4PagerRobberyIntroStartMs and nowMs > 0 and (nowMs < (md.S4PagerRobberyIntroStartMs + 4000)) then
+                introFinished = false
+            elseif md.S4PagerRobberyIntroEndHours and (S4_Pager_System.nowWorldHours() < md.S4PagerRobberyIntroEndHours) then
+                introFinished = false
+            end
+        end
+
+        if introFinished then
+            startMissionPersistentAudio(player, mission)
+            md.S4PagerRobberyIntroPending = nil
+            md.S4PagerRobberyIntroSoundId = nil
+            md.S4PagerRobberyIntroStartMs = nil
+            md.S4PagerRobberyIntroEndHours = nil
+        end
+    end
+
+    if md.S4PagerAlarmEndMs and nowMs > (md.S4PagerAlarmEndMs or 0) then
+        S4_Pager_System.stopRobberyAlarm(player)
     end
 end
 

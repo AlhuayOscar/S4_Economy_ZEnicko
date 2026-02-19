@@ -283,6 +283,9 @@ function S4_Pager_UI:onStartMission()
         areaMinY = self.pendingMission.areaMinY,
         areaMaxY = self.pendingMission.areaMaxY,
         hiddenPadding = self.pendingMission.hiddenPadding,
+        requireMask = self.pendingMission.requireMask,
+        requireBulletVest = self.pendingMission.requireBulletVest,
+        nonCompliantPenaltyPct = self.pendingMission.nonCompliantPenaltyPct,
         killGoal = math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
         killsDone = 0,
         photoDropped = false
@@ -309,6 +312,7 @@ function S4_Pager_UI:onDebugComplete()
     local pData = self.player:getModData()
     local mission = pData.S4PagerMission
     if mission and mission.status == "active" then
+        S4_Pager_System.stopMissionPersistentAudio(self.player)
         pData.S4PagerMission = nil
         clearMissionMapMarkers()
         if self.player.setHaloNote then
@@ -322,6 +326,7 @@ function S4_Pager_UI:onDebugFail()
     local pData = self.player:getModData()
     local mission = pData.S4PagerMission
     if mission and mission.status == "active" then
+        S4_Pager_System.stopMissionPersistentAudio(self.player)
         pData.S4PagerMission = nil
         clearMissionMapMarkers()
         if self.player.setHaloNote then
@@ -481,12 +486,27 @@ function S4_Pager_UI.OnPlayerUpdateValuableHalo(player)
     if not player or player ~= getSpecificPlayer(0) then
         return
     end
+    S4_Pager_System.updateRobberyAlarm(player, {
+        getMissionSpotStateFn = getMissionSpotState
+    })
     S4_Pager_System.onPlayerUpdateValuableHalo(player, {
         findAnyWorkObjectCodeInInventoryFn = findAnyWorkObjectCodeInInventory,
         findAnyNearbyWorkObjectCodeFn = findAnyNearbyWorkObjectCode
     })
 end
 Events.OnPlayerUpdate.Add(S4_Pager_UI.OnPlayerUpdateValuableHalo)
+
+function S4_Pager_UI.OnWeaponSwing(player, weapon)
+    if not player or player ~= getSpecificPlayer(0) then
+        return
+    end
+    S4_Pager_System.onWeaponNoise(player, weapon, {
+        getMissionSpotStateFn = getMissionSpotState
+    })
+end
+if Events.OnWeaponSwing then
+    Events.OnWeaponSwing.Add(S4_Pager_UI.OnWeaponSwing)
+end
 
 function S4_Pager_UI.CameraMissionPhoto(player, cameraItem)
     S4_Pager_System.cameraMissionPhoto(player, cameraItem, {

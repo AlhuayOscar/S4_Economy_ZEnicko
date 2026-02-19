@@ -33,6 +33,21 @@ S4_Jobs_Lore.MISSION_POINTS = {{
     areaMaxY = 11887,
     hiddenPadding = 16
 }, {
+    x = 8078,
+    y = 11595,
+    z = 0,
+    location = "Rosewood - Old Bank",
+    missionName = "Asalto al viejo Banco de Rosewood",
+    objective = "Asalto al viejo Banco de Rosewood",
+    areaMinX = 8077,
+    areaMaxX = 8092,
+    areaMinY = 11586,
+    areaMaxY = 11602,
+    hiddenPadding = 7,
+    requireMask = true,
+    requireBulletVest = true,
+    nonCompliantPenaltyPct = 50
+}, {
     x = 12530,
     y = 1470,
     z = 0,

@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.1] - 2026-02-19
+
+## Feature: Pager Mission Evidence Flow
+
+- Added mission-point target system for Pager contracts with map marker support and debug fixed-point mode.
+- Added target elimination progression (`killsDone/killGoal`) and auto-complete when mission targets are eliminated.
+- Added evidence object pipeline for Pager missions:
+  - Work-object metadata (`S4WorkObject`, `S4WorkCode`, lore fields).
+  - Valuable halo notifications when evidence is found.
+  - Evidence-loss warning: `Objeto destruido, deberas dar explicaciones al Cliente`.
+- Added disposable camera mission capture flow:
+  - Inventory context option `Usar Camara Desechable`.
+  - Requires being within 10 tiles from the active/completed mission point.
+  - Generates mission evidence item directly and consumes one disposable camera.
+- Added post-completion camera support:
+  - Last completed mission point is cached so players can recreate destroyed evidence by returning to the location.
+- Improved compatibility/fallback behavior for mission evidence item resolution across different item IDs/builds.
+- Removed rich-text RGB formatting from evidence tooltip for consistent display across UI contexts.
+
 ## [1.2.0] - 2026-02-18
 
 ## Feature: Dynamic Job System (Knox Careers)

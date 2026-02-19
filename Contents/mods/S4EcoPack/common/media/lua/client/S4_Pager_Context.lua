@@ -69,8 +69,7 @@ end
 
 function S4_Pager_Context.InventoryMenu(playerNum, context, items)
     items = ISInventoryPane.getActualItems(items)
-    local item = items and items[1] or nil
-    if not item then
+    if not items then
         return
     end
 
@@ -79,8 +78,81 @@ function S4_Pager_Context.InventoryMenu(playerNum, context, items)
         return
     end
 
-    if item:getFullType() == "Base.Pager" then
+    local list = {}
+    if items.size and items.get then
+        for i = 0, items:size() - 1 do
+            list[#list + 1] = items:get(i)
+        end
+    else
+        list = items
+    end
+    if not list or #list == 0 then
+        return
+    end
+
+    local item = list[1]
+    if item and item.getFullType and item:getFullType() == "Base.Pager" then
         context:addOption("Use Pager", player, S4_Pager_Context.OpenPagerMissionUI)
+    end
+
+    local function isCameraItem(it)
+        if not it then
+            return false
+        end
+        local ft = it.getFullType and it:getFullType() or ""
+        local ty = it.getType and it:getType() or ""
+        local dn = it.getDisplayName and it:getDisplayName() or ""
+        ft = string.lower(tostring(ft))
+        ty = string.lower(tostring(ty))
+        dn = string.lower(tostring(dn))
+        if string.find(ft, "camera", 1, true) then
+            return true
+        end
+        if string.find(ty, "camera", 1, true) then
+            return true
+        end
+        if string.find(dn, "camera", 1, true) or string.find(dn, "camara", 1, true) then
+            return true
+        end
+        return false
+    end
+
+    local cameraItem = nil
+    for i = 1, #list do
+        local it = list[i]
+        if isCameraItem(it) then
+            cameraItem = it
+            break
+        end
+    end
+    if not cameraItem then
+        return
+    end
+
+    local option = context:addOption("Usar Camara Desechable", player, S4_Pager_Context.UseDisposableCamera, cameraItem)
+
+    local mission = nil
+    if S4_Pager_UI and S4_Pager_UI.GetCameraPhotoTarget then
+        mission = S4_Pager_UI.GetCameraPhotoTarget(player)
+    end
+    if not mission then
+        option.notAvailable = true
+        option.onSelect = nil
+        local tt = ISToolTip:new()
+        tt.description = "Necesitas una mision activa o recien completada del Pager."
+        option.toolTip = tt
+        return
+    end
+
+    local px, py = player:getX(), player:getY()
+    local tx, ty = mission.targetX or 0, mission.targetY or 0
+    local dx, dy = px - tx, py - ty
+    if (dx * dx + dy * dy) > (10 * 10) then
+        option.notAvailable = true
+        option.onSelect = nil
+        local tt = ISToolTip:new()
+        tt.description = "Acercate a 10 celdas del objetivo para tomar la foto."
+        option.toolTip = tt
     end
 end
 
@@ -138,6 +210,17 @@ function S4_Pager_Context.OnPlayerUpdate(player)
     end
 end
 
-Events.OnPreFillInventoryObjectContextMenu.Add(S4_Pager_Context.InventoryMenu)
+function S4_Pager_Context.UseDisposableCamera(player, cameraItem)
+    if not player then
+        return
+    end
+    if S4_Pager_UI and S4_Pager_UI.CameraMissionPhoto then
+        S4_Pager_UI.CameraMissionPhoto(player, cameraItem)
+    elseif player.setHaloNote then
+        player:setHaloNote("No se pudo usar la camara", 230, 110, 70, 220)
+    end
+end
+
+Events.OnFillInventoryObjectContextMenu.Add(S4_Pager_Context.InventoryMenu)
 Events.OnKeyPressed.Add(S4_Pager_Context.OnKeyTogglePager)
 Events.OnPlayerUpdate.Add(S4_Pager_Context.OnPlayerUpdate)

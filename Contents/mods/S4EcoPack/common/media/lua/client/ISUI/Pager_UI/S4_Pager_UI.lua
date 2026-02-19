@@ -1,4 +1,6 @@
 require "ISUI/ISPanel"
+require "ISUI/Pager_UI/S4_Jobs_Lore"
+require "ISUI/Pager_UI/S4_Pager_System"
 
 S4_Pager_UI = ISPanel:derive("S4_Pager_UI")
 S4_Pager_UI.instance = nil
@@ -6,691 +8,115 @@ S4_Pager_UI.MAP_SYMBOL_ID = "S4PagerMission"
 S4_Pager_UI.MISSION_RADIUS = 20
 
 local function ensureMapSymbolDefinition()
-    if not MapSymbolDefinitions or not MapSymbolDefinitions.getInstance then
-        return
-    end
-    local ok = pcall(function()
-        MapSymbolDefinitions.getInstance():addTexture(S4_Pager_UI.MAP_SYMBOL_ID,
-            "media/ui/LootableMaps/map_airdrop.png", "Loot")
-    end)
-    return ok
+    return S4_Pager_System.ensureMapSymbolDefinition(S4_Pager_UI.MAP_SYMBOL_ID)
 end
 
-local function nowWorldHours()
-    local gt = GameTime and GameTime:getInstance() or nil
-    if gt and gt.getWorldAgeHours then
-        return gt:getWorldAgeHours()
-    end
-    return 0
-end
-
-local MISSION_POINTS = {{
-    x = 10625,
-    y = 9795,
-    z = 0,
-    location = "Muldraugh - Warehouse"
-}, {
-    x = 11978,
-    y = 6915,
-    z = 0,
-    location = "West Point - Gas Station"
-}, {
-    x = 6360,
-    y = 5240,
-    z = 0,
-    location = "Riverside - Motel"
-}, {
-    x = 8105,
-    y = 11528,
-    z = 0,
-    location = "Rosewood - Clinic"
-}, {
-    x = 12530,
-    y = 1470,
-    z = 0,
-    location = "Louisville - Storage"
-}, {
-    x = 10020,
-    y = 12740,
-    z = 0,
-    location = "March Ridge - Apartments"
-}}
+local nowWorldHours = S4_Pager_System.nowWorldHours
+local MISSION_POINTS = S4_Jobs_Lore.MISSION_POINTS or {}
+local MISSION_OBJECTIVES = S4_Jobs_Lore.MISSION_OBJECTIVES or {}
+local START_BUTTON_LABELS = S4_Jobs_Lore.START_BUTTON_LABELS or {"Start"}
+local MISSION_PHOTO_LORE = S4_Jobs_Lore.MISSION_PHOTO_LORE or {}
 
 local function randomMissionPoint()
-    return MISSION_POINTS[ZombRand(1, #MISSION_POINTS + 1)]
+    return S4_Pager_System.randomMissionPoint(MISSION_POINTS)
 end
 
 local function buildMission()
-    local objectives = {"Clean the warehouse office", "Dispose of suspicious trash bags",
-                        "Disinfect a small clinic room", "Sanitize the motel hallway",
-                        "Clean blood traces in a storage unit", "Deep-clean a private garage"}
-    local point = randomMissionPoint()
-
-    return {
-        durationHours = ZombRand(2, 9), -- 2..8
-        objective = objectives[ZombRand(1, #objectives + 1)],
-        location = point.location,
-        targetX = point.x,
-        targetY = point.y,
-        targetZ = point.z or 0,
-        zombieCount = ZombRand(1, 4) -- 1..3
-    }
+    return S4_Pager_System.buildMission(MISSION_POINTS, MISSION_OBJECTIVES)
 end
 
-local START_BUTTON_LABELS = {"Start", "Get that man", "Take their stuff", "You can do it."}
-
 local function randomStartLabel()
-    return START_BUTTON_LABELS[ZombRand(1, #START_BUTTON_LABELS + 1)] or "Start"
+    return S4_Pager_System.randomStartLabel(START_BUTTON_LABELS)
 end
 
 local function getSymbolsApi()
-    if not ISWorldMap_instance then
-        ISWorldMap.ShowWorldMap(0)
-        if ISWorldMap_instance and ISWorldMap_instance.close then
-            ISWorldMap_instance:close()
-        end
-    end
-    if not ISWorldMap_instance or not ISWorldMap_instance.javaObject then
-        return nil
-    end
-    local mapApi = ISWorldMap_instance.javaObject:getAPIv1()
-    if not mapApi then
-        return nil
-    end
-    return mapApi:getSymbolsAPI()
+    return S4_Pager_System.getSymbolsApi()
 end
 
 local function clearMissionMapMarkers()
-    -- Build compatibility: some map symbol APIs aren't available in all game versions.
-    -- Keep this as a safe no-op to avoid runtime errors.
-    return
+    return S4_Pager_System.clearMissionMapMarkers()
 end
 
 local function addMissionMapMarker(x, y)
-    if not x or not y then
-        return false
-    end
-    ensureMapSymbolDefinition()
-    clearMissionMapMarkers()
-    local symbolsApi = getSymbolsApi()
-    if not symbolsApi then
-        return false
-    end
-    local ok = pcall(function()
-        local symbol = symbolsApi:addTexture(S4_Pager_UI.MAP_SYMBOL_ID, x, y)
-        symbol:setAnchor(0.5, 0.5)
-        symbol:setRGBA(1, 0, 0, 1)
-    end)
-    return ok
+    return S4_Pager_System.addMissionMapMarker(S4_Pager_UI.MAP_SYMBOL_ID, x, y)
 end
 
 local function spawnMissionZombieAt(x, y, z, count)
-    if not x or not y then
-        return 0
-    end
-    x = math.floor(x)
-    y = math.floor(y)
-    z = math.floor(z or 0)
-    count = math.max(1, math.floor(count or 1))
-
-    local spawnedCount = 0
-
-    if addZombie then
-        for i = 1, count do
-            local sx = x + ZombRand(-2, 3)
-            local sy = y + ZombRand(-2, 3)
-            local ok1 = pcall(function()
-                addZombie(sx, sy, z, nil)
-            end)
-            if ok1 then
-                spawnedCount = spawnedCount + 1
-            else
-                local ok2 = pcall(function()
-                    addZombie(sx, sy, z, 0)
-                end)
-                if ok2 then
-                    spawnedCount = spawnedCount + 1
-                end
-            end
-        end
-    end
-
-    if spawnedCount > 0 then
-        return spawnedCount
-    end
-
-    if createHordeFromTo then
-        local okHorde = pcall(function()
-            createHordeFromTo(x, y, x, y, count)
-        end)
-        if okHorde then
-            return count
-        end
-    end
-
-    if sendClientCommand then
-        pcall(function()
-            sendClientCommand("S4SMD", "SpawnMissionZombie", {
-                x = x,
-                y = y,
-                z = z,
-                count = count
-            })
-        end)
-        return count
-    end
-
-    if isDebugEnabled and isDebugEnabled() then
-        print(string.format("[S4_Pager] Failed local zombie spawn at %d,%d,%d", x, y, z))
-    end
-    return 0
+    return S4_Pager_System.spawnMissionZombieAt(x, y, z, count)
 end
-
-local addRandomPhotoOnGroundNearMission
 
 local function completeMission(player, reasonText, r, g, b)
-    if not player then
-        return
-    end
-    local pData = player:getModData()
-    local mission = pData and pData.S4PagerMission or nil
-    if not mission or mission.status ~= "active" then
-        return
-    end
-    if not mission.photoDropped then
-        if addRandomPhotoOnGroundNearMission(mission, player) then
-            mission.photoDropped = true
-        elseif player and player.setHaloNote then
-            player:setHaloNote("No se pudo colocar Objeto de Trabajo en el suelo", 230, 110, 70, 280)
+    local refreshed = S4_Pager_System.completeMission(player, {
+        reasonText = reasonText,
+        r = r,
+        g = g,
+        b = b,
+        nowWorldHoursFn = nowWorldHours,
+        addPhotoOnGroundFn = function(mission, p)
+            return S4_Pager_System.addRandomPhotoOnGroundNearMission(mission, p, MISSION_PHOTO_LORE)
+        end
+    })
+    if refreshed then
+        clearMissionMapMarkers()
+        if S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
+            S4_Pager_UI.instance:refreshData()
         end
     end
-    -- Keep a completed-mission snapshot so disposable camera can recreate evidence later.
-    pData.S4PagerLastCompletedMission = {
-        targetX = mission.targetX,
-        targetY = mission.targetY,
-        targetZ = mission.targetZ,
-        location = mission.location,
-        completedWorldHours = nowWorldHours()
-    }
-    mission.status = "completed"
-    pData.S4PagerMission = nil
-    clearMissionMapMarkers()
-    if player.setHaloNote then
-        player:setHaloNote(reasonText or "Pager mission complete", r or 80, g or 220, b or 80, 300)
-    end
-    if S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
-        S4_Pager_UI.instance:refreshData()
-    end
-end
-
-local MISSION_PHOTO_LORE = {{
-    title = "Hidden Route",
-    note = "A photo of a man with a street number and threats written with curses."
-}, {
-    title = "Exchange Point",
-    note = "A blurry parking lot deal. A plate number is underlined three times."
-}, {
-    title = "Stolen Goods",
-    note = "Crates stacked in a dark room. Someone wrote: 'Move tonight or you're dead.'"
-}, {
-    title = "Contact Board",
-    note = "A corkboard full of faces and arrows, with one name crossed in red."
-}, {
-    title = "Surveillance Shot",
-    note = "Taken from a rooftop. The target is circled with the words: 'No mistakes.'"
-}, {
-    title = "Safehouse Entrance",
-    note = "A hidden side door marked with chalk symbols and a warning: 'Stay out.'"
-}}
-
-local function randomWorkObjectCode()
-    return string.format("%03d-%03d", ZombRand(0, 1000), ZombRand(0, 1000))
-end
-
-local function resolvePhotoItemType()
-    -- Prefer photo-like items first, fallback to common paper items.
-    local candidates = {"Base.Photograph", "Base.Photo", "Base.Polaroid", "Base.Picture", "Base.Notepad", "Base.Note",
-                        "Base.Notebook", "Base.SheetPaper2", "Base.SheetPaper"}
-    local sm = getScriptManager and getScriptManager() or nil
-    if sm and sm.FindItem then
-        for i = 1, #candidates do
-            local t = candidates[i]
-            local ok, item = pcall(function()
-                return sm:FindItem(t)
-            end)
-            if ok and item then
-                return t
-            end
-        end
-    end
-    return "Base.Photograph"
 end
 
 local function addRandomPhotoToCorpse(zombie)
-    if not zombie or not zombie.getInventory then
-        return false, nil
-    end
-    local inv = zombie:getInventory()
-    if not inv then
-        return false, nil
-    end
-    local photo = inv:AddItem(resolvePhotoItemType())
-    if not photo then
-        return false, nil
-    end
-    local entry = MISSION_PHOTO_LORE[ZombRand(1, #MISSION_PHOTO_LORE + 1)]
-    local code = randomWorkObjectCode()
-    if entry and photo.setName then
-        photo:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
-    end
-    if entry and photo.setTooltip then
-        photo:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
-    end
-    if photo.getModData then
-        local md = photo:getModData()
-        md.S4WorkObject = true
-        md.S4WorkCode = code
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
-    end
-    return true, code
-end
-
-addRandomPhotoOnGroundNearMission = function(mission, player)
-    if not mission then
-        return false
-    end
-    local world = getWorld and getWorld() or nil
-    local cell = world and world:getCell() or nil
-    if not cell then
-        return false
-    end
-
-    local tx = math.floor(mission.targetX or -1)
-    local ty = math.floor(mission.targetY or -1)
-    local tz = math.floor(mission.targetZ or 0)
-    if tx < 0 or ty < 0 then
-        return false
-    end
-
-    local square = nil
-    local offsets = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {0, 0}}
-    for i = 1, #offsets do
-        local ox = offsets[i][1]
-        local oy = offsets[i][2]
-        local s = cell:getGridSquare(tx + ox, ty + oy, tz)
-        if s then
-            square = s
-            break
-        end
-    end
-    if not square and player then
-        square = player:getSquare()
-    end
-    if not square then
-        return false
-    end
-
-    local entry = MISSION_PHOTO_LORE[ZombRand(1, #MISSION_PHOTO_LORE + 1)]
-    local code = randomWorkObjectCode()
-    local photoType = resolvePhotoItemType()
-
-    local item = nil
-    local okAdd, added = pcall(function()
-        return square:AddWorldInventoryItem(photoType, 0.5, 0.5, 0)
-    end)
-    if okAdd and added then
-        item = added
-    end
-    if not item and player and player.getSquare then
-        local ps = player:getSquare()
-        if ps then
-            local okAddP, addedP = pcall(function()
-                return ps:AddWorldInventoryItem(photoType, 0.5, 0.5, 0)
-            end)
-            if okAddP and addedP then
-                item = addedP
-                square = ps
-            end
-        end
-    end
-    if not item and player and player.getInventory then
-        local inv = player:getInventory()
-        if inv then
-            local invItem = inv:AddItem(photoType)
-            if invItem then
-                item = invItem
-            end
-        end
-    end
-    if not item then
-        return false
-    end
-
-    if item.getModData then
-        local md = item:getModData()
-        md.S4WorkObject = true
-        md.S4WorkCode = code
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
-    end
-    if entry and item.setName then
-        item:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
-    end
-    if entry and item.setTooltip then
-        item:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
-    end
-    if S4_Utils and S4_Utils.SnycObject then
-        pcall(function()
-            S4_Utils.SnycObject(item)
-        end)
-    end
-
-    mission.photoCode = code
-    local sq = square
-    if not sq and player and player.getSquare then
-        sq = player:getSquare()
-    end
-    mission.photoX = sq and sq:getX() or tx
-    mission.photoY = sq and sq:getY() or ty
-    mission.photoZ = sq and sq:getZ() or tz
-    mission.photoDestroyedWarned = false
-
-    if player and player.setHaloNote then
-        player:setHaloNote(string.format("Foto de trabajo en %d,%d", mission.photoX or tx, mission.photoY or ty), 245,
-            225, 140, 320)
-    end
-    return true
+    return S4_Pager_System.addRandomPhotoToCorpse(zombie, MISSION_PHOTO_LORE)
 end
 
 local function hasMissionPhotoOnGround(mission)
-    if not mission or not mission.photoCode then
-        return false
-    end
-    local world = getWorld and getWorld() or nil
-    local cell = world and world:getCell() or nil
-    if not cell then
-        return false
-    end
-    local cx = math.floor(mission.photoX or mission.targetX or -1)
-    local cy = math.floor(mission.photoY or mission.targetY or -1)
-    local cz = math.floor(mission.photoZ or mission.targetZ or 0)
-    if cx < 0 or cy < 0 then
-        return false
-    end
-    for dx = -2, 2 do
-        for dy = -2, 2 do
-            local square = cell:getGridSquare(cx + dx, cy + dy, cz)
-            if square then
-                local wos = square:getWorldObjects()
-                if wos then
-                    for i = 0, wos:size() - 1 do
-                        local wo = wos:get(i)
-                        if wo and wo.getItem then
-                            local it = wo:getItem()
-                            if it and it.getModData then
-                                local md = it:getModData()
-                                if md and md.S4WorkObject and md.S4WorkCode == mission.photoCode then
-                                    return true
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return false
+    return S4_Pager_System.hasMissionPhotoOnGround(mission)
 end
 
 local function playerHasMissionPhoto(player, mission)
-    if not player or not mission or not mission.photoCode then
-        return false
-    end
-    local inv = player:getInventory()
-    if not inv then
-        return false
-    end
-    local items = inv:getItems()
-    if not items then
-        return false
-    end
-    for i = 0, items:size() - 1 do
-        local it = items:get(i)
-        if it and it.getModData then
-            local md = it:getModData()
-            if md and md.S4WorkObject and md.S4WorkCode == mission.photoCode then
-                return true
-            end
-        end
-    end
-    return false
+    return S4_Pager_System.playerHasMissionPhoto(player, mission)
 end
 
 local function findAnyWorkObjectCodeInInventory(player)
-    if not player then
-        return nil
-    end
-    local inv = player:getInventory()
-    if not inv then
-        return nil
-    end
-    local items = inv:getItems()
-    if not items then
-        return nil
-    end
-    for i = 0, items:size() - 1 do
-        local it = items:get(i)
-        if it and it.getModData then
-            local md = it:getModData()
-            if md and md.S4WorkObject then
-                return md.S4WorkCode or "unknown"
-            end
-        end
-    end
-    return nil
+    return S4_Pager_System.findAnyWorkObjectCodeInInventory(player)
 end
 
 local function findAnyNearbyWorkObjectCode(player, radius)
-    if not player then
-        return nil
-    end
-    local sq = player:getSquare()
-    if not sq then
-        return nil
-    end
-    local world = getWorld and getWorld() or nil
-    local cell = world and world:getCell() or nil
-    if not cell then
-        return nil
-    end
-    local px = sq:getX()
-    local py = sq:getY()
-    local pz = sq:getZ()
-    radius = radius or 2
-    for dx = -radius, radius do
-        for dy = -radius, radius do
-            local csq = cell:getGridSquare(px + dx, py + dy, pz)
-            if csq then
-                local wos = csq:getWorldObjects()
-                if wos then
-                    for i = 0, wos:size() - 1 do
-                        local wo = wos:get(i)
-                        if wo and wo.getItem then
-                            local it = wo:getItem()
-                            if it and it.getModData then
-                                local md = it:getModData()
-                                if md and md.S4WorkObject then
-                                    return md.S4WorkCode or "unknown"
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-    return nil
+    return S4_Pager_System.findAnyNearbyWorkObjectCode(player, radius)
 end
 
 local function getFixedPointData(player)
-    if not player then
-        return nil
-    end
-    local md = player:getModData()
-    if not md or not md.S4PagerDebugFixedPointEnabled then
-        return nil
-    end
-    if md.S4PagerDebugFixedX == nil or md.S4PagerDebugFixedY == nil then
-        return nil
-    end
-    return {
-        x = math.floor(md.S4PagerDebugFixedX),
-        y = math.floor(md.S4PagerDebugFixedY),
-        z = math.floor(md.S4PagerDebugFixedZ or 0)
-    }
+    return S4_Pager_System.getFixedPointData(player)
 end
 
 local function applyFixedPointToPending(self)
-    if not self or not self.pendingMission or not self.player then
+    if not self then
         return
     end
-    local fixed = getFixedPointData(self.player)
-    if not fixed then
-        return
-    end
-    self.pendingMission.targetX = fixed.x
-    self.pendingMission.targetY = fixed.y
-    self.pendingMission.targetZ = fixed.z
-    self.pendingMission.location = string.format("DEBUG Fixed Point (%d,%d,%d)", fixed.x, fixed.y, fixed.z)
+    self.pendingMission = S4_Pager_System.applyFixedPointToPending(self.player, self.pendingMission)
 end
 
 local function isPlayerNearMission(player, mission, range)
-    if not player or not mission then
-        return false
-    end
-    local px = player:getX()
-    local py = player:getY()
-    local tx = mission.targetX or 0
-    local ty = mission.targetY or 0
-    local dx = px - tx
-    local dy = py - ty
-    local rr = (range or 120)
-    return (dx * dx + dy * dy) <= (rr * rr)
+    return S4_Pager_System.isPlayerNearMission(player, mission, range)
 end
 
 local function isWithinMissionPhotoRange(player, mission, range)
-    if not player or not mission then
-        return false
-    end
-    local px = player:getX()
-    local py = player:getY()
-    local tx = mission.targetX or 0
-    local ty = mission.targetY or 0
-    local dx = px - tx
-    local dy = py - ty
-    local rr = range or 10
-    return (dx * dx + dy * dy) <= (rr * rr)
+    return S4_Pager_System.isWithinMissionPhotoRange(player, mission, range)
 end
 
 function S4_Pager_UI.GetCameraPhotoTarget(player)
-    if not player then
-        return nil, nil
-    end
-    local pData = player:getModData()
-    local mission = pData and pData.S4PagerMission or nil
-    if mission and mission.status == "active" then
-        return mission, "active"
-    end
-    local completed = pData and pData.S4PagerLastCompletedMission or nil
-    if completed and completed.targetX and completed.targetY then
-        return completed, "completed"
-    end
-    return nil, nil
+    return S4_Pager_System.getCameraPhotoTarget(player)
 end
 
 local function removeOneItemFromPlayer(player, item)
-    if not player or not item then
-        return
-    end
-    if item:getWorldItem() then
-        item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
-        ISInventoryPage.dirtyUI()
-        return
-    end
-    if item:getContainer() then
-        item:getContainer():Remove(item)
-    else
-        player:getInventory():Remove(item)
-    end
+    S4_Pager_System.removeOneItemFromPlayer(player, item)
 end
 
 local function createValuablePhotoInInventory(player, mission, sourceLabel)
-    if not player then
-        return false
-    end
-    local inv = player:getInventory()
-    if not inv then
-        return false
-    end
-    local photoType = resolvePhotoItemType()
-    local photo = inv:AddItem(photoType)
-    if not photo then
-        return false
-    end
-    local entry = MISSION_PHOTO_LORE[ZombRand(1, #MISSION_PHOTO_LORE + 1)]
-    local code = randomWorkObjectCode()
-    if photo.getModData then
-        local md = photo:getModData()
-        md.S4WorkObject = true
-        md.S4WorkCode = code
-        md.S4WorkSource = sourceLabel or "Camera"
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
-    end
-    if entry and photo.setName then
-        photo:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
-    end
-    if entry and photo.setTooltip then
-        photo:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
-    end
-    if S4_Utils and S4_Utils.SnycObject then
-        pcall(function()
-            S4_Utils.SnycObject(photo)
-        end)
-    end
-    if mission then
-        mission.photoCode = mission.photoCode or code
-    end
-    return true
+    return S4_Pager_System.createValuablePhotoInInventory(player, mission, sourceLabel, MISSION_PHOTO_LORE)
 end
 
 local function countAliveZombiesAround(x, y, radius)
-    local world = getWorld and getWorld() or nil
-    local cell = world and world:getCell() or nil
-    local zlist = cell and cell:getZombieList() or nil
-    if not zlist then
-        return 0
-    end
-    local r2 = radius * radius
-    local count = 0
-    for i = 0, zlist:size() - 1 do
-        local z = zlist:get(i)
-        if z and (not z:isDead()) then
-            local dx = z:getX() - x
-            local dy = z:getY() - y
-            if (dx * dx + dy * dy) <= r2 then
-                count = count + 1
-            end
-        end
-    end
-    return count
+    return S4_Pager_System.countAliveZombiesAround(x, y, radius)
 end
 
 function S4_Pager_UI:showForPlayer(player)
@@ -970,93 +396,36 @@ end
 
 function S4_Pager_UI.UpdateMissionState()
     local player = getSpecificPlayer(0)
-    if not player then
-        return
-    end
-    local pData = player:getModData()
-    local mission = pData.S4PagerMission
-    if not mission or mission.status ~= "active" then
-        return
-    end
-
-    -- If mission targets were removed by external systems/mods, resolve mission.
-    local remaining = math.max(0, (mission.killGoal or 1) - (mission.killsDone or 0))
-    if remaining > 0 and isPlayerNearMission(player, mission, 120) then
-        local alive = countAliveZombiesAround(mission.targetX or 0, mission.targetY or 0, S4_Pager_UI.MISSION_RADIUS)
-        if alive <= 0 then
-            completeMission(player, "Pager mission resolved (targets removed)", 80, 220, 80)
-            return
-        end
-    end
-
-    if nowWorldHours() >= mission.endWorldHours then
-        pData.S4PagerMission = nil
-        clearMissionMapMarkers()
-        if player.setHaloNote then
-            player:setHaloNote("Pager mission failed: out of time", 220, 80, 80, 300)
-        end
-        if S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
-            S4_Pager_UI.instance:refreshData()
-        end
-        return
-    end
-
-    if mission.photoDropped and (not mission.photoDestroyedWarned) and mission.photoCode then
-        local existsOnGround = hasMissionPhotoOnGround(mission)
-        local inPlayerInv = playerHasMissionPhoto(player, mission)
-        if (not existsOnGround) and (not inPlayerInv) then
-            mission.photoDestroyedWarned = true
-            if player.setHaloNote then
-                player:setHaloNote("Objeto destruido, deberas dar explicaciones al Cliente", 230, 110, 70, 360)
+    S4_Pager_System.updateMissionState(player, {
+        missionRadius = S4_Pager_UI.MISSION_RADIUS,
+        nowWorldHoursFn = nowWorldHours,
+        isPlayerNearMissionFn = isPlayerNearMission,
+        countAliveZombiesAroundFn = countAliveZombiesAround,
+        hasMissionPhotoOnGroundFn = hasMissionPhotoOnGround,
+        playerHasMissionPhotoFn = playerHasMissionPhoto,
+        clearMissionMapMarkersFn = clearMissionMapMarkers,
+        completeMissionFn = completeMission,
+        onRefreshUiFn = function(forPlayer)
+            if S4_Pager_UI.instance and S4_Pager_UI.instance.player == forPlayer then
+                S4_Pager_UI.instance:refreshData()
             end
         end
-    end
+    })
 end
 Events.EveryOneMinute.Add(S4_Pager_UI.UpdateMissionState)
 
 function S4_Pager_UI.OnZombieDead(zombie)
     local player = getSpecificPlayer(0)
-    if not player or not zombie then
-        return
-    end
-    local pData = player:getModData()
-    local mission = pData and pData.S4PagerMission or nil
-    if not mission or mission.status ~= "active" then
-        return
-    end
-
-    local zx = zombie:getX()
-    local zy = zombie:getY()
-    local tx = mission.targetX or 0
-    local ty = mission.targetY or 0
-    local dx = zx - tx
-    local dy = zy - ty
-    local inMissionArea = (dx * dx + dy * dy) <= (S4_Pager_UI.MISSION_RADIUS * S4_Pager_UI.MISSION_RADIUS)
-    if not inMissionArea then
-        return
-    end
-
-    if not mission.zombieInventoryDropDone then
-        local okDrop, code = addRandomPhotoToCorpse(zombie)
-        if okDrop then
-            mission.zombieInventoryDropDone = true
-            mission.zombieInventoryDropCode = code
-            if player.setHaloNote then
-                player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
+    S4_Pager_System.onZombieDead(zombie, player, {
+        missionRadius = S4_Pager_UI.MISSION_RADIUS,
+        addRandomPhotoToCorpseFn = addRandomPhotoToCorpse,
+        completeMissionFn = completeMission,
+        onRefreshUiFn = function(forPlayer)
+            if S4_Pager_UI.instance and S4_Pager_UI.instance.player == forPlayer then
+                S4_Pager_UI.instance:refreshData()
             end
         end
-    end
-
-    mission.killsDone = math.min((mission.killsDone or 0) + 1, mission.killGoal or 1)
-    if player.setHaloNote then
-        player:setHaloNote(string.format("Targets: %d/%d", mission.killsDone, mission.killGoal or 1), 80, 220, 80, 180)
-    end
-
-    if mission.killsDone >= (mission.killGoal or 1) then
-        completeMission(player, "Pager mission complete", 80, 220, 80)
-    elseif S4_Pager_UI.instance and S4_Pager_UI.instance.player == player then
-        S4_Pager_UI.instance:refreshData()
-    end
+    })
 end
 Events.OnZombieDead.Add(S4_Pager_UI.OnZombieDead)
 
@@ -1064,114 +433,27 @@ function S4_Pager_UI.OnPlayerUpdateValuableHalo(player)
     if not player or player ~= getSpecificPlayer(0) then
         return
     end
-    local md = player:getModData()
-    local nowMs = getTimestampMs and getTimestampMs() or 0
-    local nextMs = md.S4WorkValuableHaloNextMs or 0
-    if nowMs > 0 and nowMs < nextMs then
-        return
-    end
-    md.S4WorkValuableHaloNextMs = nowMs + 2000
-
-    local code = findAnyWorkObjectCodeInInventory(player)
-    if not code then
-        code = findAnyNearbyWorkObjectCode(player, 2)
-    end
-    if not code then
-        return
-    end
-
-    md.S4WorkValuableSeen = md.S4WorkValuableSeen or {}
-    if md.S4WorkValuableSeen[code] then
-        return
-    end
-    md.S4WorkValuableSeen[code] = true
-    if player.setHaloNote then
-        player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
-    end
+    S4_Pager_System.onPlayerUpdateValuableHalo(player, {
+        findAnyWorkObjectCodeInInventoryFn = findAnyWorkObjectCodeInInventory,
+        findAnyNearbyWorkObjectCodeFn = findAnyNearbyWorkObjectCode
+    })
 end
 Events.OnPlayerUpdate.Add(S4_Pager_UI.OnPlayerUpdateValuableHalo)
 
 function S4_Pager_UI.CameraMissionPhoto(player, cameraItem)
-    if not player or not cameraItem then
-        return
-    end
-    local mission, mode = S4_Pager_UI.GetCameraPhotoTarget(player)
-    if not mission then
-        return
-    end
-    if not isWithinMissionPhotoRange(player, mission, 10) then
-        if player.setHaloNote then
-            player:setHaloNote("Debes acercarte al objetivo para tomar la foto", 230, 110, 70, 260)
-        end
-        return
-    end
-    local created = createValuablePhotoInInventory(player, mission, "CameraDisposable")
-    if created then
-        removeOneItemFromPlayer(player, cameraItem)
-        if player.setHaloNote then
-            if mode == "completed" then
-                player:setHaloNote("Se recupero evidencia de mision completada", 245, 225, 140, 260)
-            else
-                player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
-            end
-        end
-    elseif player.setHaloNote then
-        player:setHaloNote("No se pudo crear la foto de evidencia", 230, 110, 70, 260)
-    end
+    S4_Pager_System.cameraMissionPhoto(player, cameraItem, {
+        getCameraPhotoTargetFn = S4_Pager_UI.GetCameraPhotoTarget,
+        isWithinMissionPhotoRangeFn = isWithinMissionPhotoRange,
+        createValuablePhotoInInventoryFn = createValuablePhotoInInventory,
+        removeOneItemFromPlayerFn = removeOneItemFromPlayer
+    })
 end
 
 function S4_Pager_UI.InventoryCameraMenu(playerNum, context, items)
-    local player = getSpecificPlayer(playerNum)
-    if not player then
-        return
-    end
-    local pData = player:getModData()
-    local mission = pData and pData.S4PagerMission or nil
-    if not mission or mission.status ~= "active" then
-        return
-    end
-
-    items = ISInventoryPane.getActualItems(items)
-    if not items then
-        return
-    end
-
-    local list = {}
-    if items.size and items.get then
-        for i = 0, items:size() - 1 do
-            list[#list + 1] = items:get(i)
-        end
-    else
-        list = items
-    end
-    if not list or #list == 0 then
-        return
-    end
-
-    local item = nil
-    for i = 1, #list do
-        local it = list[i]
-        if it and it.getFullType then
-            local ft = it:getFullType()
-            if ft == "Base.CameraDisposable" or ft == "Base.DisposableCamera" or ft == "Base.Camera" then
-                item = it
-                break
-            end
-        end
-    end
-    if not item then
-        return
-    end
-
-    local label = "Take Mission Photo"
-    local option = context:addOption(label, player, S4_Pager_UI.CameraMissionPhoto, item)
-    if not isWithinMissionPhotoRange(player, mission, 10) then
-        option.notAvailable = true
-        option.onSelect = nil
-        local tt = ISToolTip:new()
-        tt.description = "Acercate a 10 celdas del objetivo para tomar la foto."
-        option.toolTip = tt
-    end
+    S4_Pager_System.inventoryCameraMenu(playerNum, context, items, {
+        cameraMissionPhotoFn = S4_Pager_UI.CameraMissionPhoto,
+        isWithinMissionPhotoRangeFn = isWithinMissionPhotoRange
+    })
 end
 -- Inventory camera context is registered in S4_Pager_Context to avoid duplicate hooks.
 

@@ -56,6 +56,17 @@ local function playComputerToggleSound()
     end
 end
 
+local function playATMBeepSound()
+    if getSoundManager and getSoundManager().playUISound then
+        local ok = pcall(function()
+            getSoundManager():playUISound("ATMBeep")
+        end)
+        if not ok then
+            getSoundManager():playUISound("S4_QoL_ButtonPush")
+        end
+    end
+end
+
 function S4_Eco_Context.InventoryMenu(playerNum, context, items)
     items = ISInventoryPane.getActualItems(items)
     local item = items[1]
@@ -242,6 +253,26 @@ local S4_Eco_Tiles_List = { -- ATM/Computer tile data
         Type = "ATM"
     },
     ["location_business_bank_01_67"] = {
+        Px = 0,
+        Py = 0,
+        Type = "ATM"
+    },
+    ["location_business_bank_01_68"] = {
+        Px = 0,
+        Py = 0,
+        Type = "ATM"
+    },
+    ["location_business_bank_01_69"] = {
+        Px = 0,
+        Py = 0,
+        Type = "ATM"
+    },
+    ["location_business_bank_01_70"] = {
+        Px = 0,
+        Py = 0,
+        Type = "ATM"
+    },
+    ["location_business_bank_01_71"] = {
         Px = 0,
         Py = 0,
         Type = "ATM"
@@ -455,13 +486,41 @@ function S4_Eco_Context.ComputerAction(Obj, player, Data, playToggleSfx)
 end
 
 function S4_Eco_Context.ATM_Action(Obj, player, Data)
-    local adjacent = S4_Utils.getAdjacent(player, Obj, Data.Px, Data.Py)
+    local function findAtmAdjacent()
+        local defaults = {{1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0}}
+        if Data then
+            local a = S4_Utils.getAdjacent(player, Obj, Data.Px or 0, Data.Py or 0)
+            if a then
+                return a
+            end
+        end
+        for i = 1, #defaults do
+            local d = defaults[i]
+            local a = S4_Utils.getAdjacent(player, Obj, d[1], d[2])
+            if a then
+                return a
+            end
+        end
+        return nil
+    end
+
+    local function openATMNow()
+        S4_ATM_MainUI:show(player, Obj)
+        playATMBeepSound()
+    end
+
+    local adjacent = findAtmAdjacent()
     if adjacent then
+        local playerSq = player:getSquare()
+        if playerSq and playerSq == adjacent then
+            openATMNow()
+            return
+        end
         local Walkaction = ISWalkToTimedAction:new(player, adjacent)
         ISTimedActionQueue.add(Walkaction)
 
         Walkaction:setOnComplete(function()
-            S4_ATM_MainUI:show(player, Obj)
+            openATMNow()
         end)
     end
 end
@@ -522,6 +581,14 @@ local function isComputerUiOpen()
     return false
 end
 
+local function isAtmUiOpen()
+    if S4_ATM_MainUI and S4_ATM_MainUI.instance and S4_ATM_MainUI.instance.isVisible and
+        S4_ATM_MainUI.instance:isVisible() then
+        return true
+    end
+    return false
+end
+
 local function closeComputerUiIfOpen()
     if S4_Booting_Sequence and S4_Booting_Sequence.instance and S4_Booting_Sequence.instance.isVisible and
         S4_Booting_Sequence.instance:isVisible() and S4_Booting_Sequence.instance.close then
@@ -531,6 +598,15 @@ local function closeComputerUiIfOpen()
     if S4_Computer_Main and S4_Computer_Main.instance and S4_Computer_Main.instance.isVisible and
         S4_Computer_Main.instance:isVisible() and S4_Computer_Main.instance.close then
         S4_Computer_Main.instance:close()
+        return true
+    end
+    return false
+end
+
+local function closeAtmUiIfOpen()
+    if S4_ATM_MainUI and S4_ATM_MainUI.instance and S4_ATM_MainUI.instance.isVisible and
+        S4_ATM_MainUI.instance:isVisible() and S4_ATM_MainUI.instance.close then
+        S4_ATM_MainUI.instance:close()
         return true
     end
     return false
@@ -598,8 +674,87 @@ local function findNearbyComputer(player)
     return bestObj, bestData
 end
 
+local function isAtmSpriteName(spriteName)
+    if not spriteName then
+        return false
+    end
+    if S4_Eco_Tiles_List[spriteName] and S4_Eco_Tiles_List[spriteName].Type == "ATM" then
+        return true
+    end
+    local prefix, idx = spriteName:match("^(location_business_bank_01)_(%d+)$")
+    if prefix == "location_business_bank_01" then
+        local n = tonumber(idx)
+        if n and n >= 64 and n <= 79 then
+            return true
+        end
+    end
+    return false
+end
+
+local function findNearbyATM(player)
+    if not player then
+        return nil, nil
+    end
+    local sq = player:getSquare()
+    if not sq then
+        return nil, nil
+    end
+    local cell = getCell()
+    if not cell then
+        return nil, nil
+    end
+
+    local bestObj = nil
+    local bestData = nil
+    local bestDist = 9999
+    local z = sq:getZ()
+    local px = sq:getX()
+    local py = sq:getY()
+
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            local testSq = cell:getGridSquare(px + dx, py + dy, z)
+            if testSq then
+                local objs = testSq:getObjects()
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    local sprite = obj and obj:getSprite()
+                    local spriteName = sprite and sprite:getName()
+                    if isAtmSpriteName(spriteName) then
+                        local data = S4_Eco_Tiles_List[spriteName] or {
+                            Px = 0,
+                            Py = 0,
+                            Type = "ATM"
+                        }
+                        local dist = math.abs(testSq:getX() - px) + math.abs(testSq:getY() - py)
+                        if dist < bestDist then
+                            bestDist = dist
+                            bestObj = obj
+                            bestData = data
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return bestObj, bestData
+end
+
 function S4_Eco_Context.KeyOpenComputer(key)
-    if key ~= Keyboard.KEY_E then
+    local isToggleKey = (key == Keyboard.KEY_E)
+    if not isToggleKey and getCore then
+        local core = getCore()
+        if core and core.getKey then
+            local ok, interactKey = pcall(function()
+                return core:getKey("Interact")
+            end)
+            if ok and interactKey and key == interactKey then
+                isToggleKey = true
+            end
+        end
+    end
+    if not isToggleKey then
         return
     end
     local player = getSpecificPlayer(0)
@@ -607,25 +762,46 @@ function S4_Eco_Context.KeyOpenComputer(key)
         return
     end
 
-    local now = getGameTime():getWorldAgeHours()
     local md = player:getModData()
-    local last = md.S4_LastEComputerOpenAt or 0
-    if (now - last) < 0.0002 then
+    local nowMs = getTimestampMs and getTimestampMs() or 0
+    local lastMs = md.S4_LastEComputerOpenAtMs or 0
+    if nowMs > 0 and (nowMs - lastMs) < 700 then
         return
     end
 
     if isComputerUiOpen() then
         if closeComputerUiIfOpen() then
-            md.S4_LastEComputerOpenAt = now
+            if nowMs > 0 then
+                md.S4_LastEComputerOpenAtMs = nowMs
+            end
             playComputerToggleSound()
+        end
+        return
+    end
+    if isAtmUiOpen() then
+        if closeAtmUiIfOpen() then
+            if nowMs > 0 then
+                md.S4_LastEComputerOpenAtMs = nowMs
+            end
         end
         return
     end
 
     local obj, data = findNearbyComputer(player)
     if obj and data then
-        md.S4_LastEComputerOpenAt = now
+        if nowMs > 0 then
+            md.S4_LastEComputerOpenAtMs = nowMs
+        end
         S4_Eco_Context.ComputerAction(obj, player, data, true)
+        return
+    end
+
+    local atmObj, atmData = findNearbyATM(player)
+    if atmObj and atmData then
+        if nowMs > 0 then
+            md.S4_LastEComputerOpenAtMs = nowMs
+        end
+        S4_Eco_Context.ATM_Action(atmObj, player, atmData)
     end
 end
 Events.OnKeyPressed.Add(S4_Eco_Context.KeyOpenComputer)

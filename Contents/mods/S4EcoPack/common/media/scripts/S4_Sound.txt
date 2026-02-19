@@ -18,6 +18,22 @@ module Base {
         }
     }
 
+    sound ATMBeep {
+        category = Object,
+        clip {
+            file = media/sound/QoL/ATMbeep.mp3,
+            volume = 0.5,
+        }
+    }
+
+    sound ATMGoodbye {
+        category = Object,
+        clip {
+            file = media/sound/QoL/goodbyeMachine.wav,
+            volume = 0.55,
+        }
+    }
+
     sound S4_BootingSound { 
         category = Object, 
 

@@ -51,6 +51,14 @@ module Base {
         }
     }
 
+    sound pageGrab {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/pagerGrab.wav,
+            volume = 0.6,
+        }
+    }
+
     sound S4_QoL_ButtonPush {
         category = Object,
         clip {

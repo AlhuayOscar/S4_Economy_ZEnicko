@@ -53,4 +53,28 @@ module Base {
 			item 1 S4Item.Signal,
 		}
 	}
+
+    craftRecipe CraftS4SatelliteDish
+	{
+        timedAction = DismantleElectrical,
+		Time = 200,
+		SkillRequired = MetalWelding:4;Electricity:2,
+		Tags = AnySurfaceCraft,
+        category = Metalworking,
+		xpAward = MetalWelding:3;Electricity:2,
+		inputs
+		{
+			item 8 [Base.SheetMetal] flags[NoBrokenItems],
+			item 3 [Base.MetalBar] flags[NoBrokenItems],
+			item 1 [Base.RadioTransmitter] flags[NoBrokenItems],
+			item 1 [Base.Receiver] flags[NoBrokenItems],
+			item 4 [Base.ElectricWire] flags[NoBrokenItems],
+			item 1 [Base.BlowTorch] mode:keep flags[MayDegradeLight;NoBrokenItems],
+			item 1 [Base.WeldingMask] mode:keep flags[NoBrokenItems],
+		}
+		outputs
+		{
+			item 1 Base.Mov_SatelliteDish,
+		}
+	}
 }

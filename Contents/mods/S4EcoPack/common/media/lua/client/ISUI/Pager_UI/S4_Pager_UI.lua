@@ -455,7 +455,7 @@ function S4_Pager_UI:render()
         end
         if self.activeMission and self.activeMission.missionMode == "stash_money" and
             getDropTargetNearState(self.player, self.activeMission, 3) then
-            self:drawText("Destino cerca", 20, 228, 0.2, 0.95, 0.2, 1, UIFont.Small)
+            self:drawText("Destination nearby", 20, 228, 0.2, 0.95, 0.2, 1, UIFont.Small)
         end
     elseif self.pendingMission then
         local contractTitle = self.pendingMission.missionName or self.pendingMission.objective or "Mission"

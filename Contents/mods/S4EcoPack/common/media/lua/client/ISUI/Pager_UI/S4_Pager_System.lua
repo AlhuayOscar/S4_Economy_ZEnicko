@@ -366,7 +366,7 @@ local function _markDirtyMoneyItem(item, mission)
     if not item then
         return
     end
-    local dirtyText = "Este dinero... Esta sucio... No deberia guardarmelo"
+    local dirtyText = "This money... It's dirty... I should not keep it."
     if item.setTooltip then
         pcall(function()
             item:setTooltip(dirtyText)
@@ -595,9 +595,9 @@ function S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
     mission.suppliesBagPlaced = bagSpawned
     if player.setHaloNote then
         if addedBundles > 0 then
-            player:setHaloNote(string.format("Dinero sucio preparado: %d MoneyBundle", addedBundles), 80, 220, 80, 300)
+            player:setHaloNote(string.format("Dirty money prepared: %d MoneyBundle", addedBundles), 80, 220, 80, 300)
         else
-            player:setHaloNote("No se pudo preparar el dinero oculto", 220, 110, 90, 280)
+            player:setHaloNote("Could not prepare hidden dirty money", 220, 110, 90, 280)
         end
         if bagSpawned then
             player:setHaloNote(string.format("Duffelbag dejado en %d,%d", sx, sy), 230, 210, 120, 280)
@@ -733,7 +733,7 @@ local function markDirtyMoneyItem(item, mission)
     if not item then
         return
     end
-    local dirtyText = "Este dinero... Esta sucio... No deberia guardarmelo"
+    local dirtyText = "This money... It's dirty... I should not keep it."
     if item.setTooltip then
         pcall(function()
             item:setTooltip(dirtyText)
@@ -1408,7 +1408,7 @@ function S4_Pager_System.completeMission(player, opts)
         if addPhotoFn and addPhotoFn(mission, player) then
             mission.photoDropped = true
         elseif player and player.setHaloNote then
-            player:setHaloNote("No se pudo colocar Objeto de Trabajo en el suelo", 230, 110, 70, 280)
+            player:setHaloNote("Could not place Work Object on the ground", 230, 110, 70, 280)
         end
     end
     local nowWorldHoursFn = opts.nowWorldHoursFn or S4_Pager_System.nowWorldHours
@@ -1507,7 +1507,7 @@ function S4_Pager_System.updateMissionState(player, opts)
                 opts.clearMissionMapMarkersFn()
             end
             if player.setHaloNote then
-                player:setHaloNote("Mision fallida: el dinero sucio fue usado o perdido", 220, 80, 80, 360)
+                player:setHaloNote("Mission failed: dirty money was used or lost", 220, 80, 80, 360)
             end
             if opts.onRefreshUiFn then
                 opts.onRefreshUiFn(player)
@@ -1527,7 +1527,7 @@ function S4_Pager_System.updateMissionState(player, opts)
                     mission.dropTargetY = drop.y
                     mission.dropTargetZ = drop.z
                     mission.dropTargetObj = drop.obj
-                    mission.runtimeObjective = "Lugar para dejar el dinero"
+                    mission.runtimeObjective = "Money drop location"
                     if opts.addMissionMapMarkerFn then
                         opts.addMissionMapMarkerFn(drop.x, drop.y)
                     end
@@ -1535,7 +1535,7 @@ function S4_Pager_System.updateMissionState(player, opts)
                         setContainerHighlight(drop.obj, true)
                     end
                     if player.setHaloNote then
-                        player:setHaloNote("Lugar para dejar el dinero marcado", 230, 210, 120, 320)
+                        player:setHaloNote("Money drop location marked", 230, 210, 120, 320)
                     end
                 else
                     if player.setHaloNote then
@@ -1567,7 +1567,7 @@ function S4_Pager_System.updateMissionState(player, opts)
                 else
                     if player.setHaloNote then
                         if not hasDuffel then
-                            player:setHaloNote("Necesitas una bolsa de lona", 220, 110, 90, 260)
+                            player:setHaloNote("You need a duffel bag", 220, 110, 90, 260)
                         else
                             player:setHaloNote(string.format("Faltan Money Bundle: %d/%d", bundles, requiredCount), 220,
                                 110, 90, 260)
@@ -1630,7 +1630,7 @@ function S4_Pager_System.updateMissionState(player, opts)
         if (not existsOnGround) and (not inPlayerInv) then
             mission.photoDestroyedWarned = true
             if player.setHaloNote then
-                player:setHaloNote("Objeto destruido, deberas dar explicaciones al Cliente", 230, 110, 70, 360)
+                player:setHaloNote("Object destroyed. You will have to explain it to the client", 230, 110, 70, 360)
             end
         end
     end
@@ -1972,7 +1972,7 @@ function S4_Pager_System.cameraMissionPhoto(player, cameraItem, opts)
     local inRange = opts.isWithinMissionPhotoRangeFn and opts.isWithinMissionPhotoRangeFn(player, mission, 10)
     if not inRange then
         if player.setHaloNote then
-            player:setHaloNote("Debes acercarte al objetivo para tomar la foto", 230, 110, 70, 260)
+            player:setHaloNote("You must get closer to the objective to take the photo", 230, 110, 70, 260)
         end
         return
     end
@@ -1984,13 +1984,13 @@ function S4_Pager_System.cameraMissionPhoto(player, cameraItem, opts)
         end
         if player.setHaloNote then
             if mode == "completed" then
-                player:setHaloNote("Se recupero evidencia de mision completada", 245, 225, 140, 260)
+                player:setHaloNote("Recovered evidence from completed mission", 245, 225, 140, 260)
             else
                 player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
             end
         end
     elseif player.setHaloNote then
-        player:setHaloNote("No se pudo crear la foto de evidencia", 230, 110, 70, 260)
+        player:setHaloNote("Could not create evidence photo", 230, 110, 70, 260)
     end
 end
 
@@ -2045,7 +2045,7 @@ function S4_Pager_System.inventoryCameraMenu(playerNum, context, items, opts)
         option.notAvailable = true
         option.onSelect = nil
         local tt = ISToolTip:new()
-        tt.description = "Acercate a 10 celdas del objetivo para tomar la foto."
+        tt.description = "Get within 10 tiles of the objective to take the photo."
         option.toolTip = tt
     end
 end

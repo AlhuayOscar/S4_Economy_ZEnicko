@@ -32,6 +32,206 @@ local function getNowMs()
     return 0
 end
 
+local function sceneDrag(scene, dx, dy)
+    if not scene or not scene.javaObject then
+        return
+    end
+    pcall(function()
+        scene.javaObject:fromLua2("dragView", dx, dy)
+    end)
+end
+
+local function getVectorComponent(v, axis)
+    if not v then
+        return 0
+    end
+    if axis == "x" then
+        if v.x then
+            local ok, n = pcall(function()
+                return v:x()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+        if v.getX then
+            local ok, n = pcall(function()
+                return v:getX()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+    elseif axis == "y" then
+        if v.y then
+            local ok, n = pcall(function()
+                return v:y()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+        if v.getY then
+            local ok, n = pcall(function()
+                return v:getY()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+    elseif axis == "z" then
+        if v.z then
+            local ok, n = pcall(function()
+                return v:z()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+        if v.getZ then
+            local ok, n = pcall(function()
+                return v:getZ()
+            end)
+            if ok and n then
+                return n
+            end
+        end
+    end
+    return 0
+end
+
+local function toBoolText(v)
+    return v and "Yes" or "No"
+end
+
+local function getVehicleScriptById(scriptId)
+    if not scriptId or not getScriptManager then
+        return nil
+    end
+    local okSm, sm = pcall(getScriptManager)
+    if not okSm or not sm then
+        return nil
+    end
+    local okFind, vs = pcall(function()
+        return sm:getVehicle(scriptId)
+    end)
+    if okFind and vs then
+        return vs
+    end
+    local okFind2, vs2 = pcall(function()
+        return sm:getVehicleScript(scriptId)
+    end)
+    if okFind2 and vs2 then
+        return vs2
+    end
+    return nil
+end
+
+local function computeMaintenancePercentFromId(scriptId)
+    local s = tostring(scriptId or "Vehicle")
+    local sum = 0
+    for i = 1, #s do
+        sum = sum + string.byte(s, i)
+    end
+    return 20 + (sum % 21) -- 20..40
+end
+
+local function getVehicleSpecs(vehicleScript, scriptId)
+    local ext = safeCall(vehicleScript, "getExtents")
+    local width = tonumber(getVectorComponent(ext, "x")) or 0
+    local height = tonumber(getVectorComponent(ext, "y")) or 0
+    local length = tonumber(getVectorComponent(ext, "z")) or 0
+    local hp = tonumber(safeCall(vehicleScript, "getEngineForce")) or 0
+    hp = hp / 10
+
+    local hasRadio = false
+    local hasHeater = false
+    local hasTrunk = false
+    local trunkCapacity = 0
+
+    local partCount = tonumber(safeCall(vehicleScript, "getPartCount")) or 0
+    if partCount > 0 and vehicleScript.getPart then
+        for i = 0, partCount - 1 do
+            local part = nil
+            local okPart, partObj = pcall(function()
+                return vehicleScript:getPart(i)
+            end)
+            if okPart then
+                part = partObj
+            end
+            if part and part.getId then
+                local pid = tostring(safeCall(part, "getId") or ""):lower()
+                if string.find(pid, "radio", 1, true) then
+                    hasRadio = true
+                end
+                if string.find(pid, "heater", 1, true) then
+                    hasHeater = true
+                end
+                if string.find(pid, "truckbed", 1, true) or string.find(pid, "trunk", 1, true) then
+                    hasTrunk = true
+                end
+            end
+            if part and part.getContainer then
+                local container = safeCall(part, "getContainer")
+                if container then
+                    local cap = tonumber(safeCall(container, "getCapacity")) or tonumber(safeCall(container, "capacity")) or 0
+                    if cap > 0 then
+                        trunkCapacity = trunkCapacity + cap
+                    end
+                end
+            end
+        end
+    end
+    if trunkCapacity > 0 then
+        hasTrunk = true
+    end
+
+    local maintenancePct = computeMaintenancePercentFromId(scriptId)
+    local specs = {
+        width = width,
+        height = height,
+        length = length,
+        engineHP = hp,
+        trunkCapacity = trunkCapacity,
+        hasRadio = hasRadio,
+        hasHeater = hasHeater,
+        hasTrunk = hasTrunk,
+        maintenancePct = maintenancePct
+    }
+    specs.tooltip = string.format(
+        "W: %.2f | H: %.2f | L: %.2f\nEngine: %.0f hp\nTrunk Cap: %.0f\nRadio: %s | Heating: %s | Trunk: %s\nMaintenance Price: %d%%",
+        specs.width, specs.height, specs.length, specs.engineHP, specs.trunkCapacity, toBoolText(specs.hasRadio),
+        toBoolText(specs.hasHeater), toBoolText(specs.hasTrunk), specs.maintenancePct)
+    return specs
+end
+
+local function getAutoPreviewZoom(specs)
+    local baseZoom = 4.0
+    if not specs then
+        return baseZoom
+    end
+    local baseHeight = 1.06
+    local baseLength = 4.92
+    local hStep = 0.30
+    local lStep = 0.40
+
+    local hOver = math.max(0, (tonumber(specs.height) or 0) - baseHeight)
+    local lOver = math.max(0, (tonumber(specs.length) or 0) - baseLength)
+
+    -- Apply when either dimension grows.
+    local hLevel = math.floor(hOver / hStep)
+    local lLevel = math.floor(lOver / lStep)
+    local level = math.max(hLevel, lLevel)
+
+    -- "Two zoom outs" per level ~= -0.8 in this UI (each click is 0.4).
+    -- Extra global margin for oversized mod vehicles: two more zoom-outs.
+    local zoom = baseZoom - 0.8 - (level * 0.8)
+    if zoom < 1.2 then
+        zoom = 1.2
+    end
+    return zoom
+end
+
 local function buildVehicleDisplayRow(vehicleScript)
     if not vehicleScript then
         return nil
@@ -46,13 +246,26 @@ local function buildVehicleDisplayRow(vehicleScript)
             moduleName = string.sub(scriptId, 1, dotPos - 1)
         end
     end
+    local mechanicType = safeCall(vehicleScript, "getMechanicType") or 0
+    local vehicleClass = "Other"
+    if mechanicType == 1 then
+        vehicleClass = "Standard"
+    elseif mechanicType == 2 then
+        vehicleClass = "Commercial"
+    elseif mechanicType == 3 then
+        vehicleClass = "Sport"
+    end
+    local specs = getVehicleSpecs(vehicleScript, scriptId)
     return {
         text = tostring(scriptId),
         item = {
             id = tostring(scriptId),
             name = tostring(name or scriptId),
             module = moduleName,
-            source = (moduleName == "Base") and "Vanilla" or "Mod"
+            source = (moduleName == "Base") and "Vanilla" or "Mod",
+            mechanicType = mechanicType,
+            vehicleClass = vehicleClass,
+            specs = specs
         }
     }
 end
@@ -426,31 +639,195 @@ function S4_IE_VehicleShop:render()
         end
     end
 
-    if self.VehiclePreviewScene and self.VehiclePreviewAutoSequence and #self.VehiclePreviewAutoSequence > 0 then
+    if self.VehiclePreviewScene and self.VehiclePreviewCine then
         local now = getNowMs()
         local lastInput = self.VehiclePreviewLastInputMs or 0
-        local nextSwitch = self.VehiclePreviewNextSwitchMs or 0
-        local canAuto = (now > 0) and ((now - lastInput) >= 1800)
-        if canAuto and now >= nextSwitch then
-            local idx = self.VehiclePreviewAutoIndex or 1
-            local viewName = self.VehiclePreviewAutoSequence[idx]
-            if viewName then
-                pcall(function()
-                    self.VehiclePreviewScene:setView(viewName)
-                end)
-                idx = idx + 1
-                if idx > #self.VehiclePreviewAutoSequence then
-                    idx = 1
-                end
-                self.VehiclePreviewAutoIndex = idx
-                self.VehiclePreviewNextSwitchMs = now + 1900
-            end
+        local canAuto = (now > 0) and ((now - lastInput) >= 1600)
+        if canAuto then
+            self:updateVehiclePreviewCinematic(now)
         end
+    end
+end
+
+function S4_IE_VehicleShop:buildPreviewCinematic()
+    -- One-shot sequence requested:
+    -- 1) Start "far left" and ease into center once.
+    -- 2) Right -> Left -> Top (nose toward bottom) -> Front.
+    return {
+        {
+            type = "view",
+            view = "Right",
+            hold = 350
+        },
+        {
+            -- Push toward right first (entry start point).
+            type = "drag",
+            dxPerTick = 18.0,
+            dyPerTick = 0.0,
+            duration = 520
+        },
+        {
+            -- Switch to opposite angle before returning (simulated driving back).
+            type = "view",
+            view = "Left",
+            hold = 260
+        },
+        {
+            type = "drag",
+            -- Return to center while facing left.
+            dxPerTick = -5.7,
+            dyPerTick = 0.0,
+            duration = 1650
+        },
+        {
+            type = "view",
+            view = "Right",
+            hold = 820
+        },
+        {
+            type = "view",
+            view = "Left",
+            hold = 900
+        },
+        {
+            type = "view",
+            view = "Top",
+            hold = 300
+        },
+        {
+            -- Top: drift upward.
+            type = "drag",
+            dxPerTick = 0.0,
+            dyPerTick = -3.2,
+            duration = 520
+        },
+        {
+            -- Top: drift downward.
+            type = "drag",
+            dxPerTick = 0.0,
+            dyPerTick = 3.2,
+            duration = 520
+        },
+        {
+            type = "view",
+            view = "Front",
+            hold = 520
+        },
+        {
+            -- Front: drift to left.
+            type = "drag",
+            dxPerTick = -3.2,
+            dyPerTick = 0.0,
+            duration = 520
+        },
+        {
+            -- Front: drift to right.
+            type = "drag",
+            dxPerTick = 3.2,
+            dyPerTick = 0.0,
+            duration = 520
+        },
+        {
+            -- Final recenter nudge.
+            type = "drag",
+            dxPerTick = -1.5,
+            dyPerTick = 0.0,
+            duration = 450
+        },
+        {
+            type = "view",
+            view = "Right",
+            hold = 700
+        }
+    }
+end
+
+function S4_IE_VehicleShop:updateVehiclePreviewCinematic(now)
+    if not self.VehiclePreviewScene or not self.VehiclePreviewCine then
+        return
+    end
+    local cine = self.VehiclePreviewCine
+    if cine.finished then
+        return
+    end
+    local steps = cine.steps or {}
+    if #steps == 0 then
+        return
+    end
+    local idx = cine.index or 1
+    if idx < 1 or idx > #steps then
+        idx = 1
+    end
+    local step = steps[idx]
+    if not step then
+        return
+    end
+
+    if not cine.stepInit then
+        cine.stepInit = true
+        cine.stepStartMs = now
+        cine.lastTickMs = now
+        if step.type == "view" and step.view then
+            pcall(function()
+                self.VehiclePreviewScene:setView(step.view)
+            end)
+        end
+    end
+
+    local elapsed = now - (cine.stepStartMs or now)
+    local holdOrDuration = step.hold or step.duration or 1000
+
+    if step.type == "drag" then
+        local lastTick = cine.lastTickMs or now
+        local dt = now - lastTick
+        if dt < 16 then
+            return
+        end
+        local factor = dt / 16
+        sceneDrag(self.VehiclePreviewScene, (step.dxPerTick or 0) * factor, (step.dyPerTick or 0) * factor)
+        cine.lastTickMs = now
+    end
+
+    if elapsed >= holdOrDuration then
+        idx = idx + 1
+        if idx > #steps then
+            cine.finished = true
+            return
+        end
+        cine.index = idx
+        cine.stepInit = false
     end
 end
 
 function S4_IE_VehicleShop:onRefreshVehicleList()
     self:reloadVehicleList()
+end
+
+function S4_IE_VehicleShop:initVehicleCategoryBox()
+    if not self.CategoryBox then
+        return
+    end
+    self.CategoryBox:clear()
+    self.CategoryBox:addItem("All", "All")
+    self.CategoryBox:addItem("Standard", "Standard")
+    self.CategoryBox:addItem("Commercial", "Commercial")
+    self.CategoryBox:addItem("Sport", "Sport")
+    self.CategoryBox:addItem("Vanilla", "Vanilla")
+    self.CategoryBox:addItem("Modded", "Modded")
+end
+
+function S4_IE_VehicleShop:passesVehicleFilter(item)
+    local filter = self.VehicleListCategory or "All"
+    if filter == "All" then
+        return true
+    end
+    if filter == "Vanilla" then
+        return item.source == "Vanilla"
+    end
+    if filter == "Modded" then
+        return item.source ~= "Vanilla"
+    end
+    return item.vehicleClass == filter
 end
 
 function S4_IE_VehicleShop:reloadVehicleList()
@@ -459,11 +836,18 @@ function S4_IE_VehicleShop:reloadVehicleList()
     end
     self.VehicleListBox:clear()
     local rows = getAllVehicleScriptsRows()
+    local shown = 0
     for i = 1, #rows do
-        self.VehicleListBox:addItem(rows[i].text, rows[i].item)
+        if self:passesVehicleFilter(rows[i].item) then
+            local row = self.VehicleListBox:addItem(rows[i].text, rows[i].item)
+            if row and rows[i].item and rows[i].item.specs and rows[i].item.specs.tooltip then
+                row.tooltip = rows[i].item.specs.tooltip
+            end
+            shown = shown + 1
+        end
     end
     if self.VehicleCountLabel then
-        self.VehicleCountLabel:setName("Total: " .. tostring(#rows))
+        self.VehicleCountLabel:setName("Total: " .. tostring(shown) .. " / " .. tostring(#rows))
     end
 end
 
@@ -479,8 +863,10 @@ function S4_IE_VehicleShop:doDrawItem_VehicleList(y, item, alt)
     end
     self:drawText(tostring(data.name or item.text or "Vehicle"), 8, y + 2, 0.95, 0.95, 0.95, 1, UIFont.Small)
     self:drawText(tostring(data.id or "Unknown"), 8, y + 11, 0.7, 0.7, 0.7, 1, UIFont.Small)
-    self:drawTextRight(tostring(data.source or "Unknown"), self:getWidth() - 8, y + 6, sourceColor.r, sourceColor.g,
+    self:drawTextRight(tostring(data.source or "Unknown"), self:getWidth() - 8, y + 1, sourceColor.r, sourceColor.g,
         sourceColor.b, 1, UIFont.Small)
+    self:drawTextRight(tostring(data.vehicleClass or "Other"), self:getWidth() - 8, y + 12, 0.78, 0.88, 0.78, 1,
+        UIFont.Small)
     return y + h
 end
 
@@ -497,7 +883,7 @@ function S4_IE_VehicleShop:onMouseDown_VehicleList(x, y)
     if row and row > 0 and self.items and self.items[row] then
         local data = self.items[row].item
         if data and data.id then
-            parentUI:openVehiclePreview(data.id, data.name or data.id)
+            parentUI:openVehiclePreview(data)
         end
     end
     return true
@@ -510,15 +896,20 @@ function S4_IE_VehicleShop:closeVehiclePreview()
     end
     self.VehiclePreviewPanel = nil
     self.VehiclePreviewScene = nil
-    self.VehiclePreviewAutoSequence = nil
-    self.VehiclePreviewAutoIndex = nil
+    self.VehiclePreviewCine = nil
     self.VehiclePreviewLastInputMs = nil
-    self.VehiclePreviewNextSwitchMs = nil
 end
 
-function S4_IE_VehicleShop:openVehiclePreview(scriptName, displayName)
-    if not scriptName then
+function S4_IE_VehicleShop:openVehiclePreview(data)
+    if not data or not data.id then
         return
+    end
+    local scriptName = data.id
+    local displayName = data.name or data.id
+    local specs = data.specs
+    if not specs then
+        local vehicleScript = getVehicleScriptById(scriptName)
+        specs = getVehicleSpecs(vehicleScript, scriptName)
     end
     self:closeVehiclePreview()
 
@@ -549,22 +940,28 @@ function S4_IE_VehicleShop:openVehiclePreview(scriptName, displayName)
     closeBtn:initialise()
     panel:addChild(closeBtn)
 
-    local scene = ISUI3DScene:new(12, 34, pw - 24, ph - 46)
+    local scene = ISUI3DScene:new(12, 34, pw - 24, ph - 136)
     scene:initialise()
     scene:instantiate()
     scene.backgroundColor = {r = 1, g = 1, b = 1, a = 1}
     panel:addChild(scene)
     self.VehiclePreviewScene = scene
-    self.VehiclePreviewZoom = 4
-    self.VehiclePreviewAutoSequence = {"Top", "Right", "Front", "Left"}
-    self.VehiclePreviewAutoIndex = 1
+    self.VehiclePreviewBaseZoom = getAutoPreviewZoom(specs)
+    self.VehiclePreviewZoom = self.VehiclePreviewBaseZoom
+    self.VehiclePreviewCine = {
+        steps = self:buildPreviewCinematic(),
+        index = 1,
+        stepInit = false,
+        stepStartMs = 0,
+        lastTickMs = 0,
+        finished = false
+    }
     self.VehiclePreviewLastInputMs = getNowMs()
-    self.VehiclePreviewNextSwitchMs = (self.VehiclePreviewLastInputMs or 0) + 1400
 
     local ok = pcall(function()
         scene.javaObject:fromLua1("setDrawGrid", false)
         scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
-        scene:setView("Top")
+        scene:setView("Right")
         scene.javaObject:fromLua1("createVehicle", "vehicle")
         scene.javaObject:fromLua2("setVehicleScript", "vehicle", scriptName)
     end)
@@ -575,7 +972,25 @@ function S4_IE_VehicleShop:openVehiclePreview(scriptName, displayName)
         panel:addChild(errLbl)
     end
 
-    local controls = ISPanel:new(12, ph - 40, pw - 24, 28)
+    local infoY = scene:getBottom() + 6
+    local infoLines = {"No specs available."}
+    if specs then
+        infoLines = {
+            string.format("Width: %.2f  Height: %.2f  Length: %.2f", specs.width or 0, specs.height or 0,
+                specs.length or 0),
+            string.format("Engine Power: %.0f hp  Trunk Capacity: %.0f", specs.engineHP or 0, specs.trunkCapacity or 0),
+            string.format("Radio: %s  Heating: %s  Trunk: %s", toBoolText(specs.hasRadio),
+                toBoolText(specs.hasHeater), toBoolText(specs.hasTrunk)),
+            string.format("Maintenance Price: %d%%", tonumber(specs.maintenancePct) or 20)
+        }
+    end
+    for i = 1, #infoLines do
+        local line = ISLabel:new(14, infoY + ((i - 1) * (S4_UI.FH_S + 2)), S4_UI.FH_S, infoLines[i], 0.88, 0.92, 0.88,
+            1, UIFont.Small, true)
+        panel:addChild(line)
+    end
+
+    local controls = ISPanel:new(12, ph - 34, pw - 24, 28)
     controls.backgroundColor = {r = 0, g = 0, b = 0, a = 0.25}
     controls.borderColor = {r = 0.3, g = 0.3, b = 0.3, a = 1}
     controls:initialise()
@@ -612,7 +1027,9 @@ function S4_IE_VehicleShop:onPreviewControl(button)
 
     local internal = button.internal
     self.VehiclePreviewLastInputMs = getNowMs()
-    self.VehiclePreviewNextSwitchMs = (self.VehiclePreviewLastInputMs or 0) + 2500
+    if self.VehiclePreviewCine then
+        self.VehiclePreviewCine.stepInit = false
+    end
     if internal == "view_front" then
         scene:setView("Front")
     elseif internal == "view_back" then
@@ -634,11 +1051,15 @@ function S4_IE_VehicleShop:onPreviewControl(button)
             scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
         end)
     elseif internal == "reset" then
-        self.VehiclePreviewZoom = 4
+        self.VehiclePreviewZoom = self.VehiclePreviewBaseZoom or 4
         pcall(function()
-            scene:setView("Top")
+            scene:setView("Right")
             scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
         end)
+        if self.VehiclePreviewCine then
+            self.VehiclePreviewCine.index = 1
+            self.VehiclePreviewCine.stepInit = false
+        end
     end
 end
 
@@ -1078,15 +1499,19 @@ function S4_IE_VehicleShop:BtnClick(Button)
     end
     self.MenuType = internal
     if internal == "Buy" then
-        ModData.request("S4_ShopData")
-        ModData.request("S4_PlayerShopData")
-        if self.ListBox then self.ListBox.SyncLevel = 0 end
-        self:ReloadData("Buy")
+        self.VehicleListCategory = self.VehicleListCategory or "All"
+        self:initVehicleCategoryBox()
+        self.CategoryBox.selectedRow = 1
+        self.CategoryBox.CategoryType = self.VehicleListCategory
+        self:reloadVehicleList()
+        self:ShopBoxVisible(true)
     elseif internal == "Sell" then
-        ModData.request("S4_ShopData")
-        ModData.request("S4_PlayerShopData")
-        if self.ListBox then self.ListBox.SyncLevel = 0 end
-        self:ReloadData("Sell")
+        self.VehicleListCategory = self.VehicleListCategory or "All"
+        self:initVehicleCategoryBox()
+        self.CategoryBox.selectedRow = 1
+        self.CategoryBox.CategoryType = self.VehicleListCategory
+        self:reloadVehicleList()
+        self:ShopBoxVisible(true)
     elseif internal == "Home" then
         self:ShopBoxVisible(false)
         self.HomePanel:setVisible(false)
@@ -1102,18 +1527,13 @@ end
 
 -- Reset Category Settings, Category Visible Settings
 function S4_IE_VehicleShop:ShopBoxVisible(Value, KeepCurrentView)
-    if self.MenuType == "Buy" then
+    if self.MenuType == "Buy" or self.MenuType == "Sell" then
         if not KeepCurrentView or not self.CategoryBox.CategoryType then
+            self:initVehicleCategoryBox()
             self.CategoryBox.selectedRow = 1
-            self.CategoryBox.CategoryType = "HotItem"
-            self:AddItems()
+            self.CategoryBox.CategoryType = self.VehicleListCategory or "All"
         end
-    elseif self.MenuType == "Sell" then
-        if not KeepCurrentView or not self.CategoryBox.CategoryType then
-            self.CategoryBox.selectedRow = 1
-            self.CategoryBox.CategoryType = "InvItem"
-            self:AddItems()
-        end
+        self:reloadVehicleList()
     else
         self.CategoryBox.selectedRow = false
         self.CategoryBox.CategoryType = false
@@ -1196,7 +1616,8 @@ function S4_IE_VehicleShop:onMouseDown_CategoryBox(x, y)
         if rowIndex > 0 then
             list.selectedRow = rowIndex
             list.CategoryType = self.items[rowIndex].item
-            ShopUI:AddItems()
+            ShopUI.VehicleListCategory = list.CategoryType or "All"
+            ShopUI:reloadVehicleList()
         end
     end
 end

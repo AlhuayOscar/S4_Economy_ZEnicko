@@ -261,6 +261,9 @@ function S4_Pager_UI:refreshData()
         if part > progress + 1 then
             self.isLocked = true
             self.lockReason = "Locked: Part " .. (part - 1) .. " required"
+        elseif part <= progress then
+            self.isLocked = true
+            self.lockReason = "Already completed"
         end
     end
 

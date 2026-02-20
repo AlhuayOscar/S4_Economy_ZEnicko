@@ -2040,7 +2040,7 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
     closeBtn:initialise()
     panel:addChild(closeBtn)
 
-    local scene = ISUI3DScene:new(12, 34, pw - 24, ph - 136)
+    local scene = ISUI3DScene:new(12, 34, pw - 24, ph - 160)
     scene:initialise()
     scene:instantiate()
     scene.backgroundColor = {r = 1, g = 1, b = 1, a = 1}

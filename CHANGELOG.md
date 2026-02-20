@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.1] - 2026-02-20
+
+### Patch: Vehicle Preview UI & Job Expansion
+
+- **UI Fix:** Fixed overlap in vehicle preview window where control buttons were covering the specifications text.
+- **Documentation:** Added "Ataque al blindado" to `Jobs_Proposal.md`, detailing a multi-stage heist involving decoy vehicles and revenge lore.
+
 ## [1.3.0] - 2026-02-20
 
 ## Feature: Global Economy Overhaul

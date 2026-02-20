@@ -41,5 +41,9 @@ Implementar un sistema de carreras profesionales que permita a los jugadores gen
 - **Rango:** De Junior a Senior/Director. Mayores niveles desbloquean mejores salarios y beneficios corporativos (descuentos en la GoodShop).
 - **Salario:** Pagos diarios o por tarea completada directamente a la tarjeta bancaria.
 
+### 9. Ataque al blindado
+- **Tarea:** El jugador debe ir a destruir un vehículo Van que parece ser el objetivo. Dicha Van tendrá el baúl completamente lleno de bolsas con papel higiénico y otros ítems de papel. Entre todo eso, habrá una "Nota sospechosamente bien escrita" que revelará la ubicación del verdadero blindado.
+- **Lore:** Al llegar a la ubicación real, ocurren explosiones que destruyen el blindado original, y el jugador deberá tomar venganza contra quienes lo tendieron en la trampa.
+
 ---
 *Documento creado para planificación futura en la rama `jobs`.*

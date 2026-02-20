@@ -6,5 +6,5 @@ description=
 description=Full credits for the base mod belong to Pkoko.
 description=Base mod: S4 Economy[Shop] https://steamcommunity.com/sharedfiles/filedetails/?id=3480405054
 description=Author profile: https://steamcommunity.com/profiles/76561198867336456
-tags=Build 42;Balance;Interface;Items;WIP
-visibility=private
+tags=Build 42;Audio;Balance;Interface;Items;Silly/Fun;QoL;WIP
+visibility=unlisted

@@ -28,7 +28,7 @@ All notable changes to this project are documented in this file.
 
 - Added new Rosewood-focused mission set for Pager contracts (simple eliminate + photo/evidence flow).
 - Hardened Pager mission/lore string fallbacks to avoid nil-format crashes after mission completion.
-- Note: **LUGARES Y COORDENADAS INESTABLES O SIN PRECISION**.
+- Note: **UNSTABLE LOCATIONS AND COORDINATES OR LACKING PRECISION**.
 
 ## [1.2.1] - 2026-02-19
 
@@ -39,9 +39,9 @@ All notable changes to this project are documented in this file.
 - Added evidence object pipeline for Pager missions:
   - Work-object metadata (`S4WorkObject`, `S4WorkCode`, lore fields).
   - Valuable halo notifications when evidence is found.
-  - Evidence-loss warning: `Objeto destruido, deberas dar explicaciones al Cliente`.
+  - Evidence-loss warning: `Object destroyed, you will have to explain it to the client`.
 - Added disposable camera mission capture flow:
-  - Inventory context option `Usar Camara Desechable`.
+  - Inventory context option `Use Disposable Camera`.
   - Requires being within 10 tiles from the active/completed mission point.
   - Generates mission evidence item directly and consumes one disposable camera.
 - Added post-completion camera support:

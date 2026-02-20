@@ -1438,7 +1438,18 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
-    local rewardAmount = ZombRand(200, 501)
+    local rewardAmount = ZombRand(15000, 60001)
+    
+    -- Special bonus for high-stakes missions or parts of a sequence
+    if mission.missionPart and mission.missionPartTotal then
+        local ratio = tonumber(mission.missionPart) / tonumber(mission.missionPartTotal)
+        if ratio >= 1.0 then -- Final part of a chain
+            rewardAmount = ZombRand(100000, 323001)
+        else
+            rewardAmount = rewardAmount + (ZombRand(10000, 25001) * tonumber(mission.missionPart))
+        end
+    end
+    
     local finalReward = rewardAmount
     local penaltyPct = tonumber(mission.nonCompliantPenaltyPct) or 50
     if penaltyPct < 0 then

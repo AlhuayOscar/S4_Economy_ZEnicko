@@ -32,6 +32,18 @@ local function getNowMs()
     return 0
 end
 
+local function getNowHours()
+    if getGameTime and getGameTime() and getGameTime().getWorldAgeHours then
+        local ok, h = pcall(function()
+            return getGameTime():getWorldAgeHours()
+        end)
+        if ok and h then
+            return h
+        end
+    end
+    return 0
+end
+
 local function sceneDrag(scene, dx, dy)
     if not scene or not scene.javaObject then
         return
@@ -39,6 +51,27 @@ local function sceneDrag(scene, dx, dy)
     pcall(function()
         scene.javaObject:fromLua2("dragView", dx, dy)
     end)
+end
+
+function S4_IE_VehicleShop:getPreviewCenterOffsetYForZoom(zoom)
+    local baseZoom = 4.0
+    local z = tonumber(zoom) or baseZoom
+    local diff = math.max(0, baseZoom - z)
+    -- Positive dy moves model visually downward in the preview.
+    return diff * 14.0
+end
+
+function S4_IE_VehicleShop:applyPreviewCenterCompensation(scene, zoom)
+    if not scene then
+        return
+    end
+    local targetOffset = self:getPreviewCenterOffsetYForZoom(zoom)
+    local currentOffset = tonumber(self.VehiclePreviewCenterOffsetY) or 0
+    local delta = targetOffset - currentOffset
+    if math.abs(delta) > 0.01 then
+        sceneDrag(scene, 0, delta)
+        self.VehiclePreviewCenterOffsetY = targetOffset
+    end
 end
 
 local function getVectorComponent(v, axis)
@@ -134,6 +167,555 @@ local function computeMaintenancePercentFromId(scriptId)
         sum = sum + string.byte(s, i)
     end
     return 20 + (sum % 21) -- 20..40
+end
+
+local VEHICLE_ORDER_STAGES = {
+    {key = "resources", label = "Resources", pct = 12},
+    {key = "adaptation", label = "Adaptation", pct = 10},
+    {key = "manufacturing", label = "Manufacturing", pct = 18},
+    {key = "assembly", label = "Assembly", pct = 15},
+    {key = "painting", label = "Painting", pct = 10},
+    {key = "to_container_port", label = "Transfer to Container Port", pct = 12},
+    {key = "arrive_port", label = "Arrival at Port", pct = 10},
+    {key = "delivery_meet_point", label = "Delivery to Meet Point", pct = 13}
+}
+
+local VEHICLE_ORDER_EVENTS = {
+    {
+        key = "bad_seats",
+        stage = "manufacturing",
+        text = "Bad seat manufacturing: -40% seat durability",
+        mods = {seatDurabilityPct = -40}
+    },
+    {
+        key = "paint_error",
+        stage = "painting",
+        text = "Paint error: doors/trunk/hood -10% durability",
+        mods = {bodyPanelDurabilityPct = -10}
+    },
+    {
+        key = "cheap_parts",
+        stage = "assembly",
+        text = "Cheap parts and defective timing belt: -20 HP",
+        mods = {engineHP = -20}
+    },
+    {
+        key = "perfect_assembly",
+        stage = "assembly",
+        text = "Perfect assembly, immaculate model: +100 HP",
+        mods = {engineHP = 100}
+    }
+}
+
+local function hashText(s)
+    local txt = tostring(s or "")
+    local h = 0
+    for i = 1, #txt do
+        h = ((h * 131) + string.byte(txt, i) + i) % 2147483647
+    end
+    return h
+end
+
+local function randRangeFromSeed(seed, minV, maxV)
+    local span = math.max(1, (maxV - minV) + 1)
+    return minV + (seed % span)
+end
+
+local function computeVehiclePrice(scriptId, vehicleClass)
+    local seed = hashText("price|" .. tostring(scriptId))
+    -- Normal range: 450,000 to 1,000,000
+    local basePrice = randRangeFromSeed(seed, 450000, 1000000)
+    
+    local classMul = 1.0
+    if vehicleClass == "Commercial" then
+        classMul = 2.0
+    elseif vehicleClass == "Sport" then
+        classMul = 3.0
+    end
+    
+    local finalPrice = basePrice * classMul
+    return math.floor(math.max(1, finalPrice))
+end
+
+local function getVehicleShopModData(player)
+    if not player then
+        return nil
+    end
+    local md = player:getModData()
+    md.S4VehicleCartQueue = md.S4VehicleCartQueue or {}
+    md.S4VehicleOrders = md.S4VehicleOrders or {}
+    md.S4VehicleOrderSeq = md.S4VehicleOrderSeq or 0
+    return md
+end
+
+local function buildStageDurations(totalHours)
+    local durations = {}
+    local used = 0
+    for i = 1, #VEHICLE_ORDER_STAGES do
+        local stage = VEHICLE_ORDER_STAGES[i]
+        local h = math.max(1, math.floor(totalHours * (stage.pct / 100)))
+        durations[i] = h
+        used = used + h
+    end
+    local diff = totalHours - used
+    local idx = #durations
+    while diff ~= 0 do
+        if diff > 0 then
+            durations[idx] = durations[idx] + 1
+            diff = diff - 1
+        else
+            if durations[idx] > 1 then
+                durations[idx] = durations[idx] - 1
+                diff = diff + 1
+            else
+                idx = idx - 1
+                if idx < 1 then
+                    break
+                end
+            end
+        end
+    end
+    return durations
+end
+
+local function getStageProgress(order, nowHours)
+    local elapsed = math.max(0, (nowHours or 0) - (order.createdAtHours or 0))
+    local total = math.max(1, order.totalHours or 24)
+    if elapsed >= total then
+        return #VEHICLE_ORDER_STAGES, 1, 1
+    end
+    local consumed = 0
+    local stageIdx = 1
+    local stagePct = 0
+    for i = 1, #VEHICLE_ORDER_STAGES do
+        local d = math.max(1, (order.stageDurations and order.stageDurations[i]) or 1)
+        if elapsed < consumed + d then
+            stageIdx = i
+            stagePct = (elapsed - consumed) / d
+            break
+        end
+        consumed = consumed + d
+    end
+    local totalPct = elapsed / total
+    return stageIdx, stagePct, totalPct
+end
+
+local function applyOrderEvent(order, stageKey)
+    if not order or not stageKey then
+        return
+    end
+    order.events = order.events or {}
+    order.eventByStage = order.eventByStage or {}
+    if order.eventByStage[stageKey] then
+        return
+    end
+    local candidates = {}
+    for i = 1, #VEHICLE_ORDER_EVENTS do
+        local e = VEHICLE_ORDER_EVENTS[i]
+        if e.stage == stageKey then
+            candidates[#candidates + 1] = e
+        end
+    end
+    if #candidates == 0 then
+        return
+    end
+    local chanceSeed = hashText(tostring(order.orderId) .. "|" .. stageKey)
+    if (chanceSeed % 100) > 45 then
+        return
+    end
+    local pick = candidates[(chanceSeed % #candidates) + 1]
+    order.eventByStage[stageKey] = pick.key
+    order.mods = order.mods or {seatDurabilityPct = 0, bodyPanelDurabilityPct = 0, engineHP = 0}
+    if pick.mods then
+        for k, v in pairs(pick.mods) do
+            order.mods[k] = (order.mods[k] or 0) + v
+        end
+    end
+    order.events[#order.events + 1] = "[" .. tostring(VEHICLE_ORDER_STAGES[order.currentStageIndex or 1].label) .. "] " ..
+        pick.text
+end
+
+local function refreshOrderRuntime(order, nowHours)
+    if not order then
+        return
+    end
+    local stageIdx, stagePct, totalPct = getStageProgress(order, nowHours)
+    order.currentStageIndex = stageIdx
+    order.stagePct = stagePct
+    order.totalPct = totalPct
+    order.completed = totalPct >= 1
+    order.remainingHours = math.max(0, (order.totalHours or 0) - math.max(0, (nowHours or 0) - (order.createdAtHours or 0)))
+    local stageKey = VEHICLE_ORDER_STAGES[stageIdx] and VEHICLE_ORDER_STAGES[stageIdx].key or nil
+    if stageKey then
+        applyOrderEvent(order, stageKey)
+    end
+end
+
+local function isDebugVehicleOrderMode()
+    if getDebug then
+        local ok, v = pcall(getDebug)
+        if ok and v then
+            return true
+        end
+    end
+    return false
+end
+
+local function buildVehicleCartEntry(item)
+    if not item or not item.id then
+        return nil
+    end
+    local price = computeVehiclePrice(item.id, item.vehicleClass)
+    return {
+        id = tostring(item.id),
+        name = tostring(item.name or item.id),
+        vehicleClass = tostring(item.vehicleClass or "Other"),
+        price = price
+    }
+end
+
+local function createVehicleOrderFromEntry(modData, entry, nowHours, dropX, dropY, dropZ)
+    if not modData or not entry then
+        return nil
+    end
+    modData.S4VehicleOrderSeq = (modData.S4VehicleOrderSeq or 0) + 1
+    local vClass = tostring(entry.vehicleClass or "Standard")
+    local minDays, maxDays = 3, 7
+    if vClass == "Commercial" then
+        minDays, maxDays = 5, 10
+    elseif vClass == "Sport" then
+        minDays, maxDays = 7, 15
+    end
+
+    local seed = hashText(entry.id .. "|" .. tostring(seq))
+    local totalHours = isDebugVehicleOrderMode() and 24 or randRangeFromSeed(seed, minDays * 24, maxDays * 24)
+
+    local order = {
+        orderId = "VS-" .. tostring(seq),
+        vehicleId = tostring(entry.id),
+        vehicleName = tostring(entry.name or entry.id),
+        vehicleClass = vClass,
+        price = tonumber(entry.price) or computeVehiclePrice(entry.id, vClass),
+        createdAtHours = nowHours or 0,
+        totalHours = totalHours,
+        stageDurations = buildStageDurations(totalHours),
+        currentStageIndex = 1,
+        stagePct = 0,
+        totalPct = 0,
+        remainingHours = totalHours,
+        completed = false,
+        delivered = false,
+        completedNotified = false,
+        lastStageIndex = 1,
+        events = {},
+        eventByStage = {},
+        mods = {
+            seatDurabilityPct = 0,
+            bodyPanelDurabilityPct = 0,
+            engineHP = 0
+        },
+        dropX = dropX,
+        dropY = dropY,
+        dropZ = dropZ or 0
+    }
+    refreshOrderRuntime(order, nowHours or 0)
+    return order
+end
+
+local function clampNumber(v, minV, maxV)
+    local n = tonumber(v) or minV
+    if n < minV then
+        return minV
+    end
+    if n > maxV then
+        return maxV
+    end
+    return n
+end
+
+local function getVehiclePartAt(vehicle, index)
+    if not vehicle then
+        return nil
+    end
+    local ok, p = pcall(function()
+        return vehicle:getPartByIndex(index)
+    end)
+    if ok then
+        return p
+    end
+    return nil
+end
+
+local function getVehiclePartIdLower(part)
+    if not part or not part.getId then
+        return ""
+    end
+    local ok, v = pcall(function()
+        return tostring(part:getId() or ""):lower()
+    end)
+    if ok and v then
+        return v
+    end
+    return ""
+end
+
+local function applyPartConditionPercent(part, deltaPct)
+    if not part or not deltaPct or not part.getCondition or not part.setCondition then
+        return
+    end
+    local okGet, cur = pcall(function()
+        return tonumber(part:getCondition()) or 100
+    end)
+    if not okGet then
+        return
+    end
+    local newCond = clampNumber(math.floor(cur * (1 + (deltaPct / 100))), 0, 100)
+    pcall(function()
+        part:setCondition(newCond)
+    end)
+end
+
+local function applyVehicleOrderModsToVehicle(vehicle, orderMods)
+    if not vehicle or not orderMods then
+        return
+    end
+
+    local seatPct = tonumber(orderMods.seatDurabilityPct) or 0
+    local panelPct = tonumber(orderMods.bodyPanelDurabilityPct) or 0
+    local engineDelta = tonumber(orderMods.engineHP) or 0
+
+    local partCount = 0
+    local okCount, cnt = pcall(function()
+        return vehicle:getPartCount()
+    end)
+    if okCount and cnt then
+        partCount = math.max(0, tonumber(cnt) or 0)
+    end
+
+    local enginePart = nil
+    for i = 0, partCount - 1 do
+        local part = getVehiclePartAt(vehicle, i)
+        if part then
+            local pid = getVehiclePartIdLower(part)
+            if seatPct ~= 0 and string.find(pid, "seat", 1, true) then
+                applyPartConditionPercent(part, seatPct)
+            end
+            if panelPct ~= 0 and (string.find(pid, "door", 1, true) or string.find(pid, "hood", 1, true) or
+                string.find(pid, "trunk", 1, true)) then
+                applyPartConditionPercent(part, panelPct)
+            end
+            if not enginePart and (pid == "engine" or string.find(pid, "engine", 1, true)) then
+                enginePart = part
+            end
+        end
+    end
+
+    if engineDelta ~= 0 then
+        local applied = false
+        if vehicle.getEnginePower and vehicle.setEnginePower then
+            local okApply = pcall(function()
+                local current = tonumber(vehicle:getEnginePower()) or 0
+                vehicle:setEnginePower(math.max(0, current + engineDelta))
+            end)
+            applied = okApply
+        end
+        if (not applied) and enginePart then
+            local condDeltaPct = 0
+            if engineDelta > 0 then
+                condDeltaPct = math.min(80, math.floor(engineDelta / 2))
+            else
+                condDeltaPct = -math.min(80, math.floor(math.abs(engineDelta) / 2))
+            end
+            applyPartConditionPercent(enginePart, condDeltaPct)
+        end
+    end
+
+    local vmd = vehicle:getModData()
+    vmd.S4VehicleOrderMods = {
+        seatDurabilityPct = seatPct,
+        bodyPanelDurabilityPct = panelPct,
+        engineHP = engineDelta
+    }
+    pcall(function()
+        vehicle:transmitModData()
+    end)
+end
+
+local function applyVehicleDeliveryState(vehicle)
+    if not vehicle then
+        return
+    end
+
+    -- 1) Create a proper key for this vehicle and place it in glovebox.
+    local createdKey = nil
+    if vehicle.createVehicleKey then
+        local okKey, key = pcall(function()
+            return vehicle:createVehicleKey()
+        end)
+        if okKey then
+            createdKey = key
+        end
+    end
+    if (not createdKey) and InventoryItemFactory and InventoryItemFactory.CreateItem then
+        local okFallback, item = pcall(function()
+            return InventoryItemFactory.CreateItem("Base.CarKey")
+        end)
+        if okFallback then
+            createdKey = item
+        end
+    end
+
+    local glovePart = nil
+    if vehicle.getPartById then
+        local okGlove, gp = pcall(function()
+            return vehicle:getPartById("GloveBox")
+        end)
+        if okGlove then
+            glovePart = gp
+        end
+    end
+    if glovePart and createdKey then
+        local container = nil
+        if glovePart.getItemContainer then
+            local okC, c = pcall(function()
+                return glovePart:getItemContainer()
+            end)
+            if okC then
+                container = c
+            end
+        end
+        if (not container) and glovePart.getContainer then
+            local okC2, c2 = pcall(function()
+                return glovePart:getContainer()
+            end)
+            if okC2 then
+                container = c2
+            end
+        end
+        if container and container.AddItem then
+            pcall(function()
+                container:AddItem(createdKey)
+            end)
+        end
+    end
+
+    -- 2) Driver door open, all other doors closed.
+    local partCount = 0
+    local okCount, cnt = pcall(function()
+        return vehicle:getPartCount()
+    end)
+    if okCount and cnt then
+        partCount = math.max(0, tonumber(cnt) or 0)
+    end
+    for i = 0, partCount - 1 do
+        local part = getVehiclePartAt(vehicle, i)
+        if part then
+            local pid = getVehiclePartIdLower(part)
+            if string.find(pid, "door", 1, true) then
+                local door = nil
+                if part.getDoor then
+                    local okDoor, d = pcall(function()
+                        return part:getDoor()
+                    end)
+                    if okDoor then
+                        door = d
+                    end
+                end
+
+                if door then
+                    pcall(function()
+                        door:setLocked(false)
+                        door:setOpen(true)
+                    end)
+                elseif part.setOpen then
+                    pcall(function()
+                        part:setOpen(true)
+                    end)
+                end
+
+                if vehicle.transmitPartDoor then
+                    pcall(function()
+                        vehicle:transmitPartDoor(part)
+                    end)
+                end
+            end
+        end
+    end
+end
+
+local function trySpawnVehicleAtDrop(order)
+    if not order or not order.vehicleId then
+        return false
+    end
+    local x = math.floor(tonumber(order.dropX) or -1)
+    local y = math.floor(tonumber(order.dropY) or -1)
+    local z = math.floor(tonumber(order.dropZ) or 0)
+    if x < 0 or y < 0 then
+        return false
+    end
+
+    local cell = getCell()
+    if not cell then
+        return false
+    end
+
+    -- 1) Find the best square (search nearby if blocked)
+    local sq = cell:getGridSquare(x, y, z)
+    if (not sq) or (not sq:isFreeOrMidair(false)) or sq:isVehicleIntersecting() then
+        local found = false
+        for dx = -2, 2 do
+            for dy = -2, 2 do
+                local s2 = cell:getOrCreateGridSquare(x + dx, y + dy, z)
+                if s2 and s2:isFreeOrMidair(false) and not s2:isVehicleIntersecting() then
+                    sq = s2
+                    x = x + dx
+                    y = y + dy
+                    found = true
+                    break
+                end
+            end
+            if found then
+                break
+            end
+        end
+    end
+    if not sq then
+        sq = cell:getOrCreateGridSquare(x, y, z)
+    end
+
+    local vehicle = nil
+    local function setIfVehicle(v)
+        if v and v.getScriptName then
+            vehicle = v
+            return true
+        end
+        return false
+    end
+
+    local dir = nil
+    if IsoDirections and IsoDirections.N then
+        dir = IsoDirections.N
+    end
+
+    if addVehicleDebug then
+        local ok2, v2 = pcall(function()
+            return addVehicleDebug(order.vehicleId, dir, nil, sq)
+        end)
+        if ok2 and setIfVehicle(v2) then
+            return vehicle
+        end
+    end
+
+    if addVehicle then
+        local ok4, v4 = pcall(function()
+            return addVehicle(order.vehicleId, x, y, z)
+        end)
+        if ok4 and setIfVehicle(v4) then
+            return vehicle
+        end
+    end
+
+    return false
 end
 
 local function getVehicleSpecs(vehicleScript, scriptId)
@@ -454,6 +1036,7 @@ function S4_IE_VehicleShop:createChildren()
     }
     self.CartPanel:initialise()
     self:addChild(self.CartPanel)
+    self:setupVehicleOrderPanel()
 
     self.CategoryPanel = ISPanel:new(InfoX, CategoryY, CategoryW, CategoryH)
     self.CategoryPanel.backgroundColor.a = 0
@@ -645,6 +1228,15 @@ function S4_IE_VehicleShop:render()
         local canAuto = (now > 0) and ((now - lastInput) >= 1600)
         if canAuto then
             self:updateVehiclePreviewCinematic(now)
+        end
+    end
+
+    if self.MenuType == "Cart" then
+        local nowMs = getNowMs()
+        local last = self.VehicleOrderLastRefreshMs or 0
+        if nowMs <= 0 or (nowMs - last) >= 1000 then
+            self.VehicleOrderLastRefreshMs = nowMs
+            self:refreshVehicleOrderPanel()
         end
     end
 end
@@ -851,6 +1443,513 @@ function S4_IE_VehicleShop:reloadVehicleList()
     end
 end
 
+function S4_IE_VehicleShop:setupVehicleOrderPanel()
+    if not self.CartPanel then
+        return
+    end
+    local panel = ISPanel:new(8, 8, self.CartPanel:getWidth() - 16, self.CartPanel:getHeight() - 16)
+    panel.backgroundColor = {r = 0.04, g = 0.04, b = 0.04, a = 0.92}
+    panel.borderColor = {r = 0.32, g = 0.32, b = 0.32, a = 1}
+    panel:initialise()
+    self.CartPanel:addChild(panel)
+    self.VehicleOrderPanel = panel
+
+    local title = ISLabel:new(10, 8, S4_UI.FH_M, "Production Cart & Delivery Queue", 0.95, 0.95, 0.95, 1, UIFont.Medium,
+        true)
+    panel:addChild(title)
+
+    local debugLabel = "Delivery Time: 1-30 days"
+    if isDebugVehicleOrderMode() then
+        debugLabel = "Delivery Time: DEBUG MODE (always 1 day)"
+    end
+    local subtitle = ISLabel:new(10, 28, S4_UI.FH_S, debugLabel, 0.78, 0.9, 0.78, 0.95, UIFont.Small, true)
+    panel:addChild(subtitle)
+    self.VehicleOrderSubtitle = subtitle
+
+    self.VehicleDropPointLabel = ISLabel:new(10, 40, S4_UI.FH_S, "Drop Point: Not set", 0.9, 0.7, 0.7, 0.95, UIFont.Small,
+        true)
+    panel:addChild(self.VehicleDropPointLabel)
+
+    local btnY = 60
+    self.VehicleQueueAddBtn = ISButton:new(10, btnY, 130, 24, "Add Selected", self, S4_IE_VehicleShop.onAddSelectedVehicleToCart)
+    self.VehicleQueueAddBtn.internal = "add_selected"
+    self.VehicleQueueAddBtn:initialise()
+    panel:addChild(self.VehicleQueueAddBtn)
+
+    self.VehicleQueueOrderBtn = ISButton:new(146, btnY, 130, 24, "Place Order", self, S4_IE_VehicleShop.onPlaceSelectedCartOrder)
+    self.VehicleQueueOrderBtn.internal = "place_order"
+    self.VehicleQueueOrderBtn:initialise()
+    panel:addChild(self.VehicleQueueOrderBtn)
+
+    self.VehicleQueueRemoveBtn = ISButton:new(282, btnY, 130, 24, "Remove", self, S4_IE_VehicleShop.onRemoveSelectedVehicleCart)
+    self.VehicleQueueRemoveBtn.internal = "remove_queue"
+    self.VehicleQueueRemoveBtn:initialise()
+    panel:addChild(self.VehicleQueueRemoveBtn)
+
+    self.VehicleQueueList = ISScrollingListBox:new(10, 90, panel:getWidth() - 20, 112)
+    self.VehicleQueueList:initialise()
+    self.VehicleQueueList:instantiate()
+    self.VehicleQueueList.drawBorder = true
+    self.VehicleQueueList.backgroundColor.a = 0.2
+    self.VehicleQueueList.borderColor.a = 1
+    self.VehicleQueueList.itemheight = 20
+    self.VehicleQueueList.parentUI = self
+    self.VehicleQueueList.doDrawItem = S4_IE_VehicleShop.doDrawItem_VehicleQueue
+    panel:addChild(self.VehicleQueueList)
+
+    local ordersLabel = ISLabel:new(10, 210, S4_UI.FH_S, "Orders History (Active + Delivered)", 0.9, 0.9, 0.9, 0.95,
+        UIFont.Small, true)
+    panel:addChild(ordersLabel)
+
+    self.VehicleOrdersList = ISScrollingListBox:new(10, 228, panel:getWidth() - 20, panel:getHeight() - 302)
+    self.VehicleOrdersList:initialise()
+    self.VehicleOrdersList:instantiate()
+    self.VehicleOrdersList.drawBorder = true
+    self.VehicleOrdersList.backgroundColor.a = 0.2
+    self.VehicleOrdersList.borderColor.a = 1
+    self.VehicleOrdersList.itemheight = 50
+    self.VehicleOrdersList.parentUI = self
+    self.VehicleOrdersList.doDrawItem = S4_IE_VehicleShop.doDrawItem_VehicleOrder
+    panel:addChild(self.VehicleOrdersList)
+
+    self.VehicleOrderDetailsLabel = ISLabel:new(10, panel:getHeight() - 68, S4_UI.FH_S, "Select an order to inspect events.",
+        0.86, 0.86, 0.86, 0.95, UIFont.Small, true)
+    panel:addChild(self.VehicleOrderDetailsLabel)
+
+    self.VehicleOrderRefreshBtn = ISButton:new(panel:getWidth() - 98, panel:getHeight() - 72, 88, 24, "Refresh", self,
+        S4_IE_VehicleShop.refreshVehicleOrderPanel)
+    self.VehicleOrderRefreshBtn.internal = "refresh_order"
+    self.VehicleOrderRefreshBtn:initialise()
+    panel:addChild(self.VehicleOrderRefreshBtn)
+
+    self.VehicleOrderClearBtn = ISButton:new(panel:getWidth() - 268, panel:getHeight() - 72, 164, 24, "DEBUG: Clear Orders",
+        self, S4_IE_VehicleShop.onDebugClearAllVehicleOrders)
+    self.VehicleOrderClearBtn.internal = "debug_clear_orders"
+    self.VehicleOrderClearBtn:initialise()
+    panel:addChild(self.VehicleOrderClearBtn)
+
+    self:refreshVehicleOrderPanel()
+end
+
+function S4_IE_VehicleShop:doDrawItem_VehicleQueue(y, item, alt)
+    local h = self.itemheight or 20
+    if self.selected == item.index then
+        self:drawRect(0, y, self:getWidth(), h, 0.22, 0.28, 0.5, 0.8)
+    end
+    local q = item.item or {}
+    local l = string.format("%s  [%s]  $%s", tostring(q.name or q.id or "Vehicle"), tostring(q.vehicleClass or "Other"),
+        tostring(math.floor(tonumber(q.price) or 0)))
+    self:drawText(l, 6, y + 3, 0.92, 0.92, 0.92, 1, UIFont.Small)
+    return y + h
+end
+
+function S4_IE_VehicleShop:doDrawItem_VehicleOrder(y, item, alt)
+    local h = self.itemheight or 50
+    if self.selected == item.index then
+        self:drawRect(0, y, self:getWidth(), h, 0.22, 0.3, 0.45, 0.8)
+    end
+    local o = item.item or {}
+    local stage = VEHICLE_ORDER_STAGES[tonumber(o.currentStageIndex) or 1]
+    local stageName = stage and stage.label or "Unknown"
+    local daysLeft = (tonumber(o.remainingHours) or 0) / 24
+    local p = math.max(0, math.min(1, tonumber(o.totalPct) or 0))
+
+    local line1 = string.format("%s | %s | $%s", tostring(o.orderId or "?"), tostring(o.vehicleName or o.vehicleId or "?"),
+        tostring(math.floor(tonumber(o.price) or 0)))
+    self:drawText(line1, 6, y + 2, 0.95, 0.95, 0.95, 1, UIFont.Small)
+
+    local stageColor = {r = 0.86, g = 0.86, b = 0.86}
+    if o.completed then
+        stageColor = {r = 0.58, g = 0.95, b = 0.58}
+    end
+    local status = "In Progress"
+    if o.delivered then
+        status = "Delivered"
+    elseif o.completed then
+        status = "Ready for Delivery"
+    end
+    local line2 = string.format("Status: %s  |  Stage: %s  |  Remaining: %.1f days", tostring(status), tostring(stageName),
+        math.max(0, daysLeft))
+    self:drawText(line2, 6, y + 16, stageColor.r, stageColor.g, stageColor.b, 1, UIFont.Small)
+
+    local barX = 6
+    local barY = y + 33
+    local barW = self:getWidth() - 12
+    local barH = 11
+    self:drawRect(barX, barY, barW, barH, 0.45, 0.1, 0.1, 0.1)
+    local fillW = math.floor(barW * p)
+    if fillW > 0 then
+        local r, g, b = 0.2, 0.82, 0.2
+        if p < 1 then
+            r, g, b = 0.2, 0.6, 0.85
+        end
+        self:drawRect(barX, barY, fillW, barH, 0.85, r, g, b)
+    end
+    self:drawRectBorder(barX, barY, barW, barH, 1, 0.28, 0.28, 0.28)
+    return y + h
+end
+
+function S4_IE_VehicleShop:onDebugClearAllVehicleOrders()
+    if not self.player then
+        return
+    end
+    if not isDebugVehicleOrderMode() then
+        if self.ComUI and self.ComUI.AddMsgBox then
+            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Debug only option.",
+                "Enable debug mode to use 'DEBUG: Clear Orders'.")
+        end
+        return
+    end
+    local md = getVehicleShopModData(self.player)
+    if not md then
+        return
+    end
+    md.S4VehicleOrders = {}
+    md.S4VehicleCartQueue = {}
+    if self.player.setHaloNote then
+        pcall(function()
+            self.player:setHaloNote("All vehicle orders cleared (debug)", 230, 205, 95, 220)
+        end)
+    end
+    self:refreshVehicleOrderPanel()
+end
+
+function S4_IE_VehicleShop:refreshVehicleOrderPanel()
+    if not self.player or not self.VehicleQueueList or not self.VehicleOrdersList then
+        return
+    end
+    local md = getVehicleShopModData(self.player)
+    if not md then
+        return
+    end
+    local nowHours = getNowHours()
+
+    local queueSel = self.VehicleQueueList.selected or 0
+    local orderSel = self.VehicleOrdersList.selected or 0
+
+    self.VehicleQueueList:clear()
+    for i = 1, #md.S4VehicleCartQueue do
+        local q = md.S4VehicleCartQueue[i]
+        self.VehicleQueueList:addItem(tostring(q.id or "Vehicle"), q)
+    end
+    if queueSel > 0 and self.VehicleQueueList.items and self.VehicleQueueList.items[queueSel] then
+        self.VehicleQueueList.selected = queueSel
+    end
+
+    self.VehicleOrdersList:clear()
+    for i = 1, #md.S4VehicleOrders do
+        local o = md.S4VehicleOrders[i]
+        refreshOrderRuntime(o, nowHours)
+        self:tryDeliverVehicleOrder(o, nowHours)
+        self.VehicleOrdersList:addItem(tostring(o.orderId or o.vehicleId or "Order"), o)
+        if not o.completed and (o.currentStageIndex or 1) ~= (o.lastStageIndex or 1) then
+            local stage = VEHICLE_ORDER_STAGES[o.currentStageIndex or 1]
+            if self.player and self.player.setHaloNote and stage and stage.label then
+                pcall(function()
+                    self.player:setHaloNote("Order " .. tostring(o.orderId) .. ": " .. tostring(stage.label), 120, 210, 255, 180)
+                end)
+            end
+            o.lastStageIndex = o.currentStageIndex
+        end
+        if o.completed and not o.completedNotified then
+            if self.player and self.player.setHaloNote then
+                pcall(function()
+                    self.player:setHaloNote("Vehicle order completed: " .. tostring(o.vehicleName), 95, 235, 95, 220)
+                end)
+            end
+            o.completedNotified = true
+        end
+    end
+    if orderSel > 0 and self.VehicleOrdersList.items and self.VehicleOrdersList.items[orderSel] then
+        self.VehicleOrdersList.selected = orderSel
+    end
+
+    if self.VehicleOrderSubtitle then
+        if isDebugVehicleOrderMode() then
+            self.VehicleOrderSubtitle:setName("Delivery Time: DEBUG MODE (always 1 day)")
+        else
+            self.VehicleOrderSubtitle:setName("Delivery Time: 1-30 days")
+        end
+    end
+    if self.VehicleDropPointLabel and self.player then
+        local pmd = self.player:getModData()
+        if pmd and pmd.S4VehicleDropX and pmd.S4VehicleDropY then
+            self.VehicleDropPointLabel:setName("Drop Point: " .. tostring(pmd.S4VehicleDropX) .. "x" ..
+                                                   tostring(pmd.S4VehicleDropY))
+            pcall(function()
+                self.VehicleDropPointLabel:setColor(0.72, 0.95, 0.72, 0.95)
+            end)
+        else
+            self.VehicleDropPointLabel:setName("Drop Point: Not set (required)")
+            pcall(function()
+                self.VehicleDropPointLabel:setColor(0.95, 0.72, 0.72, 0.95)
+            end)
+        end
+    end
+
+    local orderRow = self.VehicleOrdersList.items and self.VehicleOrdersList.items[self.VehicleOrdersList.selected]
+    local selectedOrder = orderRow and orderRow.item or nil
+    if selectedOrder then
+        local evText = "No random events yet."
+        if selectedOrder.events and #selectedOrder.events > 0 then
+            evText = selectedOrder.events[#selectedOrder.events]
+        end
+        local mods = selectedOrder.mods or {}
+        local modText = string.format("Seat %d%% | Panels %d%% | Engine %+d HP", tonumber(mods.seatDurabilityPct) or 0,
+            tonumber(mods.bodyPanelDurabilityPct) or 0, tonumber(mods.engineHP) or 0)
+        self.VehicleOrderDetailsLabel:setName(evText .. "  ||  " .. modText)
+    else
+        self.VehicleOrderDetailsLabel:setName("Select an order to inspect events.")
+    end
+end
+
+function S4_IE_VehicleShop:tryDeliverVehicleOrder(order, nowHours)
+    if not order or not order.completed or order.delivered then
+        return
+    end
+    local x = tonumber(order.dropX)
+    local y = tonumber(order.dropY)
+    if not x or not y or not self.player then
+        return
+    end
+
+    local px = self.player:getX()
+    local py = self.player:getY()
+    local dist2 = ((px - x) * (px - x)) + ((py - y) * (py - y))
+
+    -- Deliver when player is around the point so it becomes visible.
+    if dist2 > (14 * 14) then
+        if not order.deliveryReadyNotified and self.player.setHaloNote then
+            pcall(function()
+                self.player:setHaloNote("Order ready: get close to delivery point", 120, 210, 255, 190)
+            end)
+            order.deliveryReadyNotified = true
+        end
+        return
+    end
+
+    if order.nextDeliveryAttemptHours and nowHours < order.nextDeliveryAttemptHours then
+        return
+    end
+    order.nextDeliveryAttemptHours = nowHours + (1 / 60) -- 1 minute
+
+    local spawned = false
+    local vehicle = trySpawnVehicleAtDrop(order)
+    if vehicle then
+        spawned = true
+        applyVehicleDeliveryState(vehicle)
+        applyVehicleOrderModsToVehicle(vehicle, order.mods)
+        
+        -- Vibrant Sound Effect for delivery (Wrapped in pcall)
+        pcall(function()
+            getSoundManager():PlayWorldSound("AirSupplyIconSound", vehicle:getSquare(), 0, 20, 1.0, true)
+        end)
+    end
+
+    if (not spawned) and isClient and isClient() then
+        local args = {
+            orderId = order.orderId,
+            vehicleId = order.vehicleId,
+            x = math.floor(x),
+            y = math.floor(y),
+            z = math.floor(tonumber(order.dropZ) or 0),
+            mods = order.mods or {}
+        }
+        pcall(function()
+            sendClientCommand("S4SMD", "SpawnVehicleDelivery", args)
+        end)
+        spawned = true -- assume server spawn accepted
+    end
+
+    if spawned then
+        -- Mark as delivered immediately to prevent duplicate spawns on next frame
+        order.delivered = true
+        if self.player.setHaloNote then
+            pcall(function()
+                self.player:setHaloNote("Delivered: " .. tostring(order.vehicleName), 90, 235, 120, 220)
+            end)
+        end
+        -- Trigger additional local effects if spawned locally
+        if vehicle then
+            pcall(function()
+                getSoundManager():PlayWorldSound("CarDoorClose", vehicle:getSquare(), 0, 10, 1.0, true)
+            end)
+        end
+    elseif self.player.setHaloNote then
+        pcall(function()
+            self.player:setHaloNote("Delivery failed: spawn API not available", 235, 120, 120, 220)
+        end)
+    end
+end
+
+local function handleVehicleSpawnEffect(module, command, args)
+    if module == "S4SMD" and command == "PlayVehicleSpawnEffect" then
+        if not args then
+            return
+        end
+        local player = getPlayer()
+        if not player then
+            return
+        end
+        local dist = math.sqrt((player:getX() - args.x) ^ 2 + (player:getY() - args.y) ^ 2)
+        if dist > 40 then
+            return
+        end
+
+        -- Sound (Wrapped in pcall)
+        pcall(function()
+            local sq = getCell():getGridSquare(args.x, args.y, args.z)
+            if sq then
+                getSoundManager():PlayWorldSound("AirSupplyIconSound", sq, 0, 20, 1.0, true)
+            end
+        end)
+
+        -- Halo
+        if player.setHaloNote then
+            player:setHaloNote("DELIVERY ARRIVED: " .. (args.orderId or ""), 100, 255, 100, 350)
+        end
+    end
+end
+Events.OnServerCommand.Add(handleVehicleSpawnEffect)
+
+function S4_IE_VehicleShop:getSelectedVehicleFromList()
+    if not self.VehicleListBox or not self.VehicleListBox.items then
+        return nil
+    end
+    local row = self.VehicleListBox.items[self.VehicleListBox.selected]
+    if not row then
+        return nil
+    end
+    return row.item
+end
+
+function S4_IE_VehicleShop:addVehicleToQueue(item, showHalo)
+    if not self.player then
+        return false
+    end
+    local entry = buildVehicleCartEntry(item)
+    if not entry then
+        return false
+    end
+    local md = getVehicleShopModData(self.player)
+    if not md then
+        return false
+    end
+    md.S4VehicleCartQueue[#md.S4VehicleCartQueue + 1] = entry
+    if showHalo and self.player.setHaloNote then
+        pcall(function()
+            self.player:setHaloNote("Added to cart: " .. tostring(entry.name), 120, 205, 255, 180)
+        end)
+    end
+    self:refreshVehicleOrderPanel()
+    return true
+end
+
+function S4_IE_VehicleShop:onAddSelectedVehicleToCart()
+    local item = self:getSelectedVehicleFromList()
+    if not item then
+        if self.ComUI and self.ComUI.AddMsgBox then
+            self.ComUI:AddMsgBox("Vehicle Shop", nil, "No vehicle selected.", "Select a vehicle first in Buy/Sell list.")
+        end
+        return
+    end
+    self:addVehicleToQueue(item, true)
+end
+
+function S4_IE_VehicleShop:onPreviewAddToCart()
+    if not self.VehiclePreviewScene then
+        return
+    end
+    local item = self:getSelectedVehicleFromList()
+    if not item then
+        return
+    end
+    self:addVehicleToQueue(item, true)
+end
+
+function S4_IE_VehicleShop:onRemoveSelectedVehicleCart()
+    if not self.player or not self.VehicleQueueList or not self.VehicleQueueList.items then
+        return
+    end
+    local row = self.VehicleQueueList.items[self.VehicleQueueList.selected]
+    if not row or not row.item then
+        return
+    end
+    local target = row.item
+    local md = getVehicleShopModData(self.player)
+    if not md then
+        return
+    end
+    for i = #md.S4VehicleCartQueue, 1, -1 do
+        if md.S4VehicleCartQueue[i] == target then
+            table.remove(md.S4VehicleCartQueue, i)
+            break
+        end
+    end
+    self:refreshVehicleOrderPanel()
+end
+
+function S4_IE_VehicleShop:onPlaceSelectedCartOrder()
+    if not self.player or not self.VehicleQueueList or not self.VehicleQueueList.items then
+        return
+    end
+    local row = self.VehicleQueueList.items[self.VehicleQueueList.selected]
+    if not row or not row.item then
+        if self.ComUI and self.ComUI.AddMsgBox then
+            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Cart is empty.", "Add a vehicle to cart before placing an order.")
+        end
+        return
+    end
+    local target = row.item
+    local md = getVehicleShopModData(self.player)
+    if not md then
+        return
+    end
+
+    local pmd = self.player:getModData()
+    local dropX = pmd and pmd.S4VehicleDropX or nil
+    local dropY = pmd and pmd.S4VehicleDropY or nil
+    local dropZ = pmd and pmd.S4VehicleDropZ or 0
+    if not dropX or not dropY then
+        if self.ComUI and self.ComUI.AddMsgBox then
+            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Delivery point is required.",
+                "Set a Vehicle Flare drop point first (right click Vehicles Flare item).")
+        end
+        if self.player and self.player.setHaloNote then
+            pcall(function()
+                self.player:setHaloNote("Set VehicleFlare drop point first", 235, 120, 120, 260)
+            end)
+        end
+        return
+    end
+
+    local idx = nil
+    for i = 1, #md.S4VehicleCartQueue do
+        if md.S4VehicleCartQueue[i] == target then
+            idx = i
+            break
+        end
+    end
+    if not idx then
+        return
+    end
+
+    local nowHours = getNowHours()
+    local order = createVehicleOrderFromEntry(md, target, nowHours, dropX, dropY, dropZ)
+    if not order then
+        return
+    end
+    md.S4VehicleOrders[#md.S4VehicleOrders + 1] = order
+    table.remove(md.S4VehicleCartQueue, idx)
+
+    if self.player.setHaloNote then
+        pcall(function()
+            self.player:setHaloNote("Production started: " .. tostring(order.orderId), 95, 205, 255, 190)
+        end)
+    end
+    self:refreshVehicleOrderPanel()
+end
+
 function S4_IE_VehicleShop:doDrawItem_VehicleList(y, item, alt)
     local h = self.itemheight or 20
     if self.selected == item.index then
@@ -898,6 +1997,7 @@ function S4_IE_VehicleShop:closeVehiclePreview()
     self.VehiclePreviewScene = nil
     self.VehiclePreviewCine = nil
     self.VehiclePreviewLastInputMs = nil
+    self.VehiclePreviewCenterOffsetY = nil
 end
 
 function S4_IE_VehicleShop:openVehiclePreview(data)
@@ -965,6 +2065,9 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
         scene.javaObject:fromLua1("createVehicle", "vehicle")
         scene.javaObject:fromLua2("setVehicleScript", "vehicle", scriptName)
     end)
+    if ok then
+        self:applyPreviewCenterCompensation(scene, self.VehiclePreviewZoom)
+    end
 
     if not ok then
         local errLbl = ISLabel:new(18, ph - 24, S4_UI.FH_S, "3D preview not available for this vehicle script.", 1, 0.6,
@@ -1014,6 +2117,11 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
     addControl("-", "zoom_out", 28)
     addControl("+", "zoom_in", 28)
     addControl("Reset", "reset", 50)
+
+    local addCartBtn = ISButton:new(pw - 180, ph - 34, 130, 24, "Add To Cart", self, S4_IE_VehicleShop.onPreviewAddToCart)
+    addCartBtn.internal = "add_vehicle_cart"
+    addCartBtn:initialise()
+    panel:addChild(addCartBtn)
 end
 
 function S4_IE_VehicleShop:onPreviewControl(button)
@@ -1045,17 +2153,21 @@ function S4_IE_VehicleShop:onPreviewControl(button)
         pcall(function()
             scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
         end)
+        self:applyPreviewCenterCompensation(scene, self.VehiclePreviewZoom)
     elseif internal == "zoom_out" then
         self.VehiclePreviewZoom = math.max(1.2, (self.VehiclePreviewZoom or 4) - 0.4)
         pcall(function()
             scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
         end)
+        self:applyPreviewCenterCompensation(scene, self.VehiclePreviewZoom)
     elseif internal == "reset" then
         self.VehiclePreviewZoom = self.VehiclePreviewBaseZoom or 4
         pcall(function()
             scene:setView("Right")
             scene.javaObject:fromLua1("setZoom", self.VehiclePreviewZoom)
         end)
+        self.VehiclePreviewCenterOffsetY = 0
+        self:applyPreviewCenterCompensation(scene, self.VehiclePreviewZoom)
         if self.VehiclePreviewCine then
             self.VehiclePreviewCine.index = 1
             self.VehiclePreviewCine.stepInit = false
@@ -1519,7 +2631,7 @@ function S4_IE_VehicleShop:BtnClick(Button)
             self.VehicleHomePanel:setVisible(true)
         end
     elseif internal == "Cart" then
-        self:AddCartItem(false)
+        self:refreshVehicleOrderPanel()
         self:ShopBoxVisible(false)
         self.CartPanel:setVisible(true)
     end
@@ -1644,3 +2756,90 @@ function S4_IE_VehicleShop:close()
     self:setVisible(false)
     self:removeFromUIManager()
 end
+
+-- Global background check for vehicle orders (Ensures delivery even with UI closed)
+local function S4_VehicleShop_BackgroundUpdate()
+    local player = getPlayer()
+    if not player then return end
+    
+    local md = player:getModData()
+    if not md or not md.S4VehicleOrders or #md.S4VehicleOrders == 0 then return end
+    
+    local nowHours = getNowHours()
+    local hasChanges = false
+    
+    for i = 1, #md.S4VehicleOrders do
+        local o = md.S4VehicleOrders[i]
+        if not o.delivered then
+            -- 1) Refresh progress
+            refreshOrderRuntime(o, nowHours)
+            
+            -- 2) Attempt delivery if completed and nearby
+            if o.completed then
+                local x = tonumber(o.dropX)
+                local y = tonumber(o.dropY)
+                if x and y then
+                    local px = player:getX()
+                    local py = player:getY()
+                    local dist2 = ((px - x) * (px - x)) + ((py - y) * (py - y))
+                    
+                    if dist2 <= (14 * 14) then
+                        -- Borrow logic from the class method but without UI 'self'
+                        if (not o.nextDeliveryAttemptHours) or (nowHours >= o.nextDeliveryAttemptHours) then
+                            o.nextDeliveryAttemptHours = nowHours + (1 / 60)
+                            
+                            local spawned = false
+                            local vehicle = trySpawnVehicleAtDrop(o)
+                            if vehicle then
+                                spawned = true
+                                applyVehicleDeliveryState(vehicle)
+                                applyVehicleOrderModsToVehicle(vehicle, o.mods)
+                                
+                                -- Sound (Wrapped in pcall)
+                                pcall(function()
+                                    getSoundManager():PlayWorldSound("AirSupplyIconSound", vehicle:getSquare(), 0, 20, 1.0, true)
+                                end)
+                            end
+                            
+                            if (not spawned) and isClient and isClient() then
+                                local args = {
+                                    orderId = o.orderId,
+                                    vehicleId = o.vehicleId,
+                                    x = math.floor(x),
+                                    y = math.floor(y),
+                                    z = math.floor(tonumber(o.dropZ) or 0),
+                                    mods = o.mods or {}
+                                }
+                                pcall(function()
+                                    sendClientCommand("S4SMD", "SpawnVehicleDelivery", args)
+                                end)
+                                spawned = true
+                            end
+                            
+                            if spawned then
+                                -- Mark as delivered immediately
+                                o.delivered = true
+                                if player.setHaloNote then
+                                    pcall(function()
+                                        player:setHaloNote("Delivered: " .. tostring(o.vehicleName), 90, 235, 120, 220)
+                                    end)
+                                end
+                                hasChanges = true
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    -- If UI is open, refresh it to reflect background changes
+    if hasChanges and S4_Computer_Main and S4_Computer_Main.instance then
+        local app = S4_Computer_Main.instance.VehicleShop
+        if app and app:isVisible() then
+            app:refreshVehicleOrderPanel()
+        end
+    end
+end
+
+Events.EveryOneMinute.Add(S4_VehicleShop_BackgroundUpdate)

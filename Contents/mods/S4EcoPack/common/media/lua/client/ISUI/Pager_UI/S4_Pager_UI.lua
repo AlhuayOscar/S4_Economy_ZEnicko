@@ -214,10 +214,14 @@ function S4_Pager_UI:createChildren()
     self.closeBtn:initialise()
     self:addChild(self.closeBtn)
 end
-
 function S4_Pager_UI:refreshData()
     local pData = self.player:getModData()
     local mission = pData.S4PagerMission
+    
+    -- Reset UI state flags
+    self.isLocked = false
+    self.lockReason = nil
+
     if mission and mission.status == "active" then
         local left = mission.endWorldHours - nowWorldHours()
         if left < 0 then
@@ -241,8 +245,7 @@ function S4_Pager_UI:refreshData()
     end
     applyFixedPointToPending(self)
     self.startBtn:setTitle(randomStartLabel())
-    self.isLocked = false
-    self.lockReason = nil
+    
     if self.pendingMission and self.pendingMission.missionGroup and self.pendingMission.missionPart then
         local group = self.pendingMission.missionGroup
         local part = tonumber(self.pendingMission.missionPart) or 1
@@ -258,12 +261,13 @@ function S4_Pager_UI:refreshData()
         if part > progress + 1 then
             self.isLocked = true
             self.lockReason = "Locked: Part " .. (part - 1) .. " required"
-            self.startBtn:setEnable(false)
         end
     end
 
     if not self.isLocked then
         self.startBtn:setEnable(true)
+    else
+        self.startBtn:setEnable(false)
     end
     self.rollBtn:setEnable(true)
     self.completeBtn:setEnable(false)
@@ -287,6 +291,7 @@ function S4_Pager_UI:onRollMission()
     end
     self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
     applyFixedPointToPending(self)
+    self:refreshData()
 end
 
 function S4_Pager_UI:onStartMission()
@@ -360,14 +365,8 @@ function S4_Pager_UI:onDebugComplete()
     local pData = self.player:getModData()
     local mission = pData.S4PagerMission
     if mission and mission.status == "active" then
-        S4_Pager_System.stopMissionPersistentAudio(self.player)
-        pData.S4PagerMission = nil
-        clearMissionMapMarkers()
-        if self.player.setHaloNote then
-            self.player:setHaloNote("Pager mission complete (DEBUG)", 80, 220, 80, 300)
-        end
+        completeMission(self.player, "Pager mission complete (DEBUG)", 80, 220, 80)
     end
-    self:refreshData()
 end
 
 function S4_Pager_UI:onDebugFail()

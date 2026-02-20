@@ -131,6 +131,10 @@ local function countAliveZombiesAround(x, y, radius)
     return S4_Pager_System.countAliveZombiesAround(x, y, radius)
 end
 
+local function getDropTargetNearState(player, mission, maxCells)
+    return S4_Pager_System.getDropTargetNearState(player, mission, maxCells)
+end
+
 function S4_Pager_UI:showForPlayer(player)
     if not player then
         return
@@ -286,18 +290,39 @@ function S4_Pager_UI:onStartMission()
         requireMask = self.pendingMission.requireMask,
         requireBulletVest = self.pendingMission.requireBulletVest,
         nonCompliantPenaltyPct = self.pendingMission.nonCompliantPenaltyPct,
-        killGoal = math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
+        missionMode = self.pendingMission.missionMode,
+        missionGroup = self.pendingMission.missionGroup,
+        missionPart = self.pendingMission.missionPart,
+        missionPartTotal = self.pendingMission.missionPartTotal,
+        requiredBag = self.pendingMission.requiredBag,
+        requiredItemType = self.pendingMission.requiredItemType,
+        requiredItemCount = self.pendingMission.requiredItemCount,
+        escapeFromX = self.pendingMission.escapeFromX,
+        escapeFromY = self.pendingMission.escapeFromY,
+        escapeMinDistance = self.pendingMission.escapeMinDistance,
+        killGoal = (self.pendingMission.missionMode == "stash_money" or self.pendingMission.missionMode == "escape_bank") and 0 or
+            math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
         killsDone = 0,
         photoDropped = false
     }
+    if m.missionGroup == "RosewoodKnoxBankHeist" and tonumber(m.missionPart) == 1 then
+        self.player:getModData().S4KnoxPart2SuppliesSpawned = nil
+    end
     self.player:getModData().S4PagerMission = m
 
     local markerOk = addMissionMapMarker(m.targetX, m.targetY)
-    local spawnedCount = spawnMissionZombieAt(m.targetX, m.targetY, m.targetZ, m.killGoal)
+    local spawnedCount = 0
+    if m.killGoal > 0 then
+        spawnedCount = spawnMissionZombieAt(m.targetX, m.targetY, m.targetZ, m.killGoal)
+    end
     local zombieOk = spawnedCount > 0
 
     if self.player.setHaloNote then
-        if markerOk and zombieOk then
+        if m.missionMode == "stash_money" then
+            self.player:setHaloNote("Mission started: reach area and secure dirty money", 80, 220, 80, 300)
+        elseif m.missionMode == "escape_bank" then
+            self.player:setHaloNote("Mission started: Escape at least 350 cells from Knox Bank", 80, 220, 80, 300)
+        elseif markerOk and zombieOk then
             self.player:setHaloNote(string.format("Mission started: %d targets", m.killGoal), 80, 220, 80, 300)
         elseif markerOk then
             self.player:setHaloNote("Pager mission started: marca en mapa creada", 80, 220, 80, 300)
@@ -406,10 +431,20 @@ function S4_Pager_UI:render()
             1, UIFont.Small)
         self:drawText("Time left: " .. string.format("%.1f", left) .. "h", 20, 104, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Contract: " .. tostring(contractTitle), 20, 126, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Objective: " .. tostring(self.activeMission.objective), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Objective: " .. tostring(self.activeMission.runtimeObjective or self.activeMission.objective), 20, 148, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.activeMission.location), 20, 170, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Targets: " .. tostring(self.activeMission.killsDone or 0) .. "/" ..
-                          tostring(self.activeMission.killGoal or 1), 20, 192, 1, 0.9, 0.8, 1, UIFont.Small)
+        if (self.activeMission.killGoal or 0) > 0 then
+            self:drawText("Targets: " .. tostring(self.activeMission.killsDone or 0) .. "/" ..
+                              tostring(self.activeMission.killGoal or 1), 20, 192, 1, 0.9, 0.8, 1, UIFont.Small)
+        elseif self.activeMission.missionMode == "stash_money" then
+            local need = tonumber(self.activeMission.requiredItemCount) or 10
+            self:drawText("Requirement: Duffelbag + " .. tostring(need) .. " Money Bundle", 20, 192, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        elseif self.activeMission.missionMode == "escape_bank" then
+            local dist, need = S4_Pager_System.getEscapeDistanceState(self.player, self.activeMission)
+            self:drawText("Escape: " .. tostring(dist) .. "/" .. tostring(need) .. " cells", 20, 192, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        end
         self:drawText(coordsText, 20, 214, 1, 0.7, 0.7, 1, UIFont.Small)
         if spotState == "on_spot" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
@@ -417,6 +452,10 @@ function S4_Pager_UI:render()
         elseif spotState == "near" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
             self:drawText("You're near", 26 + w, 214, 0.95, 0.85, 0.2, 1, UIFont.Small)
+        end
+        if self.activeMission and self.activeMission.missionMode == "stash_money" and
+            getDropTargetNearState(self.player, self.activeMission, 3) then
+            self:drawText("Destino cerca", 20, 228, 0.2, 0.95, 0.2, 1, UIFont.Small)
         end
     elseif self.pendingMission then
         local contractTitle = self.pendingMission.missionName or self.pendingMission.objective or "Mission"
@@ -428,8 +467,18 @@ function S4_Pager_UI:render()
         self:drawText("Contract: " .. tostring(contractTitle), 20, 104, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 170, 1, 0.9, 0.8, 1,
-            UIFont.Small)
+        if self.pendingMission.missionMode == "stash_money" then
+            local need = tonumber(self.pendingMission.requiredItemCount) or 10
+            self:drawText("Requirement: Duffelbag + " .. tostring(need) .. " Money Bundle", 20, 170, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        elseif self.pendingMission.missionMode == "escape_bank" then
+            local need = tonumber(self.pendingMission.escapeMinDistance) or 350
+            self:drawText("Requirement: Move away " .. tostring(need) .. " cells", 20, 170, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        else
+            self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 170, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        end
         self:drawText(coordsText, 20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
         if spotState == "on_spot" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
@@ -452,7 +501,9 @@ function S4_Pager_UI.UpdateMissionState()
     S4_Pager_System.updateMissionState(player, {
         missionRadius = S4_Pager_UI.MISSION_RADIUS,
         nowWorldHoursFn = nowWorldHours,
+        getMissionSpotStateFn = getMissionSpotState,
         isPlayerNearMissionFn = isPlayerNearMission,
+        addMissionMapMarkerFn = addMissionMapMarker,
         countAliveZombiesAroundFn = countAliveZombiesAround,
         hasMissionPhotoOnGroundFn = hasMissionPhotoOnGround,
         playerHasMissionPhotoFn = playerHasMissionPhoto,

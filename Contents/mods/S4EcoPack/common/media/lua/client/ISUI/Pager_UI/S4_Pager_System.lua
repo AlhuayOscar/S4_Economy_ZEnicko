@@ -73,6 +73,12 @@ end
 function S4_Pager_System.buildMission(points, objectives)
     local point = S4_Pager_System.randomMissionPoint(points)
     local objective = asText(point.objective or objectives[ZombRand(1, #objectives + 1)], "Eliminate targets")
+    local zombieCount = nil
+    if point.zombieCount ~= nil then
+        zombieCount = math.max(0, math.floor(point.zombieCount))
+    else
+        zombieCount = ZombRand(1, 4)
+    end
     return {
         missionName = asText(point.missionName or objective, "Contract"),
         durationHours = point.durationHours or ZombRand(2, 9),
@@ -81,7 +87,7 @@ function S4_Pager_System.buildMission(points, objectives)
         targetX = point.x,
         targetY = point.y,
         targetZ = point.z or 0,
-        zombieCount = point.zombieCount or ZombRand(1, 4),
+        zombieCount = zombieCount,
         areaMinX = point.areaMinX,
         areaMaxX = point.areaMaxX,
         areaMinY = point.areaMinY,
@@ -89,7 +95,17 @@ function S4_Pager_System.buildMission(points, objectives)
         hiddenPadding = point.hiddenPadding,
         requireMask = point.requireMask,
         requireBulletVest = point.requireBulletVest,
-        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct
+        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct,
+        missionMode = point.missionMode,
+        missionGroup = point.missionGroup,
+        missionPart = point.missionPart,
+        missionPartTotal = point.missionPartTotal,
+        requiredBag = point.requiredBag,
+        requiredItemType = point.requiredItemType,
+        requiredItemCount = point.requiredItemCount,
+        escapeFromX = point.escapeFromX,
+        escapeFromY = point.escapeFromY,
+        escapeMinDistance = point.escapeMinDistance
     }
 end
 
@@ -104,6 +120,12 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
     i = ((i - 1) % #points) + 1
     local point = points[i]
     local objective = asText(point.objective or objectives[ZombRand(1, #objectives + 1)], "Eliminate targets")
+    local zombieCount = nil
+    if point.zombieCount ~= nil then
+        zombieCount = math.max(0, math.floor(point.zombieCount))
+    else
+        zombieCount = ZombRand(1, 4)
+    end
     return {
         missionName = asText(point.missionName or objective, "Contract"),
         durationHours = point.durationHours or ZombRand(2, 9),
@@ -112,7 +134,7 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
         targetX = point.x,
         targetY = point.y,
         targetZ = point.z or 0,
-        zombieCount = point.zombieCount or ZombRand(1, 4),
+        zombieCount = zombieCount,
         areaMinX = point.areaMinX,
         areaMaxX = point.areaMaxX,
         areaMinY = point.areaMinY,
@@ -120,8 +142,468 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
         hiddenPadding = point.hiddenPadding,
         requireMask = point.requireMask,
         requireBulletVest = point.requireBulletVest,
-        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct
+        nonCompliantPenaltyPct = point.nonCompliantPenaltyPct,
+        missionMode = point.missionMode,
+        missionGroup = point.missionGroup,
+        missionPart = point.missionPart,
+        missionPartTotal = point.missionPartTotal,
+        requiredBag = point.requiredBag,
+        requiredItemType = point.requiredItemType,
+        requiredItemCount = point.requiredItemCount,
+        escapeFromX = point.escapeFromX,
+        escapeFromY = point.escapeFromY,
+        escapeMinDistance = point.escapeMinDistance
     }
+end
+
+local function missionAreaBounds(mission)
+    if not mission then
+        return nil
+    end
+    local minX = mission.areaMinX and mission.areaMaxX and math.min(mission.areaMinX, mission.areaMaxX) or nil
+    local maxX = mission.areaMinX and mission.areaMaxX and math.max(mission.areaMinX, mission.areaMaxX) or nil
+    local minY = mission.areaMinY and mission.areaMaxY and math.min(mission.areaMinY, mission.areaMaxY) or nil
+    local maxY = mission.areaMinY and mission.areaMaxY and math.max(mission.areaMinY, mission.areaMaxY) or nil
+    return minX, maxX, minY, maxY
+end
+
+local function isDuffelBagItem(item)
+    if not item or not item.getFullType then
+        return false
+    end
+    local ft = tostring(item:getFullType() or "")
+    local dn = (item.getDisplayName and tostring(item:getDisplayName() or ""):lower()) or ""
+    return ft:find("DuffelBag", 1, true) or ft:find("Duffelbag", 1, true) or dn:find("duffel", 1, true) or
+               dn:find("lona", 1, true)
+end
+
+local function findDuffelBagItem(player)
+    if not player then
+        return nil
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return nil
+    end
+    local items = inv:getItems()
+    if not items then
+        return nil
+    end
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if isDuffelBagItem(it) then
+            return it
+        end
+    end
+    return nil
+end
+
+local function hasDuffelBagAndBundles(player, requiredCount)
+    if not player then
+        return false, 0, false
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return false, 0, false
+    end
+    local items = inv:getItems()
+    if not items then
+        return false, 0, false
+    end
+
+    local bundles = 0
+    local hasDuffel = false
+    local duffelItem = nil
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getFullType then
+            local ft = tostring(it:getFullType() or "")
+            if ft == "Base.MoneyBundle" then
+                bundles = bundles + 1
+            end
+            if isDuffelBagItem(it) then
+                hasDuffel = true
+                duffelItem = duffelItem or it
+            end
+        end
+    end
+    local need = math.max(1, math.floor(requiredCount or 10))
+    return hasDuffel and bundles >= need, bundles, hasDuffel, duffelItem
+end
+
+local function consumeMoneyBundles(player, count)
+    if not player then
+        return 0
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return 0
+    end
+    local items = inv:getItems()
+    if not items then
+        return 0
+    end
+    local removed = 0
+    local need = math.max(1, math.floor(count or 10))
+    for i = items:size() - 1, 0, -1 do
+        if removed >= need then
+            break
+        end
+        local it = items:get(i)
+        if it and it.getFullType and tostring(it:getFullType() or "") == "Base.MoneyBundle" then
+            inv:Remove(it)
+            removed = removed + 1
+        end
+    end
+    return removed
+end
+
+local function consumeOneDuffelBag(player)
+    local inv = player and player:getInventory() or nil
+    if not inv then
+        return false
+    end
+    local bag = findDuffelBagItem(player)
+    if bag then
+        inv:Remove(bag)
+        return true
+    end
+    return false
+end
+
+local function pickRandomContainerInMissionArea(mission)
+    local minX, maxX, minY, maxY = missionAreaBounds(mission)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    local z = math.floor(mission.targetZ or 0)
+    if not minX or not maxX or not minY or not maxY or not cell then
+        return nil
+    end
+
+    for _ = 1, 220 do
+        local x = ZombRand(minX, maxX + 1)
+        local y = ZombRand(minY, maxY + 1)
+        local sq = cell:getGridSquare(x, y, z)
+        if sq then
+            local objs = sq:getObjects()
+            if objs then
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    if obj and obj.getContainer and obj:getContainer() then
+                        return {x = x, y = y, z = z, obj = obj}
+                    end
+                end
+            end
+        end
+    end
+    return nil
+end
+
+local function setContainerHighlight(obj, on)
+    if not obj then
+        return
+    end
+    pcall(function()
+        if obj.setHighlighted then
+            obj:setHighlighted(on and true or false)
+        end
+    end)
+    pcall(function()
+        if obj.setOutlineHighlight then
+            obj:setOutlineHighlight(on and true or false)
+        end
+    end)
+    pcall(function()
+        if obj.setOutlineColor then
+            obj:setOutlineColor(1, 1, 0, 1)
+        end
+    end)
+end
+
+local function pickRandomContainerInBounds(minX, maxX, minY, maxY, z)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    z = math.floor(z or 0)
+    if not minX or not maxX or not minY or not maxY or not cell then
+        return nil
+    end
+    for _ = 1, 260 do
+        local x = ZombRand(minX, maxX + 1)
+        local y = ZombRand(minY, maxY + 1)
+        local sq = cell:getGridSquare(x, y, z)
+        if sq then
+            local objs = sq:getObjects()
+            if objs then
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    if obj and obj.getContainer and obj:getContainer() then
+                        return obj:getContainer(), sq
+                    end
+                end
+            end
+        end
+    end
+    return nil, nil
+end
+
+local function addItemsToContainer(container, itemType, count)
+    if not container then
+        return 0
+    end
+    local added = 0
+    local c = math.max(1, math.floor(count or 1))
+    for _ = 1, c do
+        local it = container:AddItem(itemType)
+        if it then
+            added = added + 1
+        end
+    end
+    return added
+end
+
+-- Forward-safe helpers for dirty money flow (must be declared before stash supply spawn)
+local function _markDirtyMoneyItem(item, mission)
+    if not item then
+        return
+    end
+    local dirtyText = "Este dinero... Esta sucio... No deberia guardarmelo"
+    if item.setTooltip then
+        pcall(function()
+            item:setTooltip(dirtyText)
+        end)
+    end
+    if item.getModData then
+        local md = item:getModData()
+        md.S4DirtyMoney = true
+        md.S4DirtyMoneyGroup = asText(mission and mission.missionGroup, "DirtyMoney")
+    end
+end
+
+local function _dropDirtyMoneyOnGroundInBounds(minX, maxX, minY, maxY, z, itemType, count, mission)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    z = math.floor(z or 0)
+    if not cell then
+        return 0
+    end
+    local added = 0
+    local c = math.max(1, math.floor(count or 1))
+    for _ = 1, c do
+        local x = ZombRand(minX, maxX + 1)
+        local y = ZombRand(minY, maxY + 1)
+        local sq = cell:getGridSquare(x, y, z)
+        if sq then
+            local ok, it = pcall(function()
+                return sq:AddWorldInventoryItem(itemType, ZombRand(2, 9) / 10, ZombRand(2, 9) / 10, 0)
+            end)
+            if ok and it then
+                _markDirtyMoneyItem(it, mission)
+                added = added + 1
+            end
+        end
+    end
+    return added
+end
+
+local function _dropDirtyMoneyAroundPoint(x, y, z, itemType, count, mission)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    if not cell then
+        return 0
+    end
+    x = math.floor(x or 0)
+    y = math.floor(y or 0)
+    z = math.floor(z or 0)
+    local offsets = {{0, 0}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {1, 1}, {-1, 1}, {1, -1}, {-1, -1}, {2, 0},
+                     {-2, 0}, {0, 2}, {0, -2}, {2, 1}, {-2, -1}}
+    local c = math.max(1, math.floor(count or 1))
+    local added = 0
+    for i = 1, c do
+        local o = offsets[((i - 1) % #offsets) + 1]
+        local sq = cell:getGridSquare(x + o[1], y + o[2], z)
+        if sq then
+            local ok, it = pcall(function()
+                return sq:AddWorldInventoryItem(itemType, 0.5, 0.5, 0)
+            end)
+            if ok and it then
+                _markDirtyMoneyItem(it, mission)
+                added = added + 1
+            end
+        end
+    end
+    return added
+end
+
+local function _countDirtyMoneyInPlayerInv(player, mission)
+    if not player then
+        return 0
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return 0
+    end
+    local items = inv:getItems()
+    if not items then
+        return 0
+    end
+    local group = asText(mission and mission.missionGroup, "DirtyMoney")
+    local n = 0
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getModData then
+            local md = it:getModData()
+            if md and md.S4DirtyMoney and asText(md.S4DirtyMoneyGroup, "DirtyMoney") == group then
+                n = n + 1
+            end
+        end
+    end
+    return n
+end
+
+local function _purgeDirtyMoneyInPlayerInv(player, mission)
+    if not player then
+        return 0
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return 0
+    end
+    local items = inv:getItems()
+    if not items then
+        return 0
+    end
+    local group = asText(mission and mission.missionGroup, "DirtyMoney")
+    local removed = 0
+    for i = items:size() - 1, 0, -1 do
+        local it = items:get(i)
+        if it and it.getModData then
+            local md = it:getModData()
+            if md and md.S4DirtyMoney and asText(md.S4DirtyMoneyGroup, "DirtyMoney") == group then
+                inv:Remove(it)
+                removed = removed + 1
+            end
+        end
+    end
+    return removed
+end
+
+local function resolveDuffelSpawnType()
+    local candidates = {"Base.Bag_DuffelBag", "Base.Bag_Duffelbag", "Base.Bag_DuffelBagTINT"}
+    local sm = getScriptManager and getScriptManager() or nil
+    if sm and sm.FindItem then
+        for i = 1, #candidates do
+            local t = candidates[i]
+            local ok, item = pcall(function()
+                return sm:FindItem(t)
+            end)
+            if ok and item then
+                return t
+            end
+        end
+    end
+    return "Base.Bag_DuffelBag"
+end
+
+function S4_Pager_System.getDropTargetNearState(player, mission, maxCells)
+    if not player or not mission or not mission.dropTargetX then
+        return false
+    end
+    local px = math.floor(player:getX())
+    local py = math.floor(player:getY())
+    local pz = math.floor(player:getZ())
+    local tx = math.floor(mission.dropTargetX or 0)
+    local ty = math.floor(mission.dropTargetY or 0)
+    local tz = math.floor(mission.dropTargetZ or mission.targetZ or 0)
+    if pz ~= tz then
+        return false
+    end
+    local d = math.abs(px - tx) + math.abs(py - ty)
+    return d <= (maxCells or 3)
+end
+
+function S4_Pager_System.getEscapeDistanceState(player, mission)
+    if not player or not mission then
+        return 0, tonumber(mission and mission.escapeMinDistance) or 350
+    end
+    local fromX = tonumber(mission.escapeFromX) or tonumber(mission.targetX) or 0
+    local fromY = tonumber(mission.escapeFromY) or tonumber(mission.targetY) or 0
+    local need = tonumber(mission.escapeMinDistance) or 350
+    if need < 1 then
+        need = 1
+    end
+    local dx = player:getX() - fromX
+    local dy = player:getY() - fromY
+    local dist = math.floor(math.sqrt(dx * dx + dy * dy))
+    return dist, need
+end
+
+function S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
+    if not player or not mission then
+        return false
+    end
+    local pData = player:getModData()
+    if mission.suppliesSpawned or (pData and pData.S4KnoxPart2SuppliesSpawned) then
+        return true
+    end
+
+    local z = math.floor(mission.targetZ or 0)
+    local minX = mission.sourceAreaMinX and math.min(mission.sourceAreaMinX, mission.sourceAreaMaxX) or
+                     math.min(mission.areaMinX or 0, mission.areaMaxX or 0)
+    local maxX = mission.sourceAreaMaxX and math.max(mission.sourceAreaMinX, mission.sourceAreaMaxX) or
+                     math.max(mission.areaMinX or 0, mission.areaMaxX or 0)
+    local minY = mission.sourceAreaMinY and math.min(mission.sourceAreaMinY, mission.sourceAreaMaxY) or
+                     math.min(mission.areaMinY or 0, mission.areaMaxY or 0)
+    local maxY = mission.sourceAreaMaxY and math.max(mission.sourceAreaMinY, mission.sourceAreaMaxY) or
+                     math.max(mission.areaMinY or 0, mission.areaMaxY or 0)
+
+    local needBundles = tonumber(mission.requiredItemCount) or 10
+    local itemType = asText(mission.requiredItemType, "Base.MoneyBundle")
+    local dropX = tonumber(mission.moneyDropX)
+    local dropY = tonumber(mission.moneyDropY)
+    local addedBundles = 0
+    if dropX and dropY then
+        addedBundles = _dropDirtyMoneyAroundPoint(dropX, dropY, z, itemType, needBundles + 1, mission)
+    end
+    if addedBundles <= 0 then
+        addedBundles = _dropDirtyMoneyOnGroundInBounds(minX, maxX, minY, maxY, z, itemType, needBundles + 1, mission)
+    end
+
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    local sx = math.floor(mission.duffelSpawnX or 8078)
+    local sy = math.floor(mission.duffelSpawnY or 11602)
+    local sz = math.floor(mission.duffelSpawnZ or z)
+    local square = cell and cell:getGridSquare(sx, sy, sz) or nil
+    if not square and player.getSquare then
+        square = player:getSquare()
+    end
+
+    local bagType = resolveDuffelSpawnType()
+    local bagSpawned = false
+    if square then
+        local okBag, bag = pcall(function()
+            return square:AddWorldInventoryItem(bagType, 0.5, 0.5, 0)
+        end)
+        bagSpawned = okBag and bag ~= nil
+    end
+
+    mission.suppliesSpawned = true
+    if pData then
+        pData.S4KnoxPart2SuppliesSpawned = true
+    end
+    mission.suppliesBundlesPlaced = addedBundles
+    mission.suppliesBagPlaced = bagSpawned
+    if player.setHaloNote then
+        if addedBundles > 0 then
+            player:setHaloNote(string.format("Dinero sucio preparado: %d MoneyBundle", addedBundles), 80, 220, 80, 300)
+        else
+            player:setHaloNote("No se pudo preparar el dinero oculto", 220, 110, 90, 280)
+        end
+        if bagSpawned then
+            player:setHaloNote(string.format("Duffelbag dejado en %d,%d", sx, sy), 230, 210, 120, 280)
+        end
+    end
+    return addedBundles > 0
 end
 
 function S4_Pager_System.isPlayerOnMissionSpot(player, mission)
@@ -229,7 +711,118 @@ function S4_Pager_System.getSymbolsApi()
 end
 
 function S4_Pager_System.clearMissionMapMarkers()
-    return
+    local symbolsApi = S4_Pager_System.getSymbolsApi()
+    if not symbolsApi then
+        return false
+    end
+    local ok = pcall(function()
+        if symbolsApi.clear then
+            symbolsApi:clear()
+            return
+        end
+        if symbolsApi.getSymbolCount and symbolsApi.removeSymbolByIndex then
+            for i = symbolsApi:getSymbolCount() - 1, 0, -1 do
+                symbolsApi:removeSymbolByIndex(i)
+            end
+        end
+    end)
+    return ok
+end
+
+local function markDirtyMoneyItem(item, mission)
+    if not item then
+        return
+    end
+    local dirtyText = "Este dinero... Esta sucio... No deberia guardarmelo"
+    if item.setTooltip then
+        pcall(function()
+            item:setTooltip(dirtyText)
+        end)
+    end
+    if item.getModData then
+        local md = item:getModData()
+        md.S4DirtyMoney = true
+        md.S4DirtyMoneyGroup = asText(mission and mission.missionGroup, "DirtyMoney")
+    end
+end
+
+local function dropDirtyMoneyOnGroundInBounds(minX, maxX, minY, maxY, z, itemType, count, mission)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    z = math.floor(z or 0)
+    if not cell then
+        return 0
+    end
+    local added = 0
+    local c = math.max(1, math.floor(count or 1))
+    for _ = 1, c do
+        local x = ZombRand(minX, maxX + 1)
+        local y = ZombRand(minY, maxY + 1)
+        local sq = cell:getGridSquare(x, y, z)
+        if sq then
+            local ok, it = pcall(function()
+                return sq:AddWorldInventoryItem(itemType, ZombRand(2, 9) / 10, ZombRand(2, 9) / 10, 0)
+            end)
+            if ok and it then
+                markDirtyMoneyItem(it, mission)
+                added = added + 1
+            end
+        end
+    end
+    return added
+end
+
+local function countDirtyMoneyInPlayerInv(player, mission)
+    if not player then
+        return 0
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return 0
+    end
+    local items = inv:getItems()
+    if not items then
+        return 0
+    end
+    local group = asText(mission and mission.missionGroup, "DirtyMoney")
+    local n = 0
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getModData then
+            local md = it:getModData()
+            if md and md.S4DirtyMoney and asText(md.S4DirtyMoneyGroup, "DirtyMoney") == group then
+                n = n + 1
+            end
+        end
+    end
+    return n
+end
+
+local function purgeDirtyMoneyInPlayerInv(player, mission)
+    if not player then
+        return 0
+    end
+    local inv = player:getInventory()
+    if not inv then
+        return 0
+    end
+    local items = inv:getItems()
+    if not items then
+        return 0
+    end
+    local group = asText(mission and mission.missionGroup, "DirtyMoney")
+    local removed = 0
+    for i = items:size() - 1, 0, -1 do
+        local it = items:get(i)
+        if it and it.getModData then
+            local md = it:getModData()
+            if md and md.S4DirtyMoney and asText(md.S4DirtyMoneyGroup, "DirtyMoney") == group then
+                inv:Remove(it)
+                removed = removed + 1
+            end
+        end
+    end
+    return removed
 end
 
 function S4_Pager_System.addMissionMapMarker(symbolId, x, y)
@@ -828,6 +1421,23 @@ function S4_Pager_System.completeMission(player, opts)
     }
     S4_Pager_System.stopMissionPersistentAudio(player)
 
+    if asText(mission.missionGroup, "") == "RosewoodKnoxBankHeist" and tonumber(mission.missionPart) == 1 then
+        mission.requiredItemType = mission.requiredItemType or "Base.MoneyBundle"
+        mission.requiredItemCount = mission.requiredItemCount or 10
+        mission.sourceAreaMinX = mission.sourceAreaMinX or mission.areaMinX
+        mission.sourceAreaMaxX = mission.sourceAreaMaxX or mission.areaMaxX
+        mission.sourceAreaMinY = mission.sourceAreaMinY or mission.areaMinY
+        mission.sourceAreaMaxY = mission.sourceAreaMaxY or mission.areaMaxY
+        mission.duffelSpawnX = mission.duffelSpawnX or 8078
+        mission.duffelSpawnY = mission.duffelSpawnY or 11602
+        mission.duffelSpawnZ = mission.duffelSpawnZ or 0
+        mission.moneyDropX = mission.moneyDropX or 8089
+        mission.moneyDropY = mission.moneyDropY or 11599
+        pcall(function()
+            S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
+        end)
+    end
+
     local rewardAmount = ZombRand(200, 501)
     local finalReward = rewardAmount
     local penaltyPct = tonumber(mission.nonCompliantPenaltyPct) or 50
@@ -884,8 +1494,105 @@ function S4_Pager_System.updateMissionState(player, opts)
         return
     end
 
+    if mission.missionMode == "stash_money" then
+        local dirtyInvCount = _countDirtyMoneyInPlayerInv(player, mission)
+        mission.dirtyMoneyMaxSeen = math.max(tonumber(mission.dirtyMoneyMaxSeen) or 0, dirtyInvCount)
+        if (mission.dirtyMoneyMaxSeen or 0) > 0 and dirtyInvCount < (mission.dirtyMoneyMaxSeen or 0) then
+            _purgeDirtyMoneyInPlayerInv(player, mission)
+            if mission.dropTargetObj then
+                setContainerHighlight(mission.dropTargetObj, false)
+            end
+            pData.S4PagerMission = nil
+            if opts.clearMissionMapMarkersFn then
+                opts.clearMissionMapMarkersFn()
+            end
+            if player.setHaloNote then
+                player:setHaloNote("Mision fallida: el dinero sucio fue usado o perdido", 220, 80, 80, 360)
+            end
+            if opts.onRefreshUiFn then
+                opts.onRefreshUiFn(player)
+            end
+            return
+        end
+
+        if not mission.dropTargetX then
+            local state = opts.getMissionSpotStateFn and opts.getMissionSpotStateFn(player, mission) or "far"
+            if state == "on_spot" then
+                local drop = pickRandomContainerInMissionArea(mission)
+                if drop then
+                    if opts.clearMissionMapMarkersFn then
+                        opts.clearMissionMapMarkersFn()
+                    end
+                    mission.dropTargetX = drop.x
+                    mission.dropTargetY = drop.y
+                    mission.dropTargetZ = drop.z
+                    mission.dropTargetObj = drop.obj
+                    mission.runtimeObjective = "Lugar para dejar el dinero"
+                    if opts.addMissionMapMarkerFn then
+                        opts.addMissionMapMarkerFn(drop.x, drop.y)
+                    end
+                    if drop.obj then
+                        setContainerHighlight(drop.obj, true)
+                    end
+                    if player.setHaloNote then
+                        player:setHaloNote("Lugar para dejar el dinero marcado", 230, 210, 120, 320)
+                    end
+                else
+                    if player.setHaloNote then
+                        player:setHaloNote("No se encontro contenedor, reintentando...", 220, 120, 80, 260)
+                    end
+                end
+            end
+        else
+            local px = math.floor(player:getX())
+            local py = math.floor(player:getY())
+            local pz = math.floor(player:getZ())
+            local tx = math.floor(mission.dropTargetX or 0)
+            local ty = math.floor(mission.dropTargetY or 0)
+            local tz = math.floor(mission.dropTargetZ or mission.targetZ or 0)
+            local nearDrop = (pz == tz) and ((math.abs(px - tx) + math.abs(py - ty)) <= 1)
+            if nearDrop then
+                local requiredCount = tonumber(mission.requiredItemCount) or 10
+                local canDrop, bundles, hasDuffel = hasDuffelBagAndBundles(player, requiredCount)
+                if canDrop then
+                    consumeMoneyBundles(player, requiredCount)
+                    consumeOneDuffelBag(player)
+                    if mission.dropTargetObj then
+                        setContainerHighlight(mission.dropTargetObj, false)
+                    end
+                    if opts.completeMissionFn then
+                        opts.completeMissionFn(player, "Money secured successfully", 80, 220, 80)
+                    end
+                    return
+                else
+                    if player.setHaloNote then
+                        if not hasDuffel then
+                            player:setHaloNote("Necesitas una bolsa de lona", 220, 110, 90, 260)
+                        else
+                            player:setHaloNote(string.format("Faltan Money Bundle: %d/%d", bundles, requiredCount), 220,
+                                110, 90, 260)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    if mission.missionMode == "escape_bank" then
+        local dist, need = S4_Pager_System.getEscapeDistanceState(player, mission)
+        mission.escapeDistanceNow = dist
+        mission.runtimeObjective = string.format("Escape distance: %d/%d", dist, need)
+        if dist >= need then
+            if opts.completeMissionFn then
+                opts.completeMissionFn(player, "Escape successful. Heat lost.", 80, 220, 80)
+            end
+            return
+        end
+    end
+
     local remaining = math.max(0, (mission.killGoal or 1) - (mission.killsDone or 0))
-    if remaining > 0 and (opts.isPlayerNearMissionFn and opts.isPlayerNearMissionFn(player, mission, 120)) then
+    if mission.missionMode ~= "stash_money" and mission.missionMode ~= "escape_bank" and remaining > 0 and
+        (opts.isPlayerNearMissionFn and opts.isPlayerNearMissionFn(player, mission, 120)) then
         local alive = opts.countAliveZombiesAroundFn and
                           opts.countAliveZombiesAroundFn(mission.targetX or 0, mission.targetY or 0,
                 opts.missionRadius or 20) or 0
@@ -900,6 +1607,10 @@ function S4_Pager_System.updateMissionState(player, opts)
     local nowWorldHoursFn = opts.nowWorldHoursFn or S4_Pager_System.nowWorldHours
     if nowWorldHoursFn() >= mission.endWorldHours then
         S4_Pager_System.stopMissionPersistentAudio(player)
+        if mission.dropTargetObj then
+            setContainerHighlight(mission.dropTargetObj, false)
+        end
+        _purgeDirtyMoneyInPlayerInv(player, mission)
         pData.S4PagerMission = nil
         if opts.clearMissionMapMarkersFn then
             opts.clearMissionMapMarkersFn()
@@ -933,6 +1644,9 @@ function S4_Pager_System.onZombieDead(zombie, player, opts)
     local pData = player:getModData()
     local mission = pData and pData.S4PagerMission or nil
     if not mission or mission.status ~= "active" then
+        return
+    end
+    if mission.missionMode == "stash_money" then
         return
     end
 

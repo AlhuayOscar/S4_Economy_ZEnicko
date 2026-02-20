@@ -277,6 +277,12 @@ local S4_Eco_Tiles_List = { -- ATM/Computer tile data
         Py = 0,
         Type = "ATM"
     },
+    -- Phone
+    ["location_business_office_generic_02_18"] = {
+        Px = 0,
+        Py = 0,
+        Type = "Phone"
+    },
     -- TODO: add direction values to find/look at the target object.
     -- PostBox
     ["street_decoration_01_8"] = {
@@ -441,6 +447,8 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                 elseif Data.Type == "PostBox" and IvnItemsTable["S4Item.SellPackingBox"] and Obj:getSquare():isOutside() then
                     local PostBox_Option = context:addOption(getText("ContextMenu_S4_PostBox_Sell"), Obj,
                         S4_Eco_Context.PostBox_Action, player, Data, IvnItemsTable)
+                elseif Data.Type == "Phone" then
+                    context:addOption("Use Phone", Obj, S4_Eco_Context.Phone_Action, player, Data)
                 end
             end
         end
@@ -522,6 +530,35 @@ function S4_Eco_Context.ATM_Action(Obj, player, Data)
         Walkaction:setOnComplete(function()
             openATMNow()
         end)
+    end
+end
+
+function S4_Eco_Context.Phone_Action(Obj, player, Data)
+    if not player then
+        return
+    end
+
+    local px = Data and Data.Px or 0
+    local py = Data and Data.Py or 0
+    local adjacent = S4_Utils.getAdjacent(player, Obj, px, py)
+    if adjacent then
+        local playerSq = player:getSquare()
+        if playerSq and playerSq == adjacent then
+            if player.setHaloNote then
+                player:setHaloNote("Parece que aun funciona esto...", 210, 210, 200, 230)
+            end
+            return
+        end
+
+        local walkAction = ISWalkToTimedAction:new(player, adjacent)
+        ISTimedActionQueue.add(walkAction)
+        walkAction:setOnComplete(function()
+            if player.setHaloNote then
+                player:setHaloNote("Parece que aun funciona esto...", 210, 210, 200, 230)
+            end
+        end)
+    elseif player.setHaloNote then
+        player:setHaloNote("Parece que aun funciona esto...", 210, 210, 200, 230)
     end
 end
 

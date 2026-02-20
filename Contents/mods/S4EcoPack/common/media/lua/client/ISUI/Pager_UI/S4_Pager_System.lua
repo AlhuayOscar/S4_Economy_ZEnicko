@@ -1470,6 +1470,15 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
+    if mission.missionGroup == "RosewoodKnoxBankHeist" then
+        local part = tonumber(mission.missionPart) or 1
+        if part == 3 then
+            pData.S4PagerBankHeistProgress = 0
+        else
+            pData.S4PagerBankHeistProgress = math.max(tonumber(pData.S4PagerBankHeistProgress) or 0, part)
+        end
+    end
+
     mission.status = "completed"
     pData.S4PagerMission = nil
     if player.setHaloNote then

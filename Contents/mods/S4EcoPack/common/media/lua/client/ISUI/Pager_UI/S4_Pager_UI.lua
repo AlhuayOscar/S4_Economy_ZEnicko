@@ -241,7 +241,21 @@ function S4_Pager_UI:refreshData()
     end
     applyFixedPointToPending(self)
     self.startBtn:setTitle(randomStartLabel())
-    self.startBtn:setEnable(true)
+    self.isLocked = false
+    self.lockReason = nil
+    if self.pendingMission and self.pendingMission.missionGroup == "RosewoodKnoxBankHeist" then
+        local part = tonumber(self.pendingMission.missionPart) or 1
+        local progress = tonumber(pData.S4PagerBankHeistProgress) or 0
+        if part > progress + 1 then
+            self.isLocked = true
+            self.lockReason = "Complete previous part first"
+            self.startBtn:setEnable(false)
+        end
+    end
+
+    if not self.isLocked then
+        self.startBtn:setEnable(true)
+    end
     self.rollBtn:setEnable(true)
     self.completeBtn:setEnable(false)
     self.failBtn:setEnable(false)
@@ -251,7 +265,7 @@ function S4_Pager_UI:refreshData()
     else
         self.setPointBtn:setTitle("DEBUG: Fixed Point OFF")
     end
-    self.statusText = "Ready to start mission"
+    self.statusText = self.isLocked and ("LOCKED: " .. self.lockReason) or "Ready to start mission"
 end
 
 function S4_Pager_UI:onRollMission()
@@ -480,6 +494,9 @@ function S4_Pager_UI:render()
                 UIFont.Small)
         end
         self:drawText(coordsText, 20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
+        if self.isLocked then
+            self:drawText(self.lockReason or "Locked", 20, 214, 1, 0.3, 0.3, 1, UIFont.Small)
+        end
         if spotState == "on_spot" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
             self:drawText("On Spot", 26 + w, 192, 0.2, 0.95, 0.2, 1, UIFont.Small)

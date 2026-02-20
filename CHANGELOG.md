@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.2.2] - 2026-02-20
+
+## Patch: Pager Missions Stability + New Mission Set
+
+- Added new Rosewood-focused mission set for Pager contracts (simple eliminate + photo/evidence flow).
+- Hardened Pager mission/lore string fallbacks to avoid nil-format crashes after mission completion.
+- Note: **LUGARES Y COORDENADAS INESTABLES O SIN PRECISION**.
+
 ## [1.2.1] - 2026-02-19
 
 ## Feature: Pager Mission Evidence Flow

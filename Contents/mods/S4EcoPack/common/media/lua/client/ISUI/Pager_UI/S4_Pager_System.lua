@@ -1,5 +1,27 @@
 S4_Pager_System = S4_Pager_System or {}
 
+local function asText(value, fallback)
+    if value == nil then
+        return fallback or ""
+    end
+    local t = tostring(value)
+    if t == "" then
+        return fallback or ""
+    end
+    return t
+end
+
+local function safeLoreEntry(missionPhotoLore)
+    if not missionPhotoLore or #missionPhotoLore == 0 then
+        return {title = "Work Evidence", note = "Marked evidence tied to this contract."}
+    end
+    local entry = missionPhotoLore[ZombRand(1, #missionPhotoLore + 1)] or {}
+    return {
+        title = asText(entry.title, "Work Evidence"),
+        note = asText(entry.note, "Marked evidence tied to this contract.")
+    }
+end
+
 function S4_Pager_System.nowWorldHours()
     local gt = GameTime and GameTime:getInstance() or nil
     if gt and gt.getWorldAgeHours then
@@ -50,12 +72,12 @@ end
 
 function S4_Pager_System.buildMission(points, objectives)
     local point = S4_Pager_System.randomMissionPoint(points)
-    local objective = point.objective or objectives[ZombRand(1, #objectives + 1)]
+    local objective = asText(point.objective or objectives[ZombRand(1, #objectives + 1)], "Eliminate targets")
     return {
-        missionName = point.missionName or objective,
+        missionName = asText(point.missionName or objective, "Contract"),
         durationHours = point.durationHours or ZombRand(2, 9),
         objective = objective,
-        location = point.location,
+        location = asText(point.location, "Unknown Location"),
         targetX = point.x,
         targetY = point.y,
         targetZ = point.z or 0,
@@ -81,12 +103,12 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
     end
     i = ((i - 1) % #points) + 1
     local point = points[i]
-    local objective = point.objective or objectives[ZombRand(1, #objectives + 1)]
+    local objective = asText(point.objective or objectives[ZombRand(1, #objectives + 1)], "Eliminate targets")
     return {
-        missionName = point.missionName or objective,
+        missionName = asText(point.missionName or objective, "Contract"),
         durationHours = point.durationHours or ZombRand(2, 9),
         objective = objective,
-        location = point.location,
+        location = asText(point.location, "Unknown Location"),
         targetX = point.x,
         targetY = point.y,
         targetZ = point.z or 0,
@@ -440,22 +462,20 @@ function S4_Pager_System.addRandomPhotoToCorpse(zombie, missionPhotoLore)
     if not photo then
         return false, nil
     end
-    local entry = missionPhotoLore and missionPhotoLore[ZombRand(1, #missionPhotoLore + 1)] or nil
+    local entry = safeLoreEntry(missionPhotoLore)
     local code = S4_Pager_System.randomWorkObjectCode()
-    if entry and photo.setName then
+    if photo.setName then
         photo:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
     end
-    if entry and photo.setTooltip then
+    if photo.setTooltip then
         photo:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
     end
     if photo.getModData then
         local md = photo:getModData()
         md.S4WorkObject = true
         md.S4WorkCode = code
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
+        md.S4WorkLoreTitle = entry.title
+        md.S4WorkLoreNote = entry.note
     end
     return true, code
 end
@@ -495,7 +515,7 @@ function S4_Pager_System.addRandomPhotoOnGroundNearMission(mission, player, miss
         return false
     end
 
-    local entry = missionPhotoLore and missionPhotoLore[ZombRand(1, #missionPhotoLore + 1)] or nil
+    local entry = safeLoreEntry(missionPhotoLore)
     local code = S4_Pager_System.randomWorkObjectCode()
     local photoType = S4_Pager_System.resolvePhotoItemType()
 
@@ -535,15 +555,13 @@ function S4_Pager_System.addRandomPhotoOnGroundNearMission(mission, player, miss
         local md = item:getModData()
         md.S4WorkObject = true
         md.S4WorkCode = code
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
+        md.S4WorkLoreTitle = entry.title
+        md.S4WorkLoreNote = entry.note
     end
-    if entry and item.setName then
+    if item.setName then
         item:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
     end
-    if entry and item.setTooltip then
+    if item.setTooltip then
         item:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
     end
     if S4_Utils and S4_Utils.SnycObject then
@@ -662,22 +680,20 @@ function S4_Pager_System.createValuablePhotoInInventory(player, mission, sourceL
     if not photo then
         return false
     end
-    local entry = missionPhotoLore and missionPhotoLore[ZombRand(1, #missionPhotoLore + 1)] or nil
+    local entry = safeLoreEntry(missionPhotoLore)
     local code = S4_Pager_System.randomWorkObjectCode()
     if photo.getModData then
         local md = photo:getModData()
         md.S4WorkObject = true
         md.S4WorkCode = code
-        md.S4WorkSource = sourceLabel or "Camera"
-        if entry then
-            md.S4WorkLoreTitle = entry.title
-            md.S4WorkLoreNote = entry.note
-        end
+        md.S4WorkSource = asText(sourceLabel, "Camera")
+        md.S4WorkLoreTitle = entry.title
+        md.S4WorkLoreNote = entry.note
     end
-    if entry and photo.setName then
+    if photo.setName then
         photo:setName(string.format("Objeto de Trabajo: %s | %s", code, entry.title))
     end
-    if entry and photo.setTooltip then
+    if photo.setTooltip then
         photo:setTooltip(string.format("Objeto de Trabajo: %s\n%s", code, entry.note))
     end
     if S4_Utils and S4_Utils.SnycObject then
@@ -807,7 +823,7 @@ function S4_Pager_System.completeMission(player, opts)
         targetX = mission.targetX,
         targetY = mission.targetY,
         targetZ = mission.targetZ,
-        location = mission.location,
+        location = asText(mission.location, "Unknown Location"),
         completedWorldHours = nowWorldHoursFn()
     }
     S4_Pager_System.stopMissionPersistentAudio(player)

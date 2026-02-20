@@ -1438,39 +1438,31 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
-    local rewardAmount = ZombRand(15000, 60001)
-    
-    -- Special bonus for high-stakes missions or parts of a sequence
-    if mission.missionPart and mission.missionPartTotal then
-        local ratio = tonumber(mission.missionPart) / tonumber(mission.missionPartTotal)
-        if ratio >= 1.0 then -- Final part of a chain
-            rewardAmount = ZombRand(100000, 323001)
-        else
-            rewardAmount = rewardAmount + (ZombRand(10000, 25001) * tonumber(mission.missionPart))
-        end
-    end
+    local isSequenced = mission.missionPart and mission.missionPartTotal
+    local rewardAmount = isSequenced and ZombRand(10000, 53001) or ZombRand(4000, 23001)
     
     local finalReward = rewardAmount
-    local penaltyPct = tonumber(mission.nonCompliantPenaltyPct) or 50
-    if penaltyPct < 0 then
-        penaltyPct = 0
-    elseif penaltyPct > 100 then
-        penaltyPct = 100
-    end
     local hasMask, hasVest, hasHalloweenMask = checkMissionGearRequirements(player, mission)
-    local penaltyApplied = false
-    if (mission.requireMask or mission.requireBulletVest) and not (hasMask and hasVest) then
-        finalReward = math.floor(rewardAmount * (100 - penaltyPct) / 100)
-        penaltyApplied = true
+    
+    local bonusesApplied = 0
+    local totalBonusMultiplier = 1.0
+    
+    -- Bonus for Mask if required
+    if mission.requireMask and hasMask then
+        local bonus = ZombRand(30, 61) / 100
+        totalBonusMultiplier = totalBonusMultiplier + bonus
+        bonusesApplied = bonusesApplied + 1
     end
-
-    local halloweenBonusPct = 45
-    local halloweenBonusApplied = false
-    if hasHalloweenMask then
-        finalReward = math.floor(finalReward * (100 + halloweenBonusPct) / 100)
-        halloweenBonusApplied = true
+    
+    -- Bonus for Bullet Vest if required
+    if mission.requireBulletVest and hasVest then
+        local bonus = ZombRand(30, 61) / 100
+        totalBonusMultiplier = totalBonusMultiplier + bonus
+        bonusesApplied = bonusesApplied + 1
     end
-
+    
+    finalReward = math.floor(finalReward * totalBonusMultiplier)
+    
     local rewardLogTime = (S4_Utils and S4_Utils.getLogTime) and S4_Utils.getLogTime() or nil
     if sendClientCommand then
         pcall(function()

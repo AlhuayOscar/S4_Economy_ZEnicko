@@ -1,49 +1,49 @@
-# Propuesta de Feature: Jobs (Sistema de Empleos Knox)
+# Feature Proposal: Jobs (Knox Career System)
 
-## Objetivo
-Implementar un sistema de carreras profesionales que permita a los jugadores generar ingresos estables realizando tareas específicas, integrando tanto actividades de rol como mecánicas de supervivencia.
+## Objective
+Implement a professional career system that allows players to generate stable income by performing specific tasks, integrating both roleplay activities and survival mechanics.
 
-## Lista de Empleos Sugeridos
+## Suggested Job List
 
-### 1. Operador Telefónico / Soporte
-- **Tarea:** Atender "llamadas" (notificaciones) y redirigir servicios. Requiere estar junto a un teléfono o equipo de radio.
-- **Lore:** Soporte remoto para los pocos supervivientes con tecnología.
+### 1. Telephone Operator / Support
+- **Task:** Answer "calls" (notifications) and redirect services. Requires being near a phone or radio equipment.
+- **Lore:** Remote support for the few survivors with technology.
 
-### 2. Diseñador Gráfico
-- **Tarea:** Crear o restaurar posters, logos o interfaces para la corporación. Mecánica de mini-juego o uso de materiales de arte.
-- **Lore:** Reconstrucción de la identidad visual del "Nuevo Mundo".
+### 2. Graphic Designer
+- **Task:** Create or restore posters, logos, or interfaces for the corporation. Mini-game mechanic or use of art materials.
+- **Lore:** Rebuilding the visual identity of the "New World".
 
-### 3. Vendedor de Seguros
-- **Tarea:** Persuadir a otros supervivientes (NPCs o jugadores) para contratar seguros de vida o de propiedad (vinculado a la feature SafeZone).
-- **Mecánica:** Genera comisiones pasivas.
+### 3. Insurance Salesman
+- **Task:** Persuade other survivors (NPCs or players) to sign up for life or property insurance (linked to the SafeZone feature).
+- **Mechanic:** Generates passive commissions.
 
-### 4. Programador
-- **Tarea:** "Reparar" código o hackear terminales. Requiere altos niveles de electrónica.
-- **Lore:** Mantenimiento de los sistemas de S4 Economy.
+### 4. Programmer
+- **Task:** "Repair" code or hack terminals. Requires high levels of electronics.
+- **Lore:** Maintenance of S4 Economy systems.
 
-### 5. Banquero
-- **Tarea:** Gestionar préstamos, validar tarjetas y procesar transferencias manuales de alta seguridad.
-- **Lore:** Administrador local de la sucursal ZomBank.
+### 5. Banker
+- **Task:** Manage loans, validate cards, and process high-security manual transfers.
+- **Lore:** Local administrator of the ZomBank branch.
 
-### 6. Limpiador (Cazador de Zombies)
-- **Tarea:** Eliminar una cantidad específica de zombies en zonas designadas (vinculado a DeadZone).
-- **Lore:** Control de plagas corporativo.
+### 6. Cleaner (Zombie Hunter)
+- **Task:** Eliminate a specific number of zombies in designated zones (linked to DeadZone).
+- **Lore:** Corporate pest control.
 
-### 7. Blogger / Periodista
-- **Tarea:** Escribir crónicas de supervivencia o reportar eventos en Knox News.
-- **Recompensa:** Pagos por "engagement" o clics de otros jugadores.
+### 7. Blogger / Journalist
+- **Task:** Write survival chronicles or report events on Knox News.
+- **Reward:** Payments based on "engagement" or clicks from other players.
 
-### 8. Espía / Investigador
-- **Tarea:** Recolectar información sobre hordas, inventarios de otros grupos o localizar bases ocultas.
-- **Mecánica:** Requiere sigilo y cámaras de fotos.
+### 8. Spy / Investigator
+- **Task:** Collect information about hordes, other groups' inventories, or locate hidden bases.
+- **Mechanic:** Requires stealth and cameras.
 
-## Sistema de Progresión
-- **Rango:** De Junior a Senior/Director. Mayores niveles desbloquean mejores salarios y beneficios corporativos (descuentos en la GoodShop).
-- **Salario:** Pagos diarios o por tarea completada directamente a la tarjeta bancaria.
+### 9. Armored Truck Attack
+- **Task:** The player must go to destroy a Van vehicle that appears to be the target. This Van will have the trunk full of toilet paper bags and other paper items. Among all of them, there is a "Suspiciously well-written note" and that is where the real armored truck is found, but upon arrival there are explosions and they destroy the original armored truck and the player must take revenge.
+- **Lore:** Explosions destroy the real target upon arrival, triggering a revenge plot.
 
-### 9. Ataque al blindado
-- **Tarea:** El jugador debe ir a destruir un vehículo Van que parece ser el objetivo. Dicha Van tendrá el baúl completamente lleno de bolsas con papel higiénico y otros ítems de papel. Entre todo eso, habrá una "Nota sospechosamente bien escrita" que revelará la ubicación del verdadero blindado.
-- **Lore:** Al llegar a la ubicación real, ocurren explosiones que destruyen el blindado original, y el jugador deberá tomar venganza contra quienes lo tendieron en la trampa.
+## Progression System
+- **Rank:** From Junior to Senior/Director. Higher levels unlock better salaries and corporate benefits (discounts at the GoodShop).
+- **Salary:** Daily payments or per completed task directly to the bank card.
 
 ---
-*Documento creado para planificación futura en la rama `jobs`.*
+*Document created for future planning in the `jobs` branch.*

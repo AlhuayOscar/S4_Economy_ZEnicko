@@ -12,7 +12,19 @@ local function ensureMapSymbolDefinition()
 end
 
 local nowWorldHours = S4_Pager_System.nowWorldHours
-local MISSION_POINTS = S4_Jobs_Lore.MISSION_POINTS or {}
+local function sortMissions(points)
+    local sorted = {}
+    for _, p in ipairs(points) do table.insert(sorted, p) end
+    table.sort(sorted, function(a, b)
+        local aProg = (a.missionGroup and 1) or 0
+        local bProg = (b.missionGroup and 1) or 0
+        if aProg ~= bProg then return aProg > bProg end
+        return false
+    end)
+    return sorted
+end
+
+local MISSION_POINTS = sortMissions(S4_Jobs_Lore.MISSION_POINTS or {})
 local MISSION_OBJECTIVES = S4_Jobs_Lore.MISSION_OBJECTIVES or {}
 local START_BUTTON_LABELS = S4_Jobs_Lore.START_BUTTON_LABELS or {"Start"}
 local MISSION_PHOTO_LORE = S4_Jobs_Lore.MISSION_PHOTO_LORE or {}
@@ -455,7 +467,13 @@ function S4_Pager_UI:render()
         self:drawText("Duration: " .. string.format("%.1f", self.activeMission.durationHours) .. "h", 20, 82, 1, 1, 1,
             1, UIFont.Small)
         self:drawText("Time left: " .. string.format("%.1f", left) .. "h", 20, 104, 1, 1, 1, 1, UIFont.Small)
-        self:drawText("Contract: " .. tostring(contractTitle), 20, 126, 1, 1, 1, 1, UIFont.Small)
+        local tag = "[SIDE]"
+        local tagColorR, tagColorG, tagColorB = 0.7, 0.7, 0.7
+        if self.activeMission.missionGroup then
+            tag = "[MAIN]"
+            tagColorR, tagColorG, tagColorB = 1, 0.8, 0.2
+        end
+        self:drawText("Contract: " .. tag .. " " .. tostring(contractTitle), 20, 126, tagColorR, tagColorG, tagColorB, 1, UIFont.Small)
         self:drawText("Objective: " .. tostring(self.activeMission.runtimeObjective or self.activeMission.objective), 20, 148, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.activeMission.location), 20, 170, 1, 1, 1, 1, UIFont.Small)
         if (self.activeMission.killGoal or 0) > 0 then
@@ -489,7 +507,13 @@ function S4_Pager_UI:render()
         local spotState = getMissionSpotState(self.player, self.pendingMission)
         self:drawText("Duration: " .. tostring(self.pendingMission.durationHours) .. "h", 20, 82, 1, 1, 1, 1,
             UIFont.Small)
-        self:drawText("Contract: " .. tostring(contractTitle), 20, 104, 1, 1, 1, 1, UIFont.Small)
+        local tag = "[SIDE]"
+        local tagColorR, tagColorG, tagColorB = 0.7, 0.7, 0.7
+        if self.pendingMission.missionGroup then
+            tag = "[MAIN]"
+            tagColorR, tagColorG, tagColorB = 1, 0.8, 0.2
+        end
+        self:drawText("Contract: " .. tag .. " " .. tostring(contractTitle), 20, 104, tagColorR, tagColorG, tagColorB, 1, UIFont.Small)
         self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
         if self.pendingMission.missionMode == "stash_money" then

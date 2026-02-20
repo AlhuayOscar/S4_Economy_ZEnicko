@@ -2,13 +2,27 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.0] - 2026-02-20
+
+## Feature: Global Economy Overhaul
+
+- **High-Stakes Pager Rewards:**
+  - Standard mission rewards boosted to **$15,000 - $60,000**.
+  - High-tier multi-part missions (Heists) now scale up to a maximum of **$323,000**.
+  - Balanced payouts to allow vehicle purchases ($450k+) within **10-15 missions**.
+- **Shop Data Cleanup & Categorization:**
+  - Fixed categories for over 13,000 items in `S4_Shop_Data.lua`.
+  - Moved metals, tools, and ammo out of the "Food" section.
+  - Implemented specific sub-categories: **HandGun, Rifle, Shotgun, Tools, Medical, Ammo, GunParts, VehicleParts**.
+- **Food Scarcity & Inflation:**
+  - Doubled the **BuyPrice** for all items in the "Food" category.
+  - Reduced **Stock** for food items to a range of **1-2 units**, forcing players to rely more on looting/farming.
+- **Daily Deals System:**
+  - Implemented automatic **Daily Recommended Items** (Hot Items) rotation in the server.
+  - Picks 5-15 random items every day with a **5% to 30% discount**.
+  - Resets previous discounts/hot status daily to keep the market dynamic.
+
 ## [1.2.2] - 2026-02-20
-
-## Patch: Pager Missions Stability + New Mission Set
-
-- Added new Rosewood-focused mission set for Pager contracts (simple eliminate + photo/evidence flow).
-- Hardened Pager mission/lore string fallbacks to avoid nil-format crashes after mission completion.
-- Note: **LUGARES Y COORDENADAS INESTABLES O SIN PRECISION**.
 
 ## [1.2.1] - 2026-02-19
 

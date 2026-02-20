@@ -67,6 +67,82 @@ local function playATMBeepSound()
     end
 end
 
+local S4_VEHICLE_DROP_SYMBOL_ID = "s4_vehicle_drop_point"
+
+local function ensureVehicleDropSymbolDefinition()
+    if not MapSymbolDefinitions or not MapSymbolDefinitions.getInstance then
+        return false
+    end
+    local ok = pcall(function()
+        MapSymbolDefinitions.getInstance():addTexture(S4_VEHICLE_DROP_SYMBOL_ID, "media/ui/LootableMaps/map_airdrop.png",
+            "Loot")
+    end)
+    return ok
+end
+
+local function getVehicleDropSymbolsApi()
+    if not ISWorldMap_instance then
+        ISWorldMap.ShowWorldMap(0)
+        if ISWorldMap_instance and ISWorldMap_instance.close then
+            ISWorldMap_instance:close()
+        end
+    end
+    if not ISWorldMap_instance or not ISWorldMap_instance.javaObject then
+        return nil
+    end
+    local mapApi = ISWorldMap_instance.javaObject:getAPIv1()
+    if not mapApi then
+        return nil
+    end
+    return mapApi:getSymbolsAPI()
+end
+
+local function removeVehicleDropSymbol(player)
+    if not player then
+        return false
+    end
+    local md = player:getModData()
+    local symbolIndex = md and md.S4VehicleDropSymbolIndex or nil
+    if not symbolIndex then
+        return false
+    end
+    local symbolsApi = getVehicleDropSymbolsApi()
+    if not symbolsApi or not symbolsApi.removeSymbolByIndex then
+        md.S4VehicleDropSymbolIndex = nil
+        return false
+    end
+    local ok = pcall(function()
+        symbolsApi:removeSymbolByIndex(symbolIndex)
+    end)
+    md.S4VehicleDropSymbolIndex = nil
+    return ok
+end
+
+local function addVehicleDropSymbol(player, x, y)
+    if not player or not x or not y then
+        return false
+    end
+    ensureVehicleDropSymbolDefinition()
+    removeVehicleDropSymbol(player)
+    local symbolsApi = getVehicleDropSymbolsApi()
+    if not symbolsApi then
+        return false
+    end
+    local ok = pcall(function()
+        local symbol = symbolsApi:addTexture(S4_VEHICLE_DROP_SYMBOL_ID, x, y)
+        if symbol and symbol.setAnchor then
+            symbol:setAnchor(0.5, 0.5)
+        end
+        if symbol and symbol.setRGBA then
+            symbol:setRGBA(0.2, 0.9, 1, 1)
+        end
+        if symbol and symbol.getIndex then
+            player:getModData().S4VehicleDropSymbolIndex = symbol:getIndex()
+        end
+    end)
+    return ok
+end
+
 function S4_Eco_Context.InventoryMenu(playerNum, context, items)
     items = ISInventoryPane.getActualItems(items)
     local item = items[1]
@@ -77,6 +153,14 @@ function S4_Eco_Context.InventoryMenu(playerNum, context, items)
     local itemName = item:getFullType()
     if itemName == "S4Item.Signal" then
         context:addOption(getText("ContextMenu_S4_Signal_Install"), player, S4_Eco_Context.SetAddress)
+    elseif itemName == "S4Item.VehiclesFlare" then
+        context:addOption(getText("ContextMenu_S4_VehiclesFlare_SetDropPoint"), player,
+            S4_Eco_Context.SetVehicleDropPoint)
+        local md = player and player:getModData() or nil
+        if md and md.S4VehicleDropX and md.S4VehicleDropY then
+            context:addOption(getText("ContextMenu_S4_VehiclesFlare_ClearDropPoint"), player,
+                S4_Eco_Context.ClearVehicleDropPoint)
+        end
     elseif itemName == "S4Item.BuyPackingBox" then
         context:addOption(getText("ContextMenu_S4_BuyBox_Open"), player, S4_Eco_Context.BoxOpen, item)
     elseif itemName == "Base.Money" or itemName == "Base.MoneyBundle" then
@@ -127,6 +211,41 @@ function S4_Eco_Context.SetAddress(player)
     S4_Signal_Main:show(player)
     -- local SignalCursor = ISSignalCursor:new(player, worldobjects, IvnItems)
     -- getCell():setDrag(SignalCursor, SignalCursor.player)
+end
+
+function S4_Eco_Context.SetVehicleDropPoint(player)
+    if not player then
+        return
+    end
+    local sq = player:getSquare()
+    if not sq then
+        return
+    end
+    local x = sq:getX()
+    local y = sq:getY()
+    local z = sq:getZ()
+    local md = player:getModData()
+    md.S4VehicleDropX = x
+    md.S4VehicleDropY = y
+    md.S4VehicleDropZ = z
+    addVehicleDropSymbol(player, x, y)
+    if player.setHaloNote then
+        player:setHaloNote("Vehicle drop point set: " .. tostring(x) .. "x" .. tostring(y), 90, 220, 140, 280)
+    end
+end
+
+function S4_Eco_Context.ClearVehicleDropPoint(player)
+    if not player then
+        return
+    end
+    local md = player:getModData()
+    md.S4VehicleDropX = nil
+    md.S4VehicleDropY = nil
+    md.S4VehicleDropZ = nil
+    removeVehicleDropSymbol(player)
+    if player.setHaloNote then
+        player:setHaloNote("Vehicle drop point cleared", 220, 180, 120, 250)
+    end
 end
 -- Open delivery box
 function S4_Eco_Context.BoxOpen(player, item)

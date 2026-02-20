@@ -31,6 +31,7 @@ local function reloadOpenShopWindows(modKey)
     end
 
     safeReload(ComUI.GoodShop, modKey)
+    safeReload(ComUI.VehicleShop, modKey)
     safeReload(ComUI.GoodShopAdmin, modKey)
 end
 

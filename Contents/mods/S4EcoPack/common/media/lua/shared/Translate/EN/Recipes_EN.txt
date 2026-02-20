@@ -1,4 +1,5 @@
 Recipe_EN = {
     Recipe_CraftS4CardReader = "Craft Card Reader",
     Recipe_CraftS4Signal = "Craft Signal",
+    Recipe_CraftS4VehiclesFlare = "Craft Vehicles Flare",
 }

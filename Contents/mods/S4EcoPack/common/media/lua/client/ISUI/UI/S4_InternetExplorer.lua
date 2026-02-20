@@ -6,6 +6,7 @@ local S4_IE_Class = {
     IE = "S4_IE_SNetwork",
     News = "S4_IE_KnoxNews",
     GoodShop = "S4_IE_GoodShop",
+    VehicleShop = "S4_IE_VehicleShop",
     GoodShopAdmin = "S4_IE_GoodShopAdmin",
     BlackJack = "S4_IE_BlackJack",
     ZomBank = "S4_IE_ZomBank",

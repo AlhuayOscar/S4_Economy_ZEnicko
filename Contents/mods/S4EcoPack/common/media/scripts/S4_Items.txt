@@ -72,6 +72,13 @@ module S4Item {
 		DisplayName = Signal,
 		WorldStaticModel = S4Model.Signal,
 	}
+    item VehiclesFlare {
+		Type = Normal,
+		Icon = S4_Signal,
+		Weight = 1,
+		DisplayName = Vehicles Flare,
+		WorldStaticModel = S4Model.Signal,
+	}
 
     item SellPackingBox {
 		Type = Normal,

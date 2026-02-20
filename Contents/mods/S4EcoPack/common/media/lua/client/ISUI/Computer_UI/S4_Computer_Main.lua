@@ -160,6 +160,10 @@ function S4_Computer_Main:createChildren()
         Name = "Good Shop",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
     }
+    S4_Category.ComputerIconData["VehicleShop"] = {
+        Name = "Vehicle Shop",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
+    }
 
     S4_Category.ComputerIconData["Jobs"] = {
         Name = "Jobs",
@@ -543,6 +547,27 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.GoodShop)
         end
         self.TopApp = self.GoodShop
+    elseif internal == "VehicleShop" then
+        if self.VehicleShop then
+            ModData.request("S4_ShopData")
+            ModData.request("S4_PlayerShopData")
+            if not self.VehicleShop:isVisible() then
+                self.VehicleShop:setVisible(true)
+            end
+            if self.VehicleShop.ReloadUI then
+                self.VehicleShop:ReloadUI()
+            end
+            self.VehicleShop:bringToTop()
+        else
+            self.VehicleShop = S4_InternetExplorer:new(self)
+            self.VehicleShop:initialise()
+            self.VehicleShop.TitleName = "Vehicle Shop - Internet Explorer"
+            self.VehicleShop.AddressText = "http://hind.com/VehicleShop/home"
+            self.VehicleShop.PageType = internal
+            self:addChild(self.VehicleShop)
+            self:AddTaskBar(self.VehicleShop)
+        end
+        self.TopApp = self.VehicleShop
     elseif internal == "GoodShopAdmin" then
         if self.GoodShopAdmin then
             ModData.request("S4_ShopData")

@@ -54,6 +54,31 @@ module Base {
 		}
 	}
 
+    craftRecipe CraftS4VehiclesFlare
+	{
+        timedAction = DismantleElectrical,
+		Time = 100,
+		SkillRequired = Electricity:2,
+		Tags = AnySurfaceCraft,
+        category = Electrical,
+		AutoLearnAny = Electricity:4,
+		xpAward = Electricity:2,
+		inputs
+		{
+			item 3 [Base.ElectricWire] flags[NoBrokenItems],
+			item 2 [Base.ElectronicsScrap] flags[NoBrokenItems],
+			item 2 [Base.Receiver] flags[NoBrokenItems],
+			item 1 [Base.RadioTransmitter] flags[NoBrokenItems],
+			item 8 [Base.Screws] flags[NoBrokenItems],
+			item 1 tags[Aluminum] flags[NoBrokenItems],
+			item 1 tags[Screwdriver] mode:keep flags[MayDegradeLight;NoBrokenItems],
+		}
+		outputs
+		{
+			item 1 S4Item.VehiclesFlare,
+		}
+	}
+
     craftRecipe CraftS4SatelliteDish
 	{
         timedAction = DismantleElectrical,

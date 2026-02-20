@@ -243,12 +243,21 @@ function S4_Pager_UI:refreshData()
     self.startBtn:setTitle(randomStartLabel())
     self.isLocked = false
     self.lockReason = nil
-    if self.pendingMission and self.pendingMission.missionGroup == "RosewoodKnoxBankHeist" then
+    if self.pendingMission and self.pendingMission.missionGroup and self.pendingMission.missionPart then
+        local group = self.pendingMission.missionGroup
         local part = tonumber(self.pendingMission.missionPart) or 1
-        local progress = tonumber(pData.S4PagerBankHeistProgress) or 0
+        
+        pData.S4_MissionsProgress = pData.S4_MissionsProgress or {}
+        local progress = tonumber(pData.S4_MissionsProgress[group]) or 0
+        
+        -- Legacy support for Knox Bank Heist
+        if group == "RosewoodKnoxBankHeist" and progress == 0 and pData.S4PagerBankHeistProgress then
+            progress = tonumber(pData.S4PagerBankHeistProgress) or 0
+        end
+
         if part > progress + 1 then
             self.isLocked = true
-            self.lockReason = "Complete previous part first"
+            self.lockReason = "Locked: Part " .. (part - 1) .. " required"
             self.startBtn:setEnable(false)
         end
     end

@@ -1470,12 +1470,22 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
-    if mission.missionGroup == "RosewoodKnoxBankHeist" then
+    if mission.missionGroup and mission.missionPart then
+        local group = mission.missionGroup
         local part = tonumber(mission.missionPart) or 1
-        if part == 3 then
-            pData.S4PagerBankHeistProgress = 0
+        local total = tonumber(mission.missionPartTotal) or 1
+        
+        pData.S4_MissionsProgress = pData.S4_MissionsProgress or {}
+        
+        if part >= total then
+            pData.S4_MissionsProgress[group] = 0 -- Reset sequence for replayability
         else
-            pData.S4PagerBankHeistProgress = math.max(tonumber(pData.S4PagerBankHeistProgress) or 0, part)
+            pData.S4_MissionsProgress[group] = math.max(tonumber(pData.S4_MissionsProgress[group]) or 0, part)
+        end
+        
+        -- Sync legacy variable for Knox Bank
+        if group == "RosewoodKnoxBankHeist" then
+            pData.S4PagerBankHeistProgress = pData.S4_MissionsProgress[group]
         end
     end
 

@@ -417,6 +417,35 @@ end
 function S4_Utils.CheckInvCash(player, item)
     local playerInv = player:getInventory()
     if not item then return end
+
+    local isDirty = false
+    if item:hasModData() and item:getModData().S4DirtyMoney then
+        isDirty = true
+    else
+        local dn = string.lower(item:getName() or "")
+        local dnn = string.lower(item:getDisplayName() or "")
+        if string.find(dn, "dirty") or string.find(dnn, "dirty") or string.find(dn, "suci") or string.find(dnn, "suci") then
+            isDirty = true
+        end
+    end
+
+    if isDirty then
+        if player.setHaloNote then
+            player:setHaloNote("They can't be used... Taxes are no joke", 255, 60, 60, 300)
+        end
+        if item:getWorldItem() then
+            item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
+            ISInventoryPage.dirtyUI()
+        else
+            if item:getContainer() then
+                item:getContainer():Remove(item)
+            else
+                playerInv:Remove(item)
+            end
+        end
+        return
+    end
+
     if item:getFullType() == "Base.Money" then
         local BRand = ZombRand(10001)
         if BRand == 1234 then
@@ -442,7 +471,8 @@ function S4_Utils.CheckInvCash(player, item)
             playerInv:AddItems("S4Item.Money1x100", 1)
         end
     end
-        if item:getWorldItem() then
+
+    if item:getWorldItem() then
         item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
         ISInventoryPage.dirtyUI()
     else

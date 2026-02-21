@@ -162,20 +162,7 @@ S4_Jobs_Lore.MISSION_POINTS = {{
     duffelSpawnX = 8078,
     duffelSpawnY = 11602,
     duffelSpawnZ = 0
-}, {
-    x = 8090,
-    y = 11537,
-    z = 0,
-    location = "Rosewood - Marple & Christie Legal Services",
-    missionName = "Legal Office Recovery",
-    objective = "Eliminate targets and recover legal evidence",
-    areaMinX = 8082,
-    areaMaxX = 8098,
-    areaMinY = 11529,
-    areaMaxY = 11545,
-    hiddenPadding = 12,
-    zombieCount = 4
-}, {
+},{
     x = 8081,
     y = 11588,
     z = 0,
@@ -195,6 +182,19 @@ S4_Jobs_Lore.MISSION_POINTS = {{
     escapeFromX = 8081,
     escapeFromY = 11588,
     escapeMinDistance = 350
+},{
+    x = 8090,
+    y = 11537,
+    z = 0,
+    location = "Rosewood - Marple & Christie Legal Services",
+    missionName = "Legal Office Recovery",
+    objective = "Eliminate targets and recover legal evidence",
+    areaMinX = 8082,
+    areaMaxX = 8098,
+    areaMinY = 11529,
+    areaMaxY = 11545,
+    hiddenPadding = 12,
+    zombieCount = 4
 }}
 
 S4_Jobs_Lore.MISSION_OBJECTIVES = {"Clean the warehouse office", "Dispose of suspicious trash bags",

@@ -50,6 +50,60 @@ function S4_Action_ComputerInteract:new(character, Obj, onDone)
     return o
 end
 
+local S4_Action_ExtractSafeMoney = ISBaseTimedAction:derive("S4_Action_ExtractSafeMoney")
+
+function S4_Action_ExtractSafeMoney:isValid()
+    return self.Obj ~= nil
+end
+
+function S4_Action_ExtractSafeMoney:waitToStart()
+    self.character:faceThisObject(self.Obj)
+    return self.character:shouldBeTurning()
+end
+
+function S4_Action_ExtractSafeMoney:update()
+    self.character:faceThisObject(self.Obj)
+end
+
+function S4_Action_ExtractSafeMoney:start()
+    self:setActionAnim("Loot")
+    self.character:SetVariable("LootPosition", "Mid")
+end
+
+function S4_Action_ExtractSafeMoney:stop()
+    self.character:clearVariable("LootPosition")
+    ISBaseTimedAction.stop(self)
+end
+
+function S4_Action_ExtractSafeMoney:perform()
+    self.character:clearVariable("LootPosition")
+    local pData = self.character:getModData()
+    local mission = pData.S4PagerMission
+    if mission and mission.drillIsDone then
+        mission.extractedMoneyBundles = (mission.extractedMoneyBundles or 0) + 1
+        self.character:getInventory():AddItem("Base.MoneyBundle")
+        if self.character.setHaloNote then
+            self.character:setHaloNote("+1 Money Bundle", 100, 255, 100, 200)
+        end
+    end
+    ISBaseTimedAction.perform(self)
+end
+
+function S4_Action_ExtractSafeMoney:new(character, Obj)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    o.character = character
+    o.Obj = Obj
+    o.stopOnWalk = true
+    o.stopOnRun = true
+    o.maxTime = (PerformanceSettings.getLockFPS() * 4) or 240
+    if o.character:isTimedActionInstant() then
+        o.maxTime = 1
+    end
+    return o
+end
+
 local function playComputerToggleSound()
     if getSoundManager and getSoundManager().playUISound then
         getSoundManager():playUISound("S4_QoL_ButtonPush")
@@ -724,8 +778,15 @@ function S4_Eco_Context.Safe_Action(Obj, player, Data)
     end
 
     if now >= mission.drillEndHours then
-        if player.setHaloNote then
-            player:setHaloNote("The safe is already open!", 80, 220, 80, 250)
+        local extracted = mission.extractedMoneyBundles or 0
+        local needed = tonumber(mission.requiredItemCount) or 10
+        if extracted < needed then
+            local action = S4_Action_ExtractSafeMoney:new(player, Obj)
+            ISTimedActionQueue.add(action)
+        else
+            if player.setHaloNote then
+                player:setHaloNote("The safe is empty!", 80, 220, 80, 250)
+            end
         end
         return
     end

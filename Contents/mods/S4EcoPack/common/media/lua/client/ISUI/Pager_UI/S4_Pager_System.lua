@@ -1648,8 +1648,13 @@ function S4_Pager_System.updateMissionState(player, opts)
             end
             
             if not mission.drillIsJammed and now >= mission.drillEndHours then
-                if opts.completeMissionFn then
-                    opts.completeMissionFn(player, "Safe drilled successfully! Money secured.", 80, 220, 80)
+                mission.drillIsDone = true
+                local extracted = mission.extractedMoneyBundles or 0
+                local needed = tonumber(mission.requiredItemCount) or 10
+                if extracted >= needed then
+                    if opts.completeMissionFn then
+                        opts.completeMissionFn(player, "Safe drilled successfully! Money secured.", 80, 220, 80)
+                    end
                 end
                 return
             end
@@ -1817,7 +1822,7 @@ end
 local ROBBERY_SHOUT_LINES = {"Everybody to the floor!!!", "Don't make me repeat it!",
                              "Suckers, you'll gonna learn now...", "This isn't your mama, Get the F* Down", "Get Down!"}
 
-local function sayRobberyLine(player)
+function S4_Pager_System.sayRobberyLine(player)
     if not player then
         return
     end
@@ -1973,22 +1978,6 @@ function S4_Pager_System.updateRobberyAlarm(player, opts)
 
     local pData = player:getModData()
     local mission = pData and pData.S4PagerMission or nil
-    local shoutNow = false
-    if player.isShouting then
-        local ok, v = pcall(function()
-            return player:isShouting()
-        end)
-        shoutNow = ok and v or false
-    end
-
-    if mission and mission.status == "active" and opts.getMissionSpotStateFn then
-        local spotState = opts.getMissionSpotStateFn(player, mission)
-        if spotState == "on_spot" and shoutNow and not md.S4PagerShoutingPrev then
-            sayRobberyLine(player)
-            S4_Pager_System.triggerRobberyAlarm(player, mission)
-        end
-    end
-    md.S4PagerShoutingPrev = shoutNow
 
     if mission and mission.status == "active" and mission.robberyIntroPlayed and (not mission.razormindStarted) then
         local introFinished = false
@@ -2127,15 +2116,16 @@ function S4_Pager_System.RenderDrillProgress()
     end
 
     local now = S4_Pager_System.nowWorldHours()
-    if now >= mission.drillEndHours and not mission.drillIsJammed then
-        return
-    end
 
     local sw = getCore():getScreenWidth()
 
     if mission.drillIsJammed then
         getTextManager():DrawStringCentre(UIFont.Medium, sw / 2, 80, "DRILL JAMMED! PRESS E ON SAFE!", 1.0, 0.2, 0.2, 1.0)
-    else
+    elseif mission.drillIsDone then
+        local extracted = mission.extractedMoneyBundles or 0
+        local needed = tonumber(mission.requiredItemCount) or 10
+        getTextManager():DrawStringCentre(UIFont.Medium, sw / 2, 80, string.format("Extrae el dinero (Pulsa E): %d/%d", extracted, needed), 0.2, 0.8, 0.2, 1.0)
+    elseif now < mission.drillEndHours then
         local total = mission.drillEndHours - mission.drillStartHours
         local elapsed = now - mission.drillStartHours
         local pct = math.min(100, math.max(0, math.floor((elapsed / total) * 100)))
@@ -2144,3 +2134,20 @@ function S4_Pager_System.RenderDrillProgress()
     end
 end
 Events.OnPostRender.Add(S4_Pager_System.RenderDrillProgress)
+
+function S4_Pager_System.OnShoutKeyPressed(key)
+    if getCore and getCore().getKey and key == getCore():getKey("Shout") then
+        local player = getSpecificPlayer(0)
+        if not player or player:isDead() then return end
+        local md = player:getModData()
+        local mission = md and md.S4PagerMission
+        if mission and mission.status == "active" then
+            local state = S4_Pager_System.getMissionSpotState(player, mission)
+            if state == "on_spot" then
+                S4_Pager_System.sayRobberyLine(player)
+                S4_Pager_System.triggerRobberyAlarm(player, mission)
+            end
+        end
+    end
+end
+Events.OnKeyPressed.Add(S4_Pager_System.OnShoutKeyPressed)

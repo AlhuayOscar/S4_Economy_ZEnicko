@@ -236,6 +236,10 @@ function S4_ATM_MainUI:BtnAction(Button)
         self.HomePanel:setMainCard()
     elseif internal == "Deposit_Ok" then
         self.HomePanel:ActionDeposit()
+    elseif internal == "Deposit_Return" then
+        self.HomePanel:ActionReturn()
+    elseif internal == "TransferCash_Return" then
+        self.HomePanel:ActionReturn()
     elseif internal == "Withdraw_Ok" then
         self.HomePanel:ActionWithdraw()
     elseif internal == "Transfer_Ok" then
@@ -388,6 +392,9 @@ function S4_ATM_MainUI:close()
             getSoundManager():playUISound("S4_QoL_ButtonPush")
             getSoundManager():playUISound("ATMGoodbye")
         end)
+    end
+    if self.HomePanel and self.HomePanel.close then
+        self.HomePanel:close()
     end
     if self.CardNumber then
         self.InfoPanel:ReturnCard(self.CardNumber)

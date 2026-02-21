@@ -482,5 +482,49 @@ function S4_Utils.CheckInvCash(player, item)
             playerInv:Remove(item)
         end
     end
-
 end
+
+-- Calculate randomized value for vanilla money items (Simple version)
+function S4_Utils.getVanillaMoneyValue(item)
+    if not item then return 0 end
+    
+    local isDirty = false
+    if item:hasModData() and item:getModData().S4DirtyMoney then
+        isDirty = true
+    else
+        local dn = string.lower(item:getName() or "")
+        local dnn = string.lower(item:getDisplayName() or "")
+        if string.find(dn, "dirty") or string.find(dnn, "dirty") or string.find(dn, "suci") or string.find(dnn, "suci") then
+            isDirty = true
+        end
+    end
+    if isDirty then return -1 end
+
+    local fullType = item:getFullType()
+    local totalValue = 0
+
+    if fullType == "Base.Money" then
+        local BRand = ZombRand(10001)
+        if BRand == 1234 then
+            totalValue = 20000 + ZombRand(31)
+        elseif BRand >= 9900 then
+            totalValue = (ZombRand(11) * 100) + ZombRand(31)
+        else
+            totalValue = ZombRand(101)
+        end
+    elseif fullType == "Base.MoneyBundle" then
+        for i = 1, 100 do
+            local BRand = ZombRand(10001)
+            if BRand == 1234 then
+                totalValue = totalValue + 20000 + ZombRand(31)
+            elseif BRand >= 9900 then
+                totalValue = totalValue + (ZombRand(11) * 100) + ZombRand(31)
+            else
+                totalValue = totalValue + ZombRand(101)
+            end
+        end
+    end
+
+    return totalValue
+end
+

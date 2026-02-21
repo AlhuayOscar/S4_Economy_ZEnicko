@@ -16,8 +16,8 @@ function S4_ATM_Deposit:initialise()
 
     self.AtmUI.MenuBtn4.internal = "Deposit_Ok"
     self.AtmUI.MenuBtn4:setTitle(getText("IGUI_S4_ATM_Deposit_Ok"))
-    self.AtmUI.MenuBtn5.internal = "Undo"
-    self.AtmUI.MenuBtn5:setTitle(getText("IGUI_S4_ATM_Cancel"))
+    self.AtmUI.MenuBtn5.internal = "Deposit_Return"
+    self.AtmUI.MenuBtn5:setTitle(getText("IGUI_S4_ATM_ReturnCash"))
     self.AtmUI.MenuBtn6.internal = "Undo"
     self.AtmUI.MenuBtn6:setTitle(getText("IGUI_S4_ATM_Undo"))
     self.AtmUI.MenuBtn1:setVisible(false)
@@ -28,7 +28,13 @@ function S4_ATM_Deposit:initialise()
     self.AtmUI.MenuBtn6:setVisible(true)
 
     self.CashValue = 0
-    self.CashItems = {}
+    self.CashItems = {} -- This will be used only for session items if needed, but we'll rely on counts
+    
+    self.Username = self.player:getUsername()
+    local AtmModData = self.AtmUI.Obj:getModData()
+    if AtmModData.S4_PendingDeposits and AtmModData.S4_PendingDeposits[self.Username] then
+        self.CashValue = AtmModData.S4_PendingDeposits[self.Username].Value or 0
+    end
 end
 
 function S4_ATM_Deposit:createChildren()
@@ -108,10 +114,34 @@ function S4_ATM_Deposit:onMouseUp_Insert()
     if ISMouseDrag.dragging then
         local items = S4_Utils.getMoveItemTable(ISMouseDrag.dragging)
         if #items > 0 then
+            local AtmModData = self.DepositUI.AtmUI.Obj:getModData()
+            if not AtmModData.S4_PendingDeposits then AtmModData.S4_PendingDeposits = {} end
+            if not AtmModData.S4_PendingDeposits[self.DepositUI.Username] then 
+                AtmModData.S4_PendingDeposits[self.DepositUI.Username] = { Value = 0, Counts = {} }
+            end
+            local Pending = AtmModData.S4_PendingDeposits[self.DepositUI.Username]
+
             for _, item in pairs(items) do
-                if item and S4_Setting.MoneyList[item:getFullType()] then
-                    self.DepositUI.CashValue = self.DepositUI.CashValue + S4_Setting.MoneyList[item:getFullType()]
-                    table.insert(self.DepositUI.CashItems, item)
+                local fullType = item:getFullType()
+                local val = 0
+                if S4_Setting.MoneyList[fullType] then
+                    val = S4_Setting.MoneyList[fullType]
+                elseif fullType == "Base.Money" or fullType == "Base.MoneyBundle" then
+                    val = S4_Utils.getVanillaMoneyValue(item)
+                    if val == -1 then -- Dirty money
+                        if self.DepositUI.player.setHaloNote then
+                            self.DepositUI.player:setHaloNote(getText("IGUI_S4_ATM_Msg_DirtyMoney"), 255, 60, 60, 300)
+                        end
+                        val = 0
+                    end
+                end
+
+                if val > 0 or fullType == "Base.Money" or fullType == "Base.MoneyBundle" then
+                    self.DepositUI.CashValue = self.DepositUI.CashValue + val
+                    
+                    Pending.Value = Pending.Value + val
+                    Pending.Counts[fullType] = (Pending.Counts[fullType] or 0) + 1
+
                     if item:getWorldItem() then
                         item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
                         ISInventoryPage.dirtyUI()
@@ -124,6 +154,7 @@ function S4_ATM_Deposit:onMouseUp_Insert()
                     end
                 end
             end
+            S4_Utils.SnycObject(self.DepositUI.AtmUI.Obj)
         end
     end
 end
@@ -149,6 +180,14 @@ function S4_ATM_Deposit:ActionDeposit()
                     local CashValue = self.CashValue
                     sendClientCommand("S4ED", "AddMoney", {CardNum, CashValue})
                     sendClientCommand("S4ED", "AddCardLog", {CardNum, LogTime, "Deposit", CashValue, "ATM", "Card"})
+                    
+                    -- Clear Pending
+                    local AtmModData = self.AtmUI.Obj:getModData()
+                    if AtmModData.S4_PendingDeposits then
+                        AtmModData.S4_PendingDeposits[self.Username] = nil
+                        S4_Utils.SnycObject(self.AtmUI.Obj)
+                    end
+
                     -- Initialization and main screen
                     self.CashValue = 0
                     self.CashItems = {}
@@ -162,6 +201,21 @@ function S4_ATM_Deposit:ActionDeposit()
         end
     else
         self:setMsg(getText("IGUI_S4_ATM_Msg_Deposit_NoCash"))
+    end
+end
+
+function S4_ATM_Deposit:ActionReturn()
+    local AtmModData = self.AtmUI.Obj:getModData()
+    if AtmModData.S4_PendingDeposits and AtmModData.S4_PendingDeposits[self.Username] then
+        local Pending = AtmModData.S4_PendingDeposits[self.Username]
+        local Inv = self.player:getInventory()
+        for type, count in pairs(Pending.Counts) do
+            Inv:AddItems(type, count)
+        end
+        AtmModData.S4_PendingDeposits[self.Username] = nil
+        S4_Utils.SnycObject(self.AtmUI.Obj)
+        self.CashValue = 0
+        self:setMsg(getText("IGUI_S4_ATM_Msg_Deposit_Returned"))
     end
 end
 

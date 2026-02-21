@@ -177,6 +177,7 @@ IGUI_EN = {
     IGUI_S4_ATM_Msg_Transfer_ReceiverFail = "No recipient selected.",
     IGUI_S4_ATM_Msg_EntryZero = "Invalid amount entered.",
     IGUI_S4_ATM_Msg_LowBalance = "Insufficient card balance.",
+    IGUI_S4_ATM_Msg_DirtyMoney = "Dirty money detected. Machine refuses to count it.",
     IGUI_S4_NoMoneyDebt = "Please pay your debts first",
     IGUI_S4_ATM_Msg_Error = "Error: ",
     IGUI_S4_ATM_Msg_NotShopStock = "The item is out of stock in the shop.",
@@ -204,6 +205,9 @@ IGUI_EN = {
     IGUI_S4_ATM_CompleteMsg_Withdraw = "Withdrawal completed.",
     IGUI_S4_ATM_CompleteMsg_MainCard = "This card has been set as the main account.",
     IGUI_S4_ATM_CompleteMsg_ReturnCard = "Card removed.",
+    IGUI_S4_ATM_ReturnCash = "Return Cash",
+    IGUI_S4_ATM_Msg_Deposit_Returned = "Cash returned to inventory.",
+    IGUI_S4_ATM_Approx = "Approx",
         
     IGUI_S4_Item_CreditCard = "Credit Card: %s",
     IGUI_S4_Item_CardNumber = "[Card Number: %d]",

@@ -1648,10 +1648,10 @@ function S4_Pager_System.updateMissionState(player, opts)
             end
             
             if not mission.drillNextHordeRollHours then
-                mission.drillNextHordeRollHours = now + (5 / 60)
+                mission.drillNextHordeRollHours = now + (10 / 60)
             elseif now >= mission.drillNextHordeRollHours and now < mission.drillEndHours then
-                mission.drillNextHordeRollHours = now + (5 / 60)
-                local count = ZombRand(2, 3)
+                mission.drillNextHordeRollHours = now + (10 / 60)
+                local count = ZombRand(2, 5)
                 local safeX = mission.targetX or player:getX()
                 local safeY = mission.targetY or player:getY()
                 local safeZ = mission.targetZ or player:getZ()

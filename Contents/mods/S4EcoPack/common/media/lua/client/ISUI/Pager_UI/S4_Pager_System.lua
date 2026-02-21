@@ -1638,13 +1638,35 @@ function S4_Pager_System.updateMissionState(player, opts)
             
             if now >= mission.drillNextJamRollHours and now < mission.drillEndHours then
                 mission.drillNextJamRollHours = now + (10 / 60)
-                if ZombRand(100) < 20 then
+                if ZombRand(100) < 45 then
                     mission.drillIsJammed = true
                     mission.drillJamStartHours = now
                     if player.setHaloNote then
                         player:setHaloNote("DRILL JAMMED! Go to the safe and press E to unjam it!", 220, 60, 60, 300)
                     end
                 end
+            end
+            
+            if not mission.drillNextHordeRollHours then
+                mission.drillNextHordeRollHours = now + (5 / 60)
+            elseif now >= mission.drillNextHordeRollHours and now < mission.drillEndHours then
+                mission.drillNextHordeRollHours = now + (5 / 60)
+                local count = ZombRand(2, 3)
+                local safeX = mission.targetX or player:getX()
+                local safeY = mission.targetY or player:getY()
+                local safeZ = mission.targetZ or player:getZ()
+                
+                local angle = ZombRandFloat(0, math.pi * 2)
+                local spawnX = math.floor(safeX + math.cos(angle) * 10)
+                local spawnY = math.floor(safeY + math.sin(angle) * 10)
+                
+                sendClientCommand(player, "S4SMD", "SpawnMissionZombie", {
+                    x = spawnX,
+                    y = spawnY,
+                    z = safeZ,
+                    count = count
+                })
+                addSound(player, safeX, safeY, safeZ, 80, 100)
             end
             
             if not mission.drillIsJammed and now >= mission.drillEndHours then

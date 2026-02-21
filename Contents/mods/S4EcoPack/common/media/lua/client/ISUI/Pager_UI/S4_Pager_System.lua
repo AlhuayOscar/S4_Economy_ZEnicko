@@ -1632,8 +1632,32 @@ function S4_Pager_System.updateMissionState(player, opts)
         end
     end
 
+    if mission.missionMode == "drill_safe" then
+        if mission.drillStartHours and not mission.drillIsJammed then
+            local now = S4_Pager_System.nowWorldHours()
+            
+            if now >= mission.drillNextJamRollHours and now < mission.drillEndHours then
+                mission.drillNextJamRollHours = now + (10 / 60)
+                if ZombRand(100) < 20 then
+                    mission.drillIsJammed = true
+                    mission.drillJamStartHours = now
+                    if player.setHaloNote then
+                        player:setHaloNote("DRILL JAMMED! Go to the safe and press E to unjam it!", 220, 60, 60, 300)
+                    end
+                end
+            end
+            
+            if not mission.drillIsJammed and now >= mission.drillEndHours then
+                if opts.completeMissionFn then
+                    opts.completeMissionFn(player, "Safe drilled successfully! Money secured.", 80, 220, 80)
+                end
+                return
+            end
+        end
+    end
+
     local remaining = math.max(0, (mission.killGoal or 1) - (mission.killsDone or 0))
-    if mission.missionMode ~= "stash_money" and mission.missionMode ~= "escape_bank" and remaining > 0 and
+    if mission.missionMode ~= "stash_money" and mission.missionMode ~= "escape_bank" and mission.missionMode ~= "drill_safe" and remaining > 0 and
         (opts.isPlayerNearMissionFn and opts.isPlayerNearMissionFn(player, mission, 120)) then
         local alive = opts.countAliveZombiesAroundFn and
                           opts.countAliveZombiesAroundFn(mission.targetX or 0, mission.targetY or 0,
@@ -2090,4 +2114,34 @@ function S4_Pager_System.inventoryCameraMenu(playerNum, context, items, opts)
         tt.description = "Get within 10 tiles of the objective to take the photo."
         option.toolTip = tt
     end
+    end
 end
+
+function S4_Pager_System.RenderDrillProgress()
+    local player = getSpecificPlayer(0)
+    if not player then return end
+    
+    local md = player:getModData()
+    local mission = md.S4PagerMission
+    if not mission or mission.status ~= "active" or mission.missionMode ~= "drill_safe" or not mission.drillStartHours then
+        return
+    end
+
+    local now = S4_Pager_System.nowWorldHours()
+    if now >= mission.drillEndHours and not mission.drillIsJammed then
+        return
+    end
+
+    local sw = getCore():getScreenWidth()
+
+    if mission.drillIsJammed then
+        getTextManager():DrawStringCentre(UIFont.Medium, sw / 2, 80, "DRILL JAMMED! PRESS E ON SAFE!", 1.0, 0.2, 0.2, 1.0)
+    else
+        local total = mission.drillEndHours - mission.drillStartHours
+        local elapsed = now - mission.drillStartHours
+        local pct = math.min(100, math.max(0, math.floor((elapsed / total) * 100)))
+        
+        getTextManager():DrawStringCentre(UIFont.Medium, sw / 2, 80, string.format("Drilling the safe... %d%%", pct), 0.2, 0.8, 0.2, 1.0)
+    end
+end
+Events.OnPostRender.Add(S4_Pager_System.RenderDrillProgress)

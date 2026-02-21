@@ -384,7 +384,7 @@ local S4_Eco_Tiles_List = { -- ATM/Computer tile data
     ["location_business_bank_01_69"] = {
         Px = 0,
         Py = 0,
-        Type = "ATM"
+        Type = "Safe"
     },
     ["location_business_bank_01_70"] = {
         Px = 0,
@@ -568,6 +568,8 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                         S4_Eco_Context.PostBox_Action, player, Data, IvnItemsTable)
                 elseif Data.Type == "Phone" then
                     context:addOption("Use Phone", Obj, S4_Eco_Context.Phone_Action, player, Data)
+                elseif Data.Type == "Safe" then
+                    context:addOption("Interact with Safe", Obj, S4_Eco_Context.Safe_Action, player, Data)
                 end
             end
         end
@@ -678,6 +680,58 @@ function S4_Eco_Context.Phone_Action(Obj, player, Data)
         end)
     elseif player.setHaloNote then
         player:setHaloNote("Parece que aun funciona esto...", 210, 210, 200, 230)
+    end
+end
+
+function S4_Eco_Context.Safe_Action(Obj, player, Data)
+    if not player then return end
+    local pData = player:getModData()
+    local mission = pData.S4PagerMission
+    if not mission or mission.status ~= "active" or not (mission.missionMode == "drill_safe") then
+        if player.setHaloNote then
+            player:setHaloNote("The safe is securely locked.", 200, 200, 200, 250)
+        end
+        return
+    end
+
+    local now = S4_Pager_System.nowWorldHours()
+
+    if not mission.drillStartHours then
+        mission.drillStartHours = now
+        mission.drillEndHours = now + 1.0
+        mission.drillNextJamRollHours = now + (10 / 60)
+        mission.drillIsJammed = false
+        if player.setHaloNote then
+            player:setHaloNote("Planted drill. Guard the area!", 80, 220, 80, 250)
+        end
+        return
+    end
+
+    if mission.drillIsJammed then
+        mission.drillIsJammed = false
+        mission.drillNextJamRollHours = now + (10 / 60)
+        if mission.drillJamStartHours then
+            local jammedDuration = now - mission.drillJamStartHours
+            if jammedDuration > 0 then
+                mission.drillEndHours = mission.drillEndHours + jammedDuration
+            end
+            mission.drillJamStartHours = nil
+        end
+        if player.setHaloNote then
+            player:setHaloNote("Drill unjammed! It's working again.", 80, 220, 80, 250)
+        end
+        return
+    end
+
+    if now >= mission.drillEndHours then
+        if player.setHaloNote then
+            player:setHaloNote("The safe is already open!", 80, 220, 80, 250)
+        end
+        return
+    end
+
+    if player.setHaloNote then
+        player:setHaloNote("The drill is currently running without issues.", 200, 200, 200, 250)
     end
 end
 
@@ -840,7 +894,7 @@ local function isAtmSpriteName(spriteName)
     local prefix, idx = spriteName:match("^(location_business_bank_01)_(%d+)$")
     if prefix == "location_business_bank_01" then
         local n = tonumber(idx)
-        if n and n >= 64 and n <= 79 then
+        if n and n >= 64 and n <= 79 and n ~= 69 then
             return true
         end
     end
@@ -881,6 +935,66 @@ local function findNearbyATM(player)
                             Px = 0,
                             Py = 0,
                             Type = "ATM"
+                        }
+                        local dist = math.abs(testSq:getX() - px) + math.abs(testSq:getY() - py)
+                        if dist < bestDist then
+                            bestDist = dist
+                            bestObj = obj
+                            bestData = data
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return bestObj, bestData
+end
+
+local function isSafeSpriteName(spriteName)
+    if not spriteName then
+        return false
+    end
+    if S4_Eco_Tiles_List[spriteName] and S4_Eco_Tiles_List[spriteName].Type == "Safe" then
+        return true
+    end
+    return false
+end
+
+local function findNearbySafe(player)
+    if not player then
+        return nil, nil
+    end
+    local sq = player:getSquare()
+    if not sq then
+        return nil, nil
+    end
+    local cell = getCell()
+    if not cell then
+        return nil, nil
+    end
+
+    local bestObj = nil
+    local bestData = nil
+    local bestDist = 9999
+    local z = sq:getZ()
+    local px = sq:getX()
+    local py = sq:getY()
+
+    for dx = -1, 1 do
+        for dy = -1, 1 do
+            local testSq = cell:getGridSquare(px + dx, py + dy, z)
+            if testSq then
+                local objs = testSq:getObjects()
+                for i = 0, objs:size() - 1 do
+                    local obj = objs:get(i)
+                    local sprite = obj and obj:getSprite()
+                    local spriteName = sprite and sprite:getName()
+                    if isSafeSpriteName(spriteName) then
+                        local data = S4_Eco_Tiles_List[spriteName] or {
+                            Px = 0,
+                            Py = 0,
+                            Type = "Safe"
                         }
                         local dist = math.abs(testSq:getX() - px) + math.abs(testSq:getY() - py)
                         if dist < bestDist then
@@ -958,6 +1072,15 @@ function S4_Eco_Context.KeyOpenComputer(key)
             md.S4_LastEComputerOpenAtMs = nowMs
         end
         S4_Eco_Context.ATM_Action(atmObj, player, atmData)
+        return
+    end
+
+    local safeObj, safeData = findNearbySafe(player)
+    if safeObj and safeData then
+        if nowMs > 0 then
+            md.S4_LastEComputerOpenAtMs = nowMs
+        end
+        S4_Eco_Context.Safe_Action(safeObj, player, safeData)
     end
 end
 Events.OnKeyPressed.Add(S4_Eco_Context.KeyOpenComputer)

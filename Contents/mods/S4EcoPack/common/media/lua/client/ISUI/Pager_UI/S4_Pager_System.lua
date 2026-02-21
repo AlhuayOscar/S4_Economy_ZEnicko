@@ -2114,7 +2114,6 @@ function S4_Pager_System.inventoryCameraMenu(playerNum, context, items, opts)
         tt.description = "Get within 10 tiles of the objective to take the photo."
         option.toolTip = tt
     end
-    end
 end
 
 function S4_Pager_System.RenderDrillProgress()

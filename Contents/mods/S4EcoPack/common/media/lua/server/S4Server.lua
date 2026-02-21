@@ -227,7 +227,7 @@ function S4Server.SpawnMissionZombie(player, args)
 
     if spawnedCount <= 0 and addZombiesInOutfit then
         local ok3 = pcall(function()
-            addZombiesInOutfit(x, y, z, count, "Generic01", nil, false, false, false, false)
+            addZombiesInOutfit(x, y, z, count, "Generic01", nil)
         end)
         if ok3 then
             spawnedCount = count

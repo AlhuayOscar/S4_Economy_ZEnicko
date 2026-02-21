@@ -580,11 +580,31 @@ function S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
 
     local bagType = resolveDuffelSpawnType()
     local bagSpawned = false
+    local alreadyHasBag = false
+
     if square then
-        local okBag, bag = pcall(function()
-            return square:AddWorldInventoryItem(bagType, 0.5, 0.5, 0)
-        end)
-        bagSpawned = okBag and bag ~= nil
+        local wos = square:getWorldObjects()
+        if wos then
+            for i = 0, wos:size() - 1 do
+                local wo = wos:get(i)
+                if wo and wo.getItem then
+                    local it = wo:getItem()
+                    if isDuffelBagItem(it) then
+                        alreadyHasBag = true
+                        break
+                    end
+                end
+            end
+        end
+
+        if alreadyHasBag then
+            bagSpawned = true -- Count as success since there's already a bag here
+        else
+            local okBag, bag = pcall(function()
+                return square:AddWorldInventoryItem(bagType, 0.5, 0.5, 0)
+            end)
+            bagSpawned = okBag and bag ~= nil
+        end
     end
 
     mission.suppliesSpawned = true
@@ -1431,8 +1451,8 @@ function S4_Pager_System.completeMission(player, opts)
         mission.duffelSpawnX = mission.duffelSpawnX or 8078
         mission.duffelSpawnY = mission.duffelSpawnY or 11602
         mission.duffelSpawnZ = mission.duffelSpawnZ or 0
-        mission.moneyDropX = mission.moneyDropX or 8089
-        mission.moneyDropY = mission.moneyDropY or 11599
+        mission.moneyDropX = mission.moneyDropX or 8091
+        mission.moneyDropY = mission.moneyDropY or 11592
         pcall(function()
             S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
         end)

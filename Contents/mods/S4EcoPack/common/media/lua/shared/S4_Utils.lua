@@ -448,28 +448,26 @@ function S4_Utils.CheckInvCash(player, item)
 
     if item:getFullType() == "Base.Money" then
         local BRand = ZombRand(10001)
+        local totalToCheck = 0
         if BRand == 1234 then
-            local zRand = ZombRand(30)
-            playerInv:AddItems("S4Item.Money10000", 2)
-            playerInv:AddItems("S4Item.Money1", zRand)
+            totalToCheck = 20000 + ZombRand(31)
         elseif BRand >= 9900 then
-            local mRand = ZombRand(11)
-            playerInv:AddItems("S4Item.Money100", mRand)
-            local zRand = ZombRand(30)
-            playerInv:AddItems("S4Item.Money1", zRand)
+            totalToCheck = (ZombRand(11) * 100) + ZombRand(30)
         else
-            local zRand = ZombRand(100)
-            playerInv:AddItems("S4Item.Money1", zRand)
+            totalToCheck = ZombRand(100)
         end
+        S4_Utils.AddConsolidatedMoney(player, totalToCheck)
     elseif item:getFullType() == "Base.MoneyBundle" then
         local BRand = ZombRand(10001)
+        local totalToCheck = 0
         if BRand == 5678 then
-            playerInv:AddItems("S4Item.Money10000x100", 1)
+            totalToCheck = 1000000
         elseif BRand >= 9000 then
-            playerInv:AddItems("S4Item.Money100x100", 1)
+            totalToCheck = 10000
         else
-            playerInv:AddItems("S4Item.Money1x100", 1)
+            totalToCheck = 100
         end
+        S4_Utils.AddConsolidatedMoney(player, totalToCheck)
     end
 
     if item:getWorldItem() then
@@ -482,6 +480,69 @@ function S4_Utils.CheckInvCash(player, item)
             playerInv:Remove(item)
         end
     end
+end
+
+-- Distribute money using high denominations to avoid performance lag
+function S4_Utils.AddConsolidatedMoney(player, val)
+    if not val or val <= 0 then return end
+    local inv = player:getInventory()
+    local remaining = val
+
+    -- Denominations: 
+    -- 1,000,000 (S4Item.Money10000x100)
+    -- 100,000 (S4Item.Money1000x100)
+    -- 10,000 (S4Item.Money100x100)
+    -- 1,000 (S4Item.Money1000)
+    -- 100 (S4Item.Money100)
+    
+    local d1M = math.floor(remaining / 1000000)
+    remaining = remaining % 1000000
+
+    local d100K = math.floor(remaining / 100000)
+    remaining = remaining % 100000
+    
+    local d10K = math.floor(remaining / 10000)
+    remaining = remaining % 10000
+
+    local d1K = math.floor(remaining / 1000)
+    remaining = remaining % 1000
+    
+    local d100 = math.floor(remaining / 100)
+    remaining = remaining % 100
+
+    if d1M > 0 then inv:AddItems("S4Item.Money10000x100", d1M) end
+    if d100K > 0 then inv:AddItems("S4Item.Money1000x100", d100K) end
+    if d10K > 0 then inv:AddItems("S4Item.Money100x100", d10K) end
+    if d1K > 0 then inv:AddItems("S4Item.Money1000", d1K) end
+    if d100 > 0 then inv:AddItems("S4Item.Money100", d100) end
+
+    -- The 'Performance Fix' part: instead of giving many items of Money1, give ONE.
+    if remaining > 0 then
+        local item = inv:AddItem("S4Item.Money1")
+        item:getModData().S4_ConsolidatedValue = remaining
+        -- Format name as "$1,234 Cash"
+        local formattedName = "$" .. S4_UI.getNumCommas(remaining) .. " Cash"
+        item:setName(formattedName)
+        S4_Utils.SnycObject(item)
+    end
+
+    if player.setHaloNote then
+        player:setHaloNote("+" .. S4_UI.getNumCommas(val), 100, 255, 100, 200)
+    end
+end
+
+-- Get the real value of an item, considering consolidated bucks
+function S4_Utils.getConsolidatedValue(item)
+    if not item then return 0 end
+    local fullType = item:getFullType()
+    
+    -- Check if it's a consolidated Bucks note
+    if item:hasModData() and item:getModData().S4_ConsolidatedValue then
+        return item:getModData().S4_ConsolidatedValue
+    end
+    
+    -- Otherwise use default setting
+    return S4_Setting.MoneyList[fullType] or 0
 end
 
 -- Calculate randomized value for vanilla money items (Simple version)

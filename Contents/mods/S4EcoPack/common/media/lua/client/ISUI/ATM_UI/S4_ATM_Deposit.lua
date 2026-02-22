@@ -124,7 +124,11 @@ function S4_ATM_Deposit:onMouseUp_Insert()
             for _, item in pairs(items) do
                 local fullType = item:getFullType()
                 local val = 0
-                if S4_Setting.MoneyList[fullType] then
+                local isConsolidated = false
+                if item:hasModData() and item:getModData().S4_ConsolidatedValue then
+                    val = item:getModData().S4_ConsolidatedValue
+                    isConsolidated = true
+                elseif S4_Setting.MoneyList[fullType] then
                     val = S4_Setting.MoneyList[fullType]
                 elseif fullType == "Base.Money" or fullType == "Base.MoneyBundle" then
                     val = S4_Utils.getVanillaMoneyValue(item)
@@ -140,7 +144,12 @@ function S4_ATM_Deposit:onMouseUp_Insert()
                     self.DepositUI.CashValue = self.DepositUI.CashValue + val
                     
                     Pending.Value = Pending.Value + val
-                    Pending.Counts[fullType] = (Pending.Counts[fullType] or 0) + 1
+                    if isConsolidated then
+                        if not Pending.ConsolidatedItems then Pending.ConsolidatedItems = {} end
+                        table.insert(Pending.ConsolidatedItems, {t = fullType, v = val})
+                    else
+                        Pending.Counts[fullType] = (Pending.Counts[fullType] or 0) + 1
+                    end
 
                     if item:getWorldItem() then
                         item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
@@ -211,6 +220,14 @@ function S4_ATM_Deposit:ActionReturn()
         local Inv = self.player:getInventory()
         for type, count in pairs(Pending.Counts) do
             Inv:AddItems(type, count)
+        end
+        if Pending.ConsolidatedItems then
+            for _, data in ipairs(Pending.ConsolidatedItems) do
+                local item = Inv:AddItem(data.t)
+                item:getModData().S4_ConsolidatedValue = data.v
+                item:setName(tostring(data.v) .. " Bucks")
+                S4_Utils.SnycObject(item)
+            end
         end
         AtmModData.S4_PendingDeposits[self.Username] = nil
         S4_Utils.SnycObject(self.AtmUI.Obj)

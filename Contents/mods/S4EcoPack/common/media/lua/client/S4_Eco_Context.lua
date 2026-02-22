@@ -342,27 +342,69 @@ function S4_Eco_Context.BoxOpen(player, item)
     end
 end
 
--- Convert default money items
 function S4_Eco_Context.CashCheck(player, item)
-    S4_Utils.CheckInvCash(player, item)
+    local val = S4_Utils.getVanillaMoneyValue(item)
+    if val == -1 then -- Dirty check
+        S4_Utils.CheckInvCash(player, item) -- Let the old function handle dirty removal
+        return
+    end
+    if val > 0 then
+        S4_Utils.AddConsolidatedMoney(player, val)
+        if item:getWorldItem() then
+            item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
+            ISInventoryPage.dirtyUI()
+        else
+            if item:getContainer() then
+                item:getContainer():Remove(item)
+            else
+                player:getInventory():Remove(item)
+            end
+        end
+    end
 end
+
 function S4_Eco_Context.CashCheckAll(player)
     local InvItems = S4_Utils.getPlayerItems(player)
+    local totalGrandValue = 0
+    local itemsToRemove = {}
+
     if InvItems then
         if InvItems["Base.Money"] then
-            local MoneyAmount = InvItems["Base.Money"].Amount
-            for i = 1, MoneyAmount do
+            for i = 1, InvItems["Base.Money"].Amount do
                 local item = InvItems["Base.Money"].items[i]
-                S4_Utils.CheckInvCash(player, item)
+                local val = S4_Utils.getVanillaMoneyValue(item)
+                if val == -1 then
+                    S4_Utils.CheckInvCash(player, item) -- Handle dirty
+                elseif val > 0 then
+                    totalGrandValue = totalGrandValue + val
+                    table.insert(itemsToRemove, item)
+                end
             end
         end
         if InvItems["Base.MoneyBundle"] then
-            local MoneyBundleAmount = InvItems["Base.MoneyBundle"].Amount
-            for i = 1, MoneyBundleAmount do
+            for i = 1, InvItems["Base.MoneyBundle"].Amount do
                 local item = InvItems["Base.MoneyBundle"].items[i]
-                S4_Utils.CheckInvCash(player, item)
+                local val = S4_Utils.getVanillaMoneyValue(item)
+                if val == -1 then
+                    S4_Utils.CheckInvCash(player, item) -- Handle dirty
+                elseif val > 0 then
+                    totalGrandValue = totalGrandValue + val
+                    table.insert(itemsToRemove, item)
+                end
             end
         end
+    end
+
+    if totalGrandValue > 0 then
+        S4_Utils.AddConsolidatedMoney(player, totalGrandValue)
+        for _, item in ipairs(itemsToRemove) do
+            if item:getContainer() then
+                item:getContainer():Remove(item)
+            else
+                player:getInventory():Remove(item)
+            end
+        end
+        ISInventoryPage.dirtyUI()
     end
 end
 Events.OnPreFillInventoryObjectContextMenu.Add(S4_Eco_Context.InventoryMenu)

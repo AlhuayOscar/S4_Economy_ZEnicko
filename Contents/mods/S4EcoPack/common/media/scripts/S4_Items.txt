@@ -2,62 +2,80 @@ module S4Item {
 	imports {
 		Base
 	}
-    /* 돈 */
+
     item Money1
     {
         DisplayCategory = Money,
-        Weight	=	0.001,
-        Type	=	Normal,
-        DisplayName	=	$ 1,
-        Icon	=	Money,
+        Weight = 0.001,
+        Type = Normal,
+        DisplayName = "$1",
+        Icon = Money,
         WorldStaticModel = Money,
     }
 	item Money100
     {
         DisplayCategory = Money,
-        Weight	=	0.001,
-        Type	=	Normal,
-        DisplayName	=	$ 100,
-        Icon	=	Money,
+        Weight = 0.001,
+        Type = Normal,
+        DisplayName = "$100",
+        Icon = Money,
         WorldStaticModel = Money,
     }
 	item Money10000
     {
         DisplayCategory = Money,
-        Weight	=	0.001,
-        Type	=	Normal,
-        DisplayName	=	$ 10000,
-        Icon	=	Money,
+        Weight = 0.001,
+        Type = Normal,
+        DisplayName = "$10000",
+        Icon = Money,
+        WorldStaticModel = Money,
+    }
+	item Money1000
+    {
+        DisplayCategory = Money,
+        Weight = 0.001,
+        Type = Normal,
+        DisplayName = "$1000",
+        Icon = Money,
         WorldStaticModel = Money,
     }
     item Money1x100
     {
         DisplayCategory = Money,
-        Weight	=	0.5,
-        Type	=	Normal,
-        DisplayName	=	$ 1(100 Bundle),
-        Icon	=	Money_Stack,
+        Weight = 0.15,
+        Type = Normal,
+        DisplayName = "Bundle of $100",
+        Icon = Money_Stack,
         WorldStaticModel = MoneyBundle,
     }
     item Money100x100
     {
         DisplayCategory = Money,
-        Weight	=	0.5,
-        Type	=	Normal,
-        DisplayName	=	$ 100(100 Bundle),
-        Icon	=	Money_Stack,
+        Weight = 0.15,
+        Type = Normal,
+        DisplayName = "Bundle of $10000",
+        Icon = Money_Stack,
         WorldStaticModel = MoneyBundle,
     }
     item Money10000x100
     {
         DisplayCategory = Money,
-        Weight	=	0.5,
-        Type	=	Normal,
-        DisplayName	=	$ 10000(100 Bundle),
-        Icon	=	Money_Stack,
+        Weight = 0.15,
+        Type = Normal,
+        DisplayName = "Bundle of $1000000",
+        Icon = Money_Stack,
         WorldStaticModel = MoneyBundle,
     }
-    /* 컴퓨터 관련 아이템 */
+	item Money1000x100
+    {
+        DisplayCategory = Money,
+        Weight = 0.15,
+        Type = Normal,
+        DisplayName = "Bundle of $100000",
+        Icon = Money_Stack,
+        WorldStaticModel = MoneyBundle,
+    }
+
     item CardReader {
 		Type = Normal,
 		Icon = S4_CardReader,
@@ -79,7 +97,6 @@ module S4Item {
 		DisplayName = Vehicles Flare,
 		WorldStaticModel = S4Model.Signal,
 	}
-
     item SellPackingBox {
 		Type = Normal,
 		Icon = S4_Box,
@@ -94,8 +111,6 @@ module S4Item {
 		DisplayName = PackingBox(Buy),
 		WorldStaticModel = S4Model.PackingBox,
 	}
-
-    /* AirDrop Box Item */
     item AirDropBox_Weapon {
 		Type = Normal,
 		Icon = S4_Box,
@@ -138,4 +153,22 @@ module S4Item {
 		DisplayName = AirDropBox,
 		WorldStaticModel = S4Model.AirDropBox,
 	}
+
+    item Wallet
+    {
+        Type = Container,
+        DisplayName = Leather Wallet,
+        Icon = Wallet,
+        Weight = 0.05,
+        Capacity = 5,
+        WeightReduction = 80,
+        CanBeEquipped = Inventory,
+        Tooltip = Wallet for your cash and cards,
+    }
+}
+
+module Base {
+    item MoneyBundle {
+        Weight = 0.18,
+    }
 }

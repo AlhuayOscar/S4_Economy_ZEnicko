@@ -130,7 +130,11 @@ function S4_Computer_Main:createChildren()
     }
     S4_Category.ComputerIconData["Logistics"] = {
         Name = "S4 Logistics",
-        Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
+        Icon = getTexture("media/textures/S4_Icon/Logistics.png")
+    }
+    S4_Category.ComputerIconData["Taxes"] = {
+        Name = "S4 Regional Taxes",
+        Icon = getTexture("media/textures/S4_Icon/Taxes.png")
     }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
@@ -202,7 +206,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -505,6 +509,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Logistics)
         end
         self.TopApp = self.Logistics
+    elseif internal == "Taxes" then
+        if self.Taxes then
+            if not self.Taxes:isVisible() then
+                self.Taxes:setVisible(true)
+            end
+            self.Taxes:bringToTop()
+        else
+            self.Taxes = S4_InternetExplorer:new(self)
+            self.Taxes:initialise()
+            self.Taxes.TitleName = "Regional Collection Agency"
+            self.Taxes.AddressText = "gov://knox.gov/taxes"
+            self.Taxes.PageType = internal
+            self:addChild(self.Taxes)
+            self:AddTaskBar(self.Taxes)
+        end
+        self.TopApp = self.Taxes
     elseif internal == "KarmaAdmin" then
         if self.KarmaAdmin then
             if not self.KarmaAdmin:isVisible() then

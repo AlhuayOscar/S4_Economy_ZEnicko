@@ -4,8 +4,8 @@ function S4_IE_MyDoc:new(IEUI, x, y, width, height)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=199/255, g=200/255, b=199/255, a=1}
-    o.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    o.backgroundColor = {r=10/255, g=15/255, b=25/255, a=1} -- Dark slate
+    o.borderColor = {r=0, g=1, b=1, a=0.3} -- Cyan border (Hitech)
     o.IEUI = IEUI
     o.ComUI = IEUI.ComUI
     o.player = IEUI.player
@@ -20,74 +20,105 @@ function S4_IE_MyDoc:createChildren()
     ISPanel.createChildren(self)
     
     local stats = S4_PlayerStats.getStats(self.player)
-    local x = 20
-    local y = 20
     
-    -- Título Header
-    self.LabelTitle = ISLabel:new(x, y, S4_UI.FH_L, getText("IGUI_S4_Dossier_Title") .. ": " .. self.player:getUsername(), 0, 0, 0, 1, UIFont.Large, true)
-    self:addChild(self.LabelTitle)
-    y = y + S4_UI.FH_L + 15
-
-    -- Sección Karma
-    self.LabelKarmaTag = ISLabel:new(x, y, S4_UI.FH_M, getText("IGUI_S4_Dossier_Karma"), 0.2, 0.2, 0.5, 1, UIFont.Medium, true)
-    self:addChild(self.LabelKarmaTag)
-    y = y + S4_UI.FH_M + 5
+    -- Main Grid
+    local margin = 15
+    local panelW = (self:getWidth() - (margin * 3)) / 2
+    local topH = 200
     
-    local karmaText = getText("IGUI_S4_Dossier_Karma_Neutral")
-    local karmaColor = {r=0.5, g=0.5, b=0.5}
-    if stats.Karma > 80 then karmaText = getText("IGUI_S4_Dossier_Karma_Hero"); karmaColor = {r=0, g=1, b=1}
-    elseif stats.Karma > 30 then karmaText = getText("IGUI_S4_Dossier_Karma_Good"); karmaColor = {r=0, g=0.8, b=0}
-    elseif stats.Karma < -80 then karmaText = getText("IGUI_S4_Dossier_Karma_Evil"); karmaColor = {r=1, g=0, b=0}
-    elseif stats.Karma < -30 then karmaText = getText("IGUI_S4_Dossier_Karma_Bad"); karmaColor = {r=0.8, g=0.4, b=0}
+    -- Panel 1: Stats & Karma (Left Top)
+    local p1 = ISPanel:new(margin, margin, panelW, topH)
+    p1.backgroundColor = {r=0, g=0.1, b=0.2, a=0.5}
+    p1.borderColor = {r=0, g=0.5, b=1, a=1}
+    self:addChild(p1)
+    
+    p1:addChild(ISLabel:new(10, 10, S4_UI.FH_L, "SURVIVOR DOSSIER", 0, 1, 1, 1, UIFont.Large, true))
+    p1:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "ID: " .. self.player:getUsername(), 0.8, 0.8, 0.8, 1, UIFont.Small, true))
+    p1:addChild(ISLabel:new(10, 60, S4_UI.FH_S, "Status: Alive", 0, 1, 0, 1, UIFont.Small, true))
+    
+    -- Karma
+    local kmY = 90
+    p1:addChild(ISLabel:new(10, kmY, S4_UI.FH_M, "MORAL ALIGNMENT", 0.5, 0.8, 1, 1, UIFont.Medium, true))
+    
+    local karmaText = "Neutral Worker"
+    local karmaColor = {r=0.6, g=0.6, b=0.6}
+    if stats.Karma > 80 then karmaText = "Guardian of Knox"; karmaColor = {r=0, g=1, b=1}
+    elseif stats.Karma > 30 then karmaText = "Good Samaritan"; karmaColor = {r=0, g=0.8, b=0}
+    elseif stats.Karma < -80 then karmaText = "Public Enemy #1"; karmaColor = {r=1, g=0, b=0}
+    elseif stats.Karma < -30 then karmaText = "Outlaw Scavenger"; karmaColor = {r=0.8, g=0.4, b=0}
     end
     
-    self.LabelKarmaVal = ISLabel:new(x + 20, y, S4_UI.FH_M, karmaText .. " (" .. stats.Karma .. ")", karmaColor.r, karmaColor.g, karmaColor.b, 1, UIFont.Medium, true)
-    self:addChild(self.LabelKarmaVal)
-    y = y + S4_UI.FH_M + 20
+    p1:addChild(ISLabel:new(10, kmY + 25, S4_UI.FH_L, karmaText, karmaColor.r, karmaColor.g, karmaColor.b, 1, UIFont.Large, true))
+    p1:addChild(ISLabel:new(10, kmY + 50, S4_UI.FH_S, "Rating: " .. stats.Karma .. "/100", 0.5, 0.5, 0.5, 1, UIFont.Small, true))
 
-    -- Sección Facciones
-    self.LabelFactionsTag = ISLabel:new(x, y, S4_UI.FH_M, getText("IGUI_S4_Dossier_Factions"), 0.2, 0.2, 0.5, 1, UIFont.Medium, true)
-    self:addChild(self.LabelFactionsTag)
-    y = y + S4_UI.FH_M + 10
+
+    -- Panel 2: Factions (Right Top)
+    local p2 = ISPanel:new(margin * 2 + panelW, margin, panelW, topH)
+    p2.backgroundColor = {r=0, g=0.1, b=0.2, a=0.5}
+    p2.borderColor = {r=0, g=0.5, b=1, a=1}
+    self:addChild(p2)
     
+    p2:addChild(ISLabel:new(10, 10, S4_UI.FH_M, "FACTION INTEL", 0.5, 0.8, 1, 1, UIFont.Medium, true))
+    
+    local yF = 40
     for faction, rep in pairs(stats.Factions) do
-        local factionName = getText("IGUI_S4_Faction_" .. faction)
-        local repText = getText("IGUI_S4_Relationship_Neutral")
-        local repColor = {r=0.6, g=0.6, b=0.6}
+        local fName = getText("IGUI_S4_Faction_" .. faction)
+        local rCol = {r=0.6, g=0.6, b=0.6}
+        local rTxt = "Neutral"
+        if rep > 50 then rCol={r=0,g=1,b=0}; rTxt="Ally"
+        elseif rep < -50 then rCol={r=1,g=0,b=0}; rTxt="Hostile" end
         
-        if rep > 80 then repText = getText("IGUI_S4_Relationship_Ally"); repColor = {r=0, g=1, b=0}
-        elseif rep > 30 then repText = getText("IGUI_S4_Relationship_Friendly"); repColor = {r=0, g=0.7, b=0.3}
-        elseif rep < -80 then repText = getText("IGUI_S4_Relationship_Enemy"); repColor = {r=1, g=0, b=0}
-        elseif rep < -30 then repText = getText("IGUI_S4_Relationship_Hostile"); repColor = {r=0.7, g=0.2, b=0}
-        end
-        
-        local fLabel = ISLabel:new(x + 20, y, S4_UI.FH_S, factionName .. ":", 0, 0, 0, 1, UIFont.Small, true)
-        self:addChild(fLabel)
-        
-        local rLabel = ISLabel:new(x + 180, y, S4_UI.FH_S, repText .. " [" .. rep .. "]", repColor.r, repColor.g, repColor.b, 1, UIFont.Small, true)
-        self:addChild(rLabel)
-        
-        y = y + S4_UI.FH_S + 5
+        p2:addChild(ISLabel:new(10, yF, S4_UI.FH_S, fName .. ":", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
+        p2:addChild(ISLabel:new(150, yF, S4_UI.FH_S, rTxt .. " ["..rep.."]", rCol.r, rCol.g, rCol.b, 1, UIFont.Small, true))
+        yF = yF + 25
+    end
+
+
+    -- Panel 3: Collected Files / Database (Bottom Full Width)
+    local p3H = self:getHeight() - topH - (margin * 3)
+    local p3 = ISPanel:new(margin, topH + (margin * 2), self:getWidth() - (margin * 2), p3H)
+    p3.backgroundColor = {r=0, g=0.05, b=0.1, a=0.8}
+    p3.borderColor = {r=0, g=0.5, b=1, a=0.5}
+    self:addChild(p3)
+    
+    p3:addChild(ISLabel:new(10, 10, S4_UI.FH_M, "DECRYPTED FILES & LOGS", 0, 1, 0.5, 1, UIFont.Medium, true))
+    
+    -- Mockup File List
+    local fileY = 40
+    local files = {
+        "[AUDIO] Military Comms - Day 3",
+        "[MEMO] Patient 0 - Spiffo's Kitchen",
+        "[EMAIL] Evacuation Orders (Classified)",
+        "[LOG] Subject 14 Escape."
+    }
+    
+    for i, file in ipairs(files) do
+        local fBtn = ISButton:new(10, fileY, 300, 20, file, self, S4_IE_MyDoc.onFileClick)
+        fBtn.backgroundColor = {r=0, g=0, b=0, a=0}
+        fBtn.borderColor = {r=0, g=0, b=0, a=0}
+        fBtn.textColor = {r=0.5, g=0.8, b=1, a=1}
+        fBtn:initialise()
+        p3:addChild(fBtn)
+        fileY = fileY + 25
     end
     
-    y = y + 15
-    -- Timeline / Decisiones
-    self.LabelTimeline = ISLabel:new(x, y, S4_UI.FH_M, getText("IGUI_S4_Dossier_Decisions"), 0.2, 0.2, 0.5, 1, UIFont.Medium, true)
-    self:addChild(self.LabelTimeline)
-    y = y + S4_UI.FH_M + 5
-    
-    local hasDecisions = false
-    for decID, val in pairs(stats.Decisions) do
-        local decLabel = ISLabel:new(x + 20, y, S4_UI.FH_S, "- " .. decID .. ": " .. (val and "YES" or "NO"), 0, 0, 0, 0.8, UIFont.Small, true)
-        self:addChild(decLabel)
-        y = y + S4_UI.FH_S + 2
-        hasDecisions = true
+    -- Decisions timeline
+    p3:addChild(ISLabel:new(350, 10, S4_UI.FH_M, "TIMELINE (EVENTS)", 0.8, 0.8, 0, 1, UIFont.Medium, true))
+    local tY = 40
+    local count = 0
+    for k, v in pairs(stats.Decisions) do
+        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "- " .. k .. ": " .. tostring(v), 0.7, 0.7, 0.7, 1, UIFont.Small, false))
+        tY = tY + 20
+        count = count + 1
     end
-    
-    if not hasDecisions then
-        local noneLabel = ISLabel:new(x + 20, y, S4_UI.FH_S, "(No major decisions recorded yet)", 0.4, 0.4, 0.4, 1, UIFont.Small, false)
-        self:addChild(noneLabel)
+    if count == 0 then
+        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "No major events recorded.", 0.4, 0.4, 0.4, 1, UIFont.Small, false))
     end
+end
+
+function S4_IE_MyDoc:onFileClick(btn)
+    -- Aquí se podría abrir un S4_System:new con el texto de la nota
+    self.ComUI:AddMsgBox("File Reader - Decrypted", false, "Content locked or corrupted.", false, false)
 end
 
 function S4_IE_MyDoc:render()

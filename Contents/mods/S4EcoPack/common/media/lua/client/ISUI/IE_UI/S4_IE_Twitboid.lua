@@ -4,7 +4,7 @@ function S4_IE_Twitboid:new(IEUI, x, y, width, height)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=29/255, g=161/255, b=242/255, a=0.1} -- Twitter blue tint
+    o.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1} -- Dark mode 
     o.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
     o.IEUI = IEUI
     o.ComUI = IEUI.ComUI
@@ -15,53 +15,138 @@ end
 
 function S4_IE_Twitboid:initialise()
     ISPanel.initialise(self)
-    self:generateFeed()
+    self:syncFeed()
 end
 
-function S4_IE_Twitboid:generateFeed()
-    -- Some static/dynamic posts
-    table.insert(self.posts, {user="@Spiffo", text="Don't forget to wash your hands! Safety first!", time="2m"})
-    table.insert(self.posts, {user="@Survivr1", text="Anyone seen the helicopter? It's been hovering over Muldraugh for an hour.", time="15m"})
-    table.insert(self.posts, {user="@General_Mcgrew", text="Martial law is in effect. Stay indoors. Do not approach the exclusion zone.", time="1h"})
-    table.insert(self.posts, {user="@Chef_Louis", text="I found a working stove! Rat stew is back on the menu boys!", time="3h"})
+-- Genera un feed basado en estado del juego
+function S4_IE_Twitboid:syncFeed()
+    self.posts = {}
     
+    local isHeliActive = getSoundManager():isListenerInRange(0,0,0) -- placeholder check 
+    
+    table.insert(self.posts, {user="@KnoxGov", name="Knox Response", text="Stay inside your homes. Do not attempt to breach the exclusion zone. Our military personnel have the situation under control.", time="12h", verified=true})
+    table.insert(self.posts, {user="@RadioFreeKnox", name="Radio Free Knox", text="They're biting! If someone gets bitten, they don't get sick... they turn! Don't listen to the broadcasts!", time="5h", verified=false})
+    table.insert(self.posts, {user="@Spiffo_Corp", name="Spiffo's Official", text="We are experiencing supply chain issues. Stay calm, grab a Spiffo Burger to wait it out!", time="2h", verified=true})
+    
+    -- Dependiendo del Karma
     local stats = S4_PlayerStats.getStats(self.player)
-    if stats.Karma > 50 then
-        table.insert(self.posts, {user="@Civilian_Aid", text="Rumors of a hero in the area... someone is actually helping for once.", time="4h"})
-    elseif stats.Karma < -50 then
-        table.insert(self.posts, {user="@Survivor_Network", text="WARNING: A dangerous individual has been spotted. Avoid contact at all costs.", time="4h"})
+    if stats.Karma > 30 then
+        table.insert(self.posts, {user="@WestPointSurv", name="WP Safehouse", text="There's a good person out there helping people. Gives me hope.", time="30m", verified=false})
+    elseif stats.Karma < -30 then
+        table.insert(self.posts, {user="@TraderUnion", name="Trader Union Alert", text="WARNING: Dangerous scavenger in the area. Shoot on sight.", time="15m", verified=true})
+    end
+    
+    -- Posts de la comunidad (ModData)
+    local twitData = ModData.getOrCreate("S4_TwitboidGlobal")
+    if twitData.posts then
+        for i, p in ipairs(twitData.posts) do
+            table.insert(self.posts, 1, p) -- Add at top
+        end
     end
 end
 
 function S4_IE_Twitboid:createChildren()
     ISPanel.createChildren(self)
     
-    local x = 10
-    local y = 10
+    local x = 0
+    local y = 0
     
-    -- Banner
-    self.Banner = ISPanel:new(0, 0, self:getWidth(), 40)
-    self.Banner.backgroundColor = {r=29/255, g=161/255, b=242/255, a=1}
-    self:addChild(self.Banner)
+    -- Left Sidebar (Menu)
+    self.Sidebar = ISPanel:new(x, y, 120, self:getHeight())
+    self.Sidebar.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1}
+    self.Sidebar.borderColor = {r=0.2, g=0.2, b=0.2, a=1}
+    self:addChild(self.Sidebar)
     
-    self.LogoLabel = ISLabel:new(20, 10, S4_UI.FH_M, "Twitboid / Home", 1, 1, 1, 1, UIFont.Medium, true)
-    self.Banner:addChild(self.LogoLabel)
+    local logo = ISLabel:new(10, 10, S4_UI.FH_L, "Twitboid", 0.1, 0.6, 0.9, 1, UIFont.Large, true)
+    self.Sidebar:addChild(logo)
     
-    y = 50
-    -- Feed
+    local menuHome = ISLabel:new(10, 50, S4_UI.FH_M, "# Home", 1, 1, 1, 1, UIFont.Medium, true)
+    self.Sidebar:addChild(menuHome)
+    
+    local menuFollow = ISLabel:new(10, 80, S4_UI.FH_M, "@ Following", 0.6, 0.6, 0.6, 1, UIFont.Medium, true)
+    self.Sidebar:addChild(menuFollow)
+
+    -- Trending (Sidebar Right)
+    self.Rightbar = ISPanel:new(self:getWidth() - 150, y, 150, self:getHeight())
+    self.Rightbar.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1}
+    self.Rightbar.borderColor = {r=0.2, g=0.2, b=0.2, a=1}
+    self:addChild(self.Rightbar)
+
+    local trendTitle = ISLabel:new(10, 10, S4_UI.FH_M, "Trends for you", 1, 1, 1, 1, UIFont.Medium, true)
+    self.Rightbar:addChild(trendTitle)
+    self.Rightbar:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "1. #Quarantine", 0.1, 0.6, 0.9, 1, UIFont.Small, true))
+    self.Rightbar:addChild(ISLabel:new(10, 60, S4_UI.FH_S, "2. #Muldraugh", 0.1, 0.6, 0.9, 1, UIFont.Small, true))
+    self.Rightbar:addChild(ISLabel:new(10, 80, S4_UI.FH_S, "3. Where is Army?", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
+    self.Rightbar:addChild(ISLabel:new(10, 100, S4_UI.FH_S, "4. #Bitten", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
+
+    -- Main Feed Area
+    self.FeedArea = ISPanel:new(121, 0, self:getWidth() - 271, self:getHeight())
+    self.FeedArea.backgroundColor = {r=0, g=0, b=0, a=1}
+    self:addChild(self.FeedArea)
+    
+    -- Compositor / Postear
+    self.PostInput = ISTextEntryBox:new("What is happening?", 10, 10, self.FeedArea:getWidth() - 100, S4_UI.FH_M)
+    self.PostInput.font = UIFont.Medium
+    self.PostInput:initialise()
+    self.PostInput:instantiate()
+    self.FeedArea:addChild(self.PostInput)
+    
+    self.BtnPost = ISButton:new(self.FeedArea:getWidth() - 80, 10, 70, S4_UI.FH_M, "Boid", self, S4_IE_Twitboid.onPost)
+    self.BtnPost.backgroundColor = {r=0.1, g=0.6, b=0.9, a=1}
+    self.BtnPost.textColor = {r=1, g=1, b=1, a=1}
+    self.BtnPost:initialise()
+    self.FeedArea:addChild(self.BtnPost)
+
+    -- Rendering posts
+    local feedY = 50
     for i, post in ipairs(self.posts) do
-        local postPanel = ISPanel:new(10, y, self:getWidth() - 20, 60)
-        postPanel.backgroundColor = {r=1, g=1, b=1, a=0.9}
-        postPanel.borderColor = {r=0.8, g=0.8, b=0.8, a=1}
-        self:addChild(postPanel)
+        if feedY > self:getHeight() - 60 then break end -- Limit view
         
-        local uLabel = ISLabel:new(10, 5, S4_UI.FH_S, post.user .. " • " .. post.time, 0.1, 0.5, 0.9, 1, UIFont.Small, true)
-        postPanel:addChild(uLabel)
+        local postPanel = ISPanel:new(0, feedY, self.FeedArea:getWidth(), 60)
+        postPanel.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1} -- Dark mode tweet
+        postPanel.borderColor = {r=0.2, g=0.2, b=0.2, a=1}
+        self.FeedArea:addChild(postPanel)
         
-        local tLabel = ISLabel:new(10, 25, S4_UI.FH_S, post.text, 0, 0, 0, 1, UIFont.Small, false)
+        local displayName = post.name or "Survivor"
+        local headerText = displayName .. " " .. post.user .. " • " .. post.time
+        if post.verified then headerText = headerText .. " [V]" end
+        
+        local hLabel = ISLabel:new(10, 5, S4_UI.FH_S, headerText, 0.5, 0.5, 0.5, 1, UIFont.Small, true)
+        postPanel:addChild(hLabel)
+        
+        local tLabel = ISLabel:new(10, 25, S4_UI.FH_S, post.text, 1, 1, 1, 1, UIFont.Small, false)
         postPanel:addChild(tLabel)
         
-        y = y + 70
+        feedY = feedY + 60
+    end
+end
+
+function S4_IE_Twitboid:onPost(button)
+    local text = self.PostInput:getText()
+    if text and text ~= "" and text ~= "What is happening?" then
+        local twitData = ModData.getOrCreate("S4_TwitboidGlobal")
+        if not twitData.posts then twitData.posts = {} end
+        
+        local username = "@" .. self.player:getUsername()
+        
+        local newPost = {
+            user = username,
+            name = username,
+            text = text,
+            time = "Just now",
+            verified = false
+        }
+        
+        table.insert(twitData.posts, 1, newPost)
+        -- Limpiar historial para evitar lag extremo
+        if #twitData.posts > 20 then
+            table.remove(twitData.posts, 21)
+        end
+        
+        if isClient() then ModData.transmit("S4_TwitboidGlobal") end
+        
+        -- Recargar
+        self.IEUI:ReloadUI()
     end
 end
 

@@ -118,7 +118,11 @@ function S4_Computer_Main:createChildren()
 
     S4_Category.ComputerIconData["Twitboid"] = {
         Name = "Twitboid",
-        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Twitboid.png")
+    }
+    S4_Category.ComputerIconData["Crimeboid"] = {
+        Name = "Crimeboid.net",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Crimeboid.png")
     }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
@@ -154,7 +158,7 @@ function S4_Computer_Main:createChildren()
     }
     S4_Category.ComputerIconData["News"] = {
         Name = "Knox News",
-        Icon = getTexture("media/textures/S4_Icon/Newspaper.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_News.png")
     }
     S4_Category.ComputerIconData["ZomBank"] = {
         Name = "Zom Bank",
@@ -337,9 +341,9 @@ function S4_Computer_Main:render()
     local newsModData = ModData.getOrCreate("S4_KnoxNews")
     if self.Btn_News then
         if newsModData.IsNew then
-            self.Btn_News.image = getTexture("media/textures/S4_Icon/NewspaperIncoming.png")
+            self.Btn_News.image = getTexture("media/textures/S4_Icon/Icon_64_NewsIncoming.png")
         else
-            self.Btn_News.image = getTexture("media/textures/S4_Icon/Newspaper.png")
+            self.Btn_News.image = getTexture("media/textures/S4_Icon/Icon_64_News.png")
         end
     end
 
@@ -416,6 +420,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Twitboid)
         end
         self.TopApp = self.Twitboid
+    elseif internal == "Crimeboid" then
+        if self.Crimeboid then
+            if not self.Crimeboid:isVisible() then
+                self.Crimeboid:setVisible(true)
+            end
+            self.Crimeboid:bringToTop()
+        else
+            self.Crimeboid = S4_InternetExplorer:new(self)
+            self.Crimeboid:initialise()
+            self.Crimeboid.TitleName = "Crimeboid.net - Internet Explorer"
+            self.Crimeboid.AddressText = "https://crimeboid.net/hidden"
+            self.Crimeboid.PageType = internal
+            self:addChild(self.Crimeboid)
+            self:AddTaskBar(self.Crimeboid)
+        end
+        self.TopApp = self.Crimeboid
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then

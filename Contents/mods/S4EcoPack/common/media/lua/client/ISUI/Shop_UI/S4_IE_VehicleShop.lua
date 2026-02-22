@@ -1026,7 +1026,7 @@ function S4_IE_VehicleShop:createChildren()
     self.HomePanel:initialise()
     self:addChild(self.HomePanel)
 
-    self.CartPanel = S4_Shop_Cart:new(self, InfoX, CategoryY, self:getWidth() - 20, CategoryH)
+    self.CartPanel = ISPanel:new(InfoX, CategoryY, self:getWidth() - 20, CategoryH)
     self.CartPanel.backgroundColor.a = 0
     self.CartPanel.borderColor = {
         r = 0.4,

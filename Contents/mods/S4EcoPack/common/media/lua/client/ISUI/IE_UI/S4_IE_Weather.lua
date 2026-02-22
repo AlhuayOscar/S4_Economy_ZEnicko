@@ -31,9 +31,11 @@ function S4_IE_Weather:createChildren()
     self.Banner:addChild(ISLabel:new(20, 10, S4_UI.FH_L, "KNOX WEATHER SERVICE", 1, 1, 1, 1, UIFont.Large, true))
     self.Banner:addChild(ISLabel:new(20, 35, S4_UI.FH_S, "Meteorological forecasting and 7-day climatic predictions.", 0.8, 0.9, 1, 1, UIFont.Small, true))
 
-    self.ContentArea = ISPanel:new(10, 70, w - 20, h - 80)
+    self.ContentArea = ISScrollingListBox:new(10, 70, w - 20, h - 80)
     self.ContentArea.backgroundColor = {r=0.95, g=0.98, b=1, a=1}
     self.ContentArea.borderColor = {r=0.6, g=0.7, b=0.8, a=1}
+    self.ContentArea:initialise()
+    self.ContentArea:instantiate()
     self:addChild(self.ContentArea)
     
     local y = 20
@@ -56,13 +58,13 @@ function S4_IE_Weather:createChildren()
         y = y + 40
         
         local forecast = {
-            {day="MON", temp="12°C", cond="Cloudy", desc="Overcast. Low wind speeds."},
-            {day="TUE", temp="9°C", cond="Rain", desc="Heavy precipitation beginning 14:00."},
-            {day="WED", temp="8°C", cond="Storm", desc="Severe thunderstorms. Power grid risk."},
-            {day="THU", temp="15°C", cond="Clear", desc="Sunny. High visibility."},
-            {day="FRI", temp="14°C", cond="Fog", desc="Thick morning fog. Visibility < 50m."},
-            {day="SAT", temp="2°C", cond="Snow", desc="First snowfall expected at midnight."},
-            {day="SUN", temp="-5°C", cond="Blizzard", desc="Dangerous cold. Seek shelter immediately."}
+            {day="MON", temp="12 Cel", cond="Cloudy", desc="Overcast. Low wind speeds."},
+            {day="TUE", temp="9 Cel", cond="Rain", desc="Heavy precipitation beginning 14:00."},
+            {day="WED", temp="8 Cel", cond="Storm", desc="Severe thunderstorms. Power grid risk."},
+            {day="THU", temp="15 Cel", cond="Clear", desc="Sunny. High visibility."},
+            {day="FRI", temp="14 Cel", cond="Fog", desc="Thick morning fog. Visibility < 50m."},
+            {day="SAT", temp="2 Cel", cond="Snow", desc="First snowfall expected at midnight."},
+            {day="SUN", temp="-5 Cel", cond="Blizzard", desc="Dangerous cold. Seek shelter immediately."}
         }
         
         for _, day in ipairs(forecast) do
@@ -83,6 +85,7 @@ function S4_IE_Weather:createChildren()
             
             y = y + 60
         end
+        self.ContentArea:setScrollHeight(y + 20)
     end
 end
 

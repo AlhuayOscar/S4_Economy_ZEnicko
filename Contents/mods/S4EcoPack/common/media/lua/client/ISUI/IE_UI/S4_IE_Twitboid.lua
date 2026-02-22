@@ -111,6 +111,8 @@ function S4_IE_Twitboid:createChildren()
         local postPanel = ISPanel:new(0, feedY, self.FeedArea:getWidth(), 60)
         postPanel.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1} -- Dark mode tweet
         postPanel.borderColor = {r=0.2, g=0.2, b=0.2, a=1}
+        postPanel:initialise()
+        postPanel:instantiate()
         self.FeedArea:addChild(postPanel)
         
         local displayName = post.name or "Survivor"

@@ -153,7 +153,7 @@ function S4_Pager_UI:showForPlayer(player)
     end
     if not S4_Pager_UI.instance then
         local w = 480
-        local h = 280
+        local h = 330
         local x = (getCore():getScreenWidth() - w) / 2
         local y = (getCore():getScreenHeight() - h) / 2
         S4_Pager_UI.instance = S4_Pager_UI:new(player, x, y, w, h)

@@ -32,8 +32,10 @@ function S4_IE_BBS:createChildren()
     self.Banner:addChild(ISLabel:new(20, 40, S4_UI.FH_S, "> CONNECTION ESTABLISHED... 14400 BAUD", 0, 0.8, 0, 1, UIFont.Small, true))
     self.Banner:addChild(ISLabel:new(20, 55, S4_UI.FH_S, "> DOWNLOADING FILE LIST... OK", 0, 0.8, 0, 1, UIFont.Small, true))
 
-    self.ContentArea = ISPanel:new(10, 90, w - 20, h - 100)
+    self.ContentArea = ISScrollingListBox:new(10, 90, w - 20, h - 100)
     self.ContentArea.backgroundColor = {r=0, g=0, b=0, a=1}
+    self.ContentArea:initialise()
+    self.ContentArea:instantiate()
     self:addChild(self.ContentArea)
     
     local y = 10
@@ -69,6 +71,7 @@ function S4_IE_BBS:createChildren()
         
         y = y + 70
     end
+    self.ContentArea:setScrollHeight(y + 20)
 end
 
 function S4_IE_BBS:onDownload(btn)

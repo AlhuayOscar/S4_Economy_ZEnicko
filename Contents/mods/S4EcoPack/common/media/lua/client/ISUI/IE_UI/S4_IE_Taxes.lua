@@ -32,9 +32,11 @@ function S4_IE_Taxes:createChildren()
     self.Banner:addChild(ISLabel:new(20, 35, S4_UI.FH_S, "Department of Revenue & Civil Contributions", 0.6, 0.6, 0.7, 1, UIFont.Small, true))
 
     -- Main Content Area
-    self.ContentArea = ISPanel:new(20, 80, w - 40, h - 100)
+    self.ContentArea = ISScrollingListBox:new(20, 80, w - 40, h - 100)
     self.ContentArea.backgroundColor = {r=1, g=1, b=0.98, a=1}
     self.ContentArea.borderColor = {r=0.7, g=0.7, b=0.6, a=1}
+    self.ContentArea:initialise()
+    self.ContentArea:instantiate()
     self:addChild(self.ContentArea)
     
     local cW = self.ContentArea:getWidth()
@@ -93,6 +95,8 @@ function S4_IE_Taxes:createChildren()
     btnPay.textColor = {r=1, g=1, b=1, a=1}
     btnPay:initialise()
     self.ContentArea:addChild(btnPay)
+    
+    self.ContentArea:setScrollHeight(y + 140)
 end
 
 function S4_IE_Taxes:onPay(btn)

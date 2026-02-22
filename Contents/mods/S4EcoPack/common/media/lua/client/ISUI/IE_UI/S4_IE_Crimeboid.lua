@@ -163,6 +163,18 @@ end
 function S4_IE_Crimeboid:renderRecords()
     local cw = self.ContentArea:getWidth()
     local stats = S4_PlayerStats.getStats(self.player)
+    
+    -- Swap to scroll mode dynamically for this tab
+    self.ContentArea:clearChildren()
+    local h = self.ContentArea:getHeight()
+    local nx, ny = self.ContentArea:getX(), self.ContentArea:getY()
+    self:removeChild(self.ContentArea)
+    
+    self.ContentArea = ISScrollingListBox:new(nx, ny, cw, h)
+    self.ContentArea.backgroundColor = {r=0.08, g=0.08, b=0.08, a=1}
+    self.ContentArea:initialise()
+    self.ContentArea:instantiate()
+    self:addChild(self.ContentArea)
 
     self.ContentArea:addChild(ISLabel:new(10, 10, S4_UI.FH_L, getText("IGUI_S4_Crime_Records_Title"), 0.5, 0.5, 1, 1, UIFont.Large, true))
     self.ContentArea:addChild(ISLabel:new(10, 45, S4_UI.FH_S, getText("IGUI_S4_Crime_Records_Desc"), 0.8, 0.8, 0.8, 1, UIFont.Small, true))
@@ -178,7 +190,7 @@ function S4_IE_Crimeboid:renderRecords()
     kmPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, "Moral Alignment (Current: " .. stats.Karma .. ")", 1, 1, 1, 1, UIFont.Small, true))
     kmPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, true))
     
-    local btnK = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveKarma") .. " - $10,000", self, S4_IE_Crimeboid.onBribeKarma)
+    local btnK = ISButton:new(kmPnl:getWidth() - 230, 15, 200, 30, getText("IGUI_S4_Crime_ImproveKarma") .. " - $10,000", self, S4_IE_Crimeboid.onBribeKarma)
     btnK.backgroundColor = {r=0.4, g=0, b=0, a=1}
     if stats.Karma > 20 then btnK.enable = false; btnK.title = "Max Reached" end
     btnK:initialise()
@@ -197,7 +209,7 @@ function S4_IE_Crimeboid:renderRecords()
         fPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, factionName .. " (Current: " .. rep .. ")", 1, 1, 1, 1, UIFont.Small, true))
         fPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, true))
         
-        local btnF = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveRep") .. " - $15,000", self, S4_IE_Crimeboid.onBribeFaction)
+        local btnF = ISButton:new(fPnl:getWidth() - 230, 15, 200, 30, getText("IGUI_S4_Crime_ImproveRep") .. " - $15,000", self, S4_IE_Crimeboid.onBribeFaction)
         btnF.internal = faction
         btnF.backgroundColor = {r=0.4, g=0, b=0, a=1}
         
@@ -207,6 +219,7 @@ function S4_IE_Crimeboid:renderRecords()
         
         y = y + 70
     end
+    self.ContentArea:setScrollHeight(y + 20)
 end
 
 function S4_IE_Crimeboid:onBuy(btn)

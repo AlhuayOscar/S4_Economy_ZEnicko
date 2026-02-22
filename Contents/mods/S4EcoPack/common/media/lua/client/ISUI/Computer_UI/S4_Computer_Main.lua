@@ -136,6 +136,30 @@ function S4_Computer_Main:createChildren()
         Name = "S4 Regional Taxes",
         Icon = getTexture("media/textures/S4_Icon/Taxes.png")
     }
+    S4_Category.ComputerIconData["Community"] = {
+        Name = "Community Hub",
+        Icon = getTexture("media/textures/S4_Icon/Community.png")
+    }
+    S4_Category.ComputerIconData["FarmWatch"] = {
+        Name = "FarmWatch",
+        Icon = getTexture("media/textures/S4_Icon/FarmWatch.png")
+    }
+    S4_Category.ComputerIconData["Recon"] = {
+        Name = "Scout & Recon",
+        Icon = getTexture("media/textures/S4_Icon/Recon.png")
+    }
+    S4_Category.ComputerIconData["Recover"] = {
+        Name = "Corpse Recovery",
+        Icon = getTexture("media/textures/S4_Icon/RecoverBody.png")
+    }
+    S4_Category.ComputerIconData["Repair"] = {
+        Name = "Tool Repair",
+        Icon = getTexture("media/textures/S4_Icon/Repair.png")
+    }
+    S4_Category.ComputerIconData["Weather"] = {
+        Name = "Knox Weather",
+        Icon = getTexture("media/textures/S4_Icon/Weather.png")
+    }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
@@ -206,7 +230,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -525,6 +549,90 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Taxes)
         end
         self.TopApp = self.Taxes
+    elseif internal == "Community" then
+        if self.Community then
+            if not self.Community:isVisible() then self.Community:setVisible(true) end
+            self.Community:bringToTop()
+        else
+            self.Community = S4_InternetExplorer:new(self)
+            self.Community:initialise()
+            self.Community.TitleName = "Knox Community Hub"
+            self.Community.AddressText = "http://knox.community.gov/index"
+            self.Community.PageType = internal
+            self:addChild(self.Community)
+            self:AddTaskBar(self.Community)
+        end
+        self.TopApp = self.Community
+    elseif internal == "FarmWatch" then
+        if self.FarmWatch then
+            if not self.FarmWatch:isVisible() then self.FarmWatch:setVisible(true) end
+            self.FarmWatch:bringToTop()
+        else
+            self.FarmWatch = S4_InternetExplorer:new(self)
+            self.FarmWatch:initialise()
+            self.FarmWatch.TitleName = "FarmWatch Agrosystems"
+            self.FarmWatch.AddressText = "https://farmwatch.corp/market"
+            self.FarmWatch.PageType = internal
+            self:addChild(self.FarmWatch)
+            self:AddTaskBar(self.FarmWatch)
+        end
+        self.TopApp = self.FarmWatch
+    elseif internal == "Recon" then
+        if self.Recon then
+            if not self.Recon:isVisible() then self.Recon:setVisible(true) end
+            self.Recon:bringToTop()
+        else
+            self.Recon = S4_InternetExplorer:new(self)
+            self.Recon:initialise()
+            self.Recon.TitleName = "Recon & Survival Mapping"
+            self.Recon.AddressText = "local://recon_suite.exe"
+            self.Recon.PageType = internal
+            self:addChild(self.Recon)
+            self:AddTaskBar(self.Recon)
+        end
+        self.TopApp = self.Recon
+    elseif internal == "Recover" then
+        if self.Recover then
+            if not self.Recover:isVisible() then self.Recover:setVisible(true) end
+            self.Recover:bringToTop()
+        else
+            self.Recover = S4_InternetExplorer:new(self)
+            self.Recover:initialise()
+            self.Recover.TitleName = "Body Recovery Services"
+            self.Recover.AddressText = "http://recovery.knox/request"
+            self.Recover.PageType = internal
+            self:addChild(self.Recover)
+            self:AddTaskBar(self.Recover)
+        end
+        self.TopApp = self.Recover
+    elseif internal == "Repair" then
+        if self.Repair then
+            if not self.Repair:isVisible() then self.Repair:setVisible(true) end
+            self.Repair:bringToTop()
+        else
+            self.Repair = S4_InternetExplorer:new(self)
+            self.Repair:initialise()
+            self.Repair.TitleName = "HandyMan Online Repairs"
+            self.Repair.AddressText = "http://repair.handyman.com/service"
+            self.Repair.PageType = internal
+            self:addChild(self.Repair)
+            self:AddTaskBar(self.Repair)
+        end
+        self.TopApp = self.Repair
+    elseif internal == "Weather" then
+        if self.Weather then
+            if not self.Weather:isVisible() then self.Weather:setVisible(true) end
+            self.Weather:bringToTop()
+        else
+            self.Weather = S4_InternetExplorer:new(self)
+            self.Weather:initialise()
+            self.Weather.TitleName = "Knox Meteorological Data"
+            self.Weather.AddressText = "192.168.1.100:8080/weather_monitor"
+            self.Weather.PageType = internal
+            self:addChild(self.Weather)
+            self:AddTaskBar(self.Weather)
+        end
+        self.TopApp = self.Weather
     elseif internal == "KarmaAdmin" then
         if self.KarmaAdmin then
             if not self.KarmaAdmin:isVisible() then

@@ -17,7 +17,13 @@ local S4_IE_Class = {
     Zeddit = "S4_IE_Zeddit",
     KarmaAdmin = "S4_IE_KarmaAdmin",
     Logistics = "S4_IE_Logistics",
-    Taxes = "S4_IE_Taxes"
+    Taxes = "S4_IE_Taxes",
+    Community = "S4_IE_Community",
+    FarmWatch = "S4_IE_FarmWatch",
+    Recon = "S4_IE_Recon",
+    Recover = "S4_IE_Recover",
+    Repair = "S4_IE_Repair",
+    Weather = "S4_IE_Weather"
 }
 
 function S4_InternetExplorer:initialise()

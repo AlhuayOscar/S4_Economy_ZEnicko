@@ -2,6 +2,56 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.5.0] - 2026-02-21
+
+## Feature: Knox OS Desktop Expansion & Retro BBS
+
+- **Knox BBS Terminal:**
+  - Added retro 90s Dial-Up Bulletin Board System (`S4_IE_BBS`).
+  - Immersive ANSI-style interface with "Shareware" file directory referencing other unreleased mod apps.
+  - Interactive "Download" buttons with lore-friendly warning prompts.
+- **S4 Community Hub:**
+  - "Knox Municipality" dashboard designed for server event voting.
+  - Active Government Proposals (e.g. "Prop 104: Demolition of West Point Bridge").
+  - Dynamically restricts voting rights based on tax delinquency.
+- **FarmWatch Agrosystems:**
+  - Subscription-based ($500/mo) satellite crop monitoring.
+  - Tracks specific agricultural blocks (Rosewood, Muldraugh, etc.).
+  - Reports primary crops, hydration percentage, disease risk, and estimated yields using a visual hazard interface.
+- **Scout & Recon:**
+  - Tactical military encrypted terminal for purchasing map intel.
+  - Packages include Zombie Density Thermal Maps, Random Safehouse Generation, and Animal/Bio-scans.
+  - Simulates scanning with detailed contextual diagnostic popup warnings.
+- **Knox Weather Service:**
+  - Premium Weather Access ($250/mo) system.
+  - 7-Day predictive forecast covering Temperature, Conditions (Fog, Storms, Snow), and precise hourly-breakdowns (85% accuracy).
+- **Corpse Recovery & Tool Repair:**
+  - Expanded desktop layout with dummy application interfaces referencing future service integrations.
+- **Engine Optimization & Stability:**
+  - Added Python pipeline fix script.
+  - Fixed Kahlua/Java engine crashes (`Object tried to call nil in createChildren`) across all IE modules caused by missing `initialise()` calls on ISButton classes.
+
+## [1.4.0] - 2026-02-21
+
+## Feature: Global Logistics, Twitboid & Karma Admin
+
+- **S4 Logistics & Commerce:**
+  - New dedicated desktop app connecting directly to `S4_PlayerStats`.
+  - Added support for persistent data: `Warehouses` and `Stocks` variables saved to player profile.
+  - Dynamic Stock Market interface: Buy and Sell shares of SPIFF, KNOX, and PHM dynamically linking to the database.
+  - My Warehouses tab reading active capacity and physical off-map ownership states.
+- **Karma Admin Tool:**
+  - Added developer-only shortcut app visible only to `admin` access levels or Debug Mode.
+  - Live readout of player's general Karma and specific Faction Reputation.
+  - Debug control buttons: `+10`, `-10`, `Reset (0)` for fast testing of alignment mechanics.
+  - Logistics Testing bounds: `Spawn Test Warehouse`, `Add 10 SPIFF Stocks`, `Remove 10 SPIFF Stocks`.
+- **Twitboid Interactivity:**
+  - Sidebar expanded with "Notifications" and "Profile".
+  - Posts now contain interactive `Reply`, `ReBoid`, and `<3 Like` buttons with color feedback states and RNG hit counters.
+- **UI Bug Fixes:**
+  - Fixed Crimeboid tab overlapping by swapping manual array removal for native `clearChildren()`.
+  - Fixed Zeddit thread wrapping to prevent text overflowing bounds by utilizing `luautils.split()`.
+
 ## [1.3.1] - 2026-02-20
 
 ### Patch: Vehicle Preview UI & Job Expansion

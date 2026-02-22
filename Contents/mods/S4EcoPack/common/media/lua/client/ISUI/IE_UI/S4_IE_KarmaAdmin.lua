@@ -137,9 +137,9 @@ function S4_IE_KarmaAdmin:onDec2(btn)
 end
 
 function S4_IE_KarmaAdmin:onSpawnWH(btn)
-    local randomId = "testWH_" .. tostring(math.random(1000, 9999))
+    local randomId = "testWH_" .. tostring(ZomboidRand(1000, 9999))
     S4_PlayerStats.addWarehouse(self.player, randomId, "Debug Storage Alpha", 1000, "Muldraugh")
-    S4_PlayerStats.updateWarehouseUsage(self.player, randomId, math.random(100, 800))
+    S4_PlayerStats.updateWarehouseUsage(self.player, randomId, ZomboidRand(100, 800))
     self.ComUI:AddMsgBox("Test Data Added", false, "Created debug warehouse in Logistics system.", false, false)
 end
 

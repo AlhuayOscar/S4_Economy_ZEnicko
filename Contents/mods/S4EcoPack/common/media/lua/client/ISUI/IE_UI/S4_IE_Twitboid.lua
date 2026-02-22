@@ -86,8 +86,10 @@ function S4_IE_Twitboid:createChildren()
     self.Rightbar:addChild(ISLabel:new(10, 100, S4_UI.FH_S, "4. #Bitten", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
 
     -- Main Feed Area
-    self.FeedArea = ISPanel:new(121, 0, self:getWidth() - 271, self:getHeight())
+    self.FeedArea = ISScrollingListBox:new(121, 0, self:getWidth() - 271, self:getHeight())
     self.FeedArea.backgroundColor = {r=0, g=0, b=0, a=1}
+    self.FeedArea:initialise()
+    self.FeedArea:instantiate()
     self:addChild(self.FeedArea)
     
     -- Compositor / Postear
@@ -106,7 +108,6 @@ function S4_IE_Twitboid:createChildren()
     -- Rendering posts
     local feedY = 50
     for i, post in ipairs(self.posts) do
-        if feedY > self:getHeight() - 60 then break end -- Limit view
         
         local postPanel = ISPanel:new(0, feedY, self.FeedArea:getWidth(), 60)
         postPanel.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1} -- Dark mode tweet
@@ -162,6 +163,7 @@ function S4_IE_Twitboid:createChildren()
         
         feedY = feedY + postPanel:getHeight() + 10
     end
+    self.FeedArea:setScrollHeight(feedY + 20)
 end
 
 function S4_IE_Twitboid:onAction(btn)

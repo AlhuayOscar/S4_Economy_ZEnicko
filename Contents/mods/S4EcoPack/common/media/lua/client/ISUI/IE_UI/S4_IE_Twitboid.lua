@@ -24,16 +24,16 @@ function S4_IE_Twitboid:syncFeed()
     
     local isHeliActive = getSoundManager():isListenerInRange(0,0,0) -- placeholder check 
     
-    table.insert(self.posts, {user="@KnoxGov", name="Knox Response", text="Stay inside your homes. Do not attempt to breach the exclusion zone. Our military personnel have the situation under control.", time="12h", verified=true})
-    table.insert(self.posts, {user="@RadioFreeKnox", name="Radio Free Knox", text="They're biting! If someone gets bitten, they don't get sick... they turn! Don't listen to the broadcasts!", time="5h", verified=false})
-    table.insert(self.posts, {user="@Spiffo_Corp", name="Spiffo's Official", text="We are experiencing supply chain issues. Stay calm, grab a Spiffo Burger to wait it out!", time="2h", verified=true})
+    table.insert(self.posts, {user="@KnoxGov", name="Knox Response", text="Stay inside your homes. Do not attempt to breach\nthe exclusion zone. Our military personnel have\nthe situation under control.", time="12h", verified=true})
+    table.insert(self.posts, {user="@RadioFreeKnox", name="Radio Free Knox", text="They're biting! If someone gets bitten,\nthey don't get sick... they turn!\nDon't listen to the broadcasts!", time="5h", verified=false})
+    table.insert(self.posts, {user="@Spiffo_Corp", name="Spiffo's Official", text="We are experiencing supply chain issues.\nStay calm, grab a Spiffo Burger to wait it out!", time="2h", verified=true})
     
     -- Dependiendo del Karma
     local stats = S4_PlayerStats.getStats(self.player)
     if stats.Karma > 30 then
-        table.insert(self.posts, {user="@WestPointSurv", name="WP Safehouse", text="There's a good person out there helping people. Gives me hope.", time="30m", verified=false})
+        table.insert(self.posts, {user="@WestPointSurv", name="WP Safehouse", text="There's a good person out there helping\npeople. Gives me hope.", time="30m", verified=false})
     elseif stats.Karma < -30 then
-        table.insert(self.posts, {user="@TraderUnion", name="Trader Union Alert", text="WARNING: Dangerous scavenger in the area. Shoot on sight.", time="15m", verified=true})
+        table.insert(self.posts, {user="@TraderUnion", name="Trader Union Alert", text="WARNING: Dangerous scavenger in the area.\nShoot on sight.", time="15m", verified=true})
     end
     
     -- Posts de la comunidad (ModData)
@@ -114,10 +114,16 @@ function S4_IE_Twitboid:createChildren()
         local hLabel = ISLabel:new(10, 5, S4_UI.FH_S, headerText, 0.5, 0.5, 0.5, 1, UIFont.Small, true)
         postPanel:addChild(hLabel)
         
-        local tLabel = ISLabel:new(10, 25, S4_UI.FH_S, post.text, 1, 1, 1, 1, UIFont.Small, false)
-        postPanel:addChild(tLabel)
+        local bodyLines = luautils.split(post.text, "\n")
+        local ty = 25
+        for _, line in ipairs(bodyLines) do
+            local tLabel = ISLabel:new(10, ty, S4_UI.FH_S, line, 1, 1, 1, 1, UIFont.Small, true)
+            postPanel:addChild(tLabel)
+            ty = ty + 15
+        end
+        postPanel:setHeight(ty + 10)
         
-        feedY = feedY + 60
+        feedY = feedY + postPanel:getHeight() + 10
     end
 end
 

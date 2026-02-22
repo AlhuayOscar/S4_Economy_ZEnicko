@@ -107,7 +107,7 @@ function S4_IE_Crimeboid:renderMarket()
         self.ContentArea:addChild(pnl)
         
         pnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, item.name, 1, 0.5, 0.2, 1, UIFont.Small, true))
-        pnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, item.desc, 0.6, 0.6, 0.6, 1, UIFont.Small, false))
+        pnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, item.desc, 0.6, 0.6, 0.6, 1, UIFont.Small, true))
         
         local btnBuy = ISButton:new(cw - 120, 15, 90, 30, "Buy $" .. S4_UI.getNumCommas(item.price), self, S4_IE_Crimeboid.onBuy)
         btnBuy.internal = "buy_" .. i
@@ -149,7 +149,7 @@ end
 function S4_IE_Crimeboid:renderIdentity()
     local cw = self.ContentArea:getWidth()
     self.ContentArea:addChild(ISLabel:new(10, 10, S4_UI.FH_M, "Identity Cleansing Services", 0.5, 0.5, 1, 1, UIFont.Medium, true))
-    self.ContentArea:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "Wipe your server history, clean your Karma, disappear.", 0.8, 0.8, 0.8, 1, UIFont.Small, false))
+    self.ContentArea:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "Wipe your server history, clean your Karma, disappear.", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
     
     local btnWipe = ISButton:new(10, 80, 200, 40, "Reset Karma to 0 ($50,000)", self, S4_IE_Crimeboid.onWipe)
     btnWipe.backgroundColor = {r=0, g=0.3, b=0.6, a=1}
@@ -161,7 +161,7 @@ function S4_IE_Crimeboid:renderRecords()
     local stats = S4_PlayerStats.getStats(self.player)
 
     self.ContentArea:addChild(ISLabel:new(10, 10, S4_UI.FH_L, getText("IGUI_S4_Crime_Records_Title"), 0.5, 0.5, 1, 1, UIFont.Large, true))
-    self.ContentArea:addChild(ISLabel:new(10, 45, S4_UI.FH_S, getText("IGUI_S4_Crime_Records_Desc"), 0.8, 0.8, 0.8, 1, UIFont.Small, false))
+    self.ContentArea:addChild(ISLabel:new(10, 45, S4_UI.FH_S, getText("IGUI_S4_Crime_Records_Desc"), 0.8, 0.8, 0.8, 1, UIFont.Small, true))
     
     local y = 80
     
@@ -172,7 +172,7 @@ function S4_IE_Crimeboid:renderRecords()
     self.ContentArea:addChild(kmPnl)
     
     kmPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, "Moral Alignment (Current: " .. stats.Karma .. ")", 1, 1, 1, 1, UIFont.Small, true))
-    kmPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, false))
+    kmPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, true))
     
     local btnK = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveKarma") .. " - $10,000", self, S4_IE_Crimeboid.onBribeKarma)
     btnK.backgroundColor = {r=0.4, g=0, b=0, a=1}
@@ -190,7 +190,7 @@ function S4_IE_Crimeboid:renderRecords()
         
         local factionName = getText("IGUI_S4_Faction_" .. faction)
         fPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, factionName .. " (Current: " .. rep .. ")", 1, 1, 1, 1, UIFont.Small, true))
-        fPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, false))
+        fPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, true))
         
         local btnF = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveRep") .. " - $15,000", self, S4_IE_Crimeboid.onBribeFaction)
         btnF.internal = faction

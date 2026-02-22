@@ -185,10 +185,10 @@ function S4_InternetExplorer:ReloadUI()
 end
 
 -- Create/Remove S4_IE
-function S4_InternetExplorer:new(ComUI, x, y)
+function S4_InternetExplorer:new(ComUI, x, y, width, height)
     local o = {}
     if not width or not height then
-        width, height = 420, 380
+        width, height = 800, 600
     end
     if not x or not y then
         x = (ComUI:getWidth() / 2) - (width / 2)

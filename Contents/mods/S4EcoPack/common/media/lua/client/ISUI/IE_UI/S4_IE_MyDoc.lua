@@ -107,12 +107,12 @@ function S4_IE_MyDoc:createChildren()
     local tY = 40
     local count = 0
     for k, v in pairs(stats.Decisions) do
-        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "- " .. k .. ": " .. tostring(v), 0.7, 0.7, 0.7, 1, UIFont.Small, false))
+        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "- " .. k .. ": " .. tostring(v), 0.7, 0.7, 0.7, 1, UIFont.Small, true))
         tY = tY + 20
         count = count + 1
     end
     if count == 0 then
-        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "No major events recorded.", 0.4, 0.4, 0.4, 1, UIFont.Small, false))
+        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "No major events recorded.", 0.4, 0.4, 0.4, 1, UIFont.Small, true))
     end
 end
 

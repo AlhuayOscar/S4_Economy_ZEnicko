@@ -196,11 +196,26 @@ function S4_Computer_Main:createChildren()
     local BtnY = 20
     local TaskFont = S4_UI.getFontType(2)
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
-    -- for BtnType, BtnData in pairs(self.SystemData) do
-    for BtnType, BtnData in pairs(S4_Category.ComputerIconData) do
-        if BtnType ~= "MyCom" then
-            BtnY = BtnY + BtnH + 10
+
+    local orderedIcons = {
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+    }
+    local renderedIcons = {}
+    for _, k in ipairs(orderedIcons) do
+        if S4_Category.ComputerIconData[k] then
+            table.insert(renderedIcons, k)
         end
+    end
+    for k, _ in pairs(S4_Category.ComputerIconData) do
+        local found = false
+        for _, ordered in ipairs(renderedIcons) do
+            if ordered == k then found = true; break end
+        end
+        if not found then table.insert(renderedIcons, k) end
+    end
+
+    for _, BtnType in ipairs(renderedIcons) do
+        local BtnData = S4_Category.ComputerIconData[BtnType]
         if BtnY + BtnH >= self:getHeight() - TaskBarH then
             BtnX = BtnX + BtnW + 10
             BtnY = 20
@@ -224,6 +239,8 @@ function S4_Computer_Main:createChildren()
         self["Btn_" .. BtnType].render = S4_Computer_Main.BtnRender
         self["Btn_" .. BtnType]:initialise()
         self:addChild(self["Btn_" .. BtnType])
+
+        BtnY = BtnY + BtnH + 10
     end
 
     if self.player:isAccessLevel("admin") or getDebug() then

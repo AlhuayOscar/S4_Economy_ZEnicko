@@ -87,11 +87,16 @@ function S4_IE_Logistics:renderWarehouses()
     self.ContentArea:addChild(ISLabel:new(15, 45, S4_UI.FH_S, "Manage your remote cargo containers.", 0.4, 0.4, 0.4, 1, UIFont.Small, true))
     
     local y = 80
-    local storage = {
-        {name="Muldraugh Depot Unit P-4", capacity=500, used=120, location="Muldraugh Outskirts"},
-        {name="West Point Secured Lockbox", capacity=150, used=145, location="West Point Downtown"},
-        {name="Louisville Cargo Container", capacity=2000, used=0, location="LV Checkpoint"}
-    }
+    local stats = S4_PlayerStats.getStats(self.player)
+    
+    local storage = {}
+    for k, v in pairs(stats.Warehouses) do
+        table.insert(storage, v)
+    end
+    
+    if #storage == 0 then
+        self.ContentArea:addChild(ISLabel:new(15, y, S4_UI.FH_M, "You don't own any warehouses.", 0.6, 0.6, 0.6, 1, UIFont.Medium, true))
+    end
     
     for _, wh in ipairs(storage) do
         local pnl = ISPanel:new(15, y, cw - 30, 70)
@@ -140,10 +145,16 @@ function S4_IE_Logistics:renderStocks()
     self.ContentArea:addChild(ISLabel:new(15, 45, S4_UI.FH_S, "Buy and sell public shares. High volatility.", 0.4, 0.4, 0.4, 1, UIFont.Small, true))
     
     local y = 80
+    local stats = S4_PlayerStats.getStats(self.player)
+    
+    local spiffOwned = stats.Stocks["SPIFF"] or 0
+    local knoxOwned = stats.Stocks["KNOX"] or 0
+    local phmOwned = stats.Stocks["PHM"] or 0
+    
     local stocks = {
-        {symbol="SPIFF", name="Spiffo Corp Industries", price=124.50, trend="UP", held=100},
-        {symbol="KNOX", name="Knox Bank Group", price=34.20, trend="DOWN", held=0},
-        {symbol="PHM", name="PharmaHug Operations", price=289.00, trend="UP", held=10}
+        {symbol="SPIFF", name="Spiffo Corp Industries", price=124.50, trend="UP", held=spiffOwned},
+        {symbol="KNOX", name="Knox Bank Group", price=34.20, trend="DOWN", held=knoxOwned},
+        {symbol="PHM", name="PharmaHug Operations", price=289.00, trend="UP", held=phmOwned}
     }
     
     for _, st in ipairs(stocks) do
@@ -163,18 +174,32 @@ function S4_IE_Logistics:renderStocks()
         
         pnl:addChild(ISLabel:new(cw - 300, 30, S4_UI.FH_M, "Shares Owned: " .. st.held, 0.1, 0.3, 0.6, 1, UIFont.Medium, true))
         
-        local btnSell = ISButton:new(cw - 150, 15, 60, 30, "Sell 10", self, S4_IE_Logistics.onAction)
+        local btnSell = ISButton:new(cw - 150, 15, 60, 30, "Sell 10", self, S4_IE_Logistics.onActionSell)
+        btnSell.internal = st.symbol
         btnSell.backgroundColor = {r=0.9, g=0.9, b=0.9, a=1}
         if st.held < 10 then btnSell.enable = false end
         pnl:addChild(btnSell)
         
-        local btnBuy = ISButton:new(cw - 80, 15, 60, 30, "Buy 10", self, S4_IE_Logistics.onAction)
+        local btnBuy = ISButton:new(cw - 80, 15, 60, 30, "Buy 10", self, S4_IE_Logistics.onActionBuy)
+        btnBuy.internal = st.symbol
         btnBuy.backgroundColor = {r=0.2, g=0.6, b=0.2, a=1}
         btnBuy.textColor = {r=1, g=1, b=1, a=1}
         pnl:addChild(btnBuy)
         
         y = y + 90
     end
+end
+
+function S4_IE_Logistics:onActionSell(btn)
+    S4_PlayerStats.addStock(self.player, btn.internal, -10)
+    self:switchTab({internal="Stocks"}) -- Re-render
+    self.ComUI:AddMsgBox("Transaction Complete", false, "Sold 10 shares of " .. btn.internal .. " successfully.", false, false)
+end
+
+function S4_IE_Logistics:onActionBuy(btn)
+    S4_PlayerStats.addStock(self.player, btn.internal, 10)
+    self:switchTab({internal="Stocks"}) -- Re-render
+    self.ComUI:AddMsgBox("Transaction Complete", false, "Bought 10 shares of " .. btn.internal .. " successfully.", false, false)
 end
 
 function S4_IE_Logistics:renderContracts()

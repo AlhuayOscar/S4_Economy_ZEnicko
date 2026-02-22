@@ -76,6 +76,19 @@ function S4_IE_KarmaAdmin:rebuildUI()
     
     local bDecB = ISButton:new(220, y, 200, 30, "Trigger 'Saved Trader'", self, S4_IE_KarmaAdmin.onDec2)
     bDecB:initialise(); self.ContentList:addChild(bDecB)
+    
+    y = y + 40
+    self.ContentList:addChild(ISLabel:new(10, y, S4_UI.FH_M, "Logistics & Commerce Tests", 0.8, 0.8, 1, 1, UIFont.Medium, true))
+    y = y + 40
+    
+    local bSpawnWH = ISButton:new(10, y, 200, 30, "Spawn Test Warehouse", self, S4_IE_KarmaAdmin.onSpawnWH)
+    bSpawnWH:initialise(); self.ContentList:addChild(bSpawnWH)
+    
+    local bAddStock = ISButton:new(220, y, 200, 30, "Add 10 SPIFF Stocks", self, S4_IE_KarmaAdmin.onAddStock)
+    bAddStock:initialise(); self.ContentList:addChild(bAddStock)
+    
+    local bRemStock = ISButton:new(430, y, 200, 30, "Remove 10 SPIFF Stocks", self, S4_IE_KarmaAdmin.onRemStock)
+    bRemStock:initialise(); self.ContentList:addChild(bRemStock)
 end
 
 function S4_IE_KarmaAdmin:onKPlus()
@@ -111,6 +124,23 @@ function S4_IE_KarmaAdmin:onDec2(btn)
     S4_PlayerStats.addFactionRep(self.player, "TraderUnion", 15)
     S4_PlayerStats.addKarma(self.player, 10)
     self:rebuildUI()
+end
+
+function S4_IE_KarmaAdmin:onSpawnWH(btn)
+    local randomId = "testWH_" .. tostring(math.random(1000, 9999))
+    S4_PlayerStats.addWarehouse(self.player, randomId, "Debug Storage Alpha", 1000, "Muldraugh")
+    S4_PlayerStats.updateWarehouseUsage(self.player, randomId, math.random(100, 800))
+    self.ComUI:AddMsgBox("Test Data Added", false, "Created debug warehouse in Logistics system.", false, false)
+end
+
+function S4_IE_KarmaAdmin:onAddStock(btn)
+    S4_PlayerStats.addStock(self.player, "SPIFF", 10)
+    self.ComUI:AddMsgBox("Test Data Added", false, "+10 SPIFF added to portfolio.", false, false)
+end
+
+function S4_IE_KarmaAdmin:onRemStock(btn)
+    S4_PlayerStats.addStock(self.player, "SPIFF", -10)
+    self.ComUI:AddMsgBox("Test Data Removed", false, "-10 SPIFF removed from portfolio.", false, false)
 end
 
 function S4_IE_KarmaAdmin:render()

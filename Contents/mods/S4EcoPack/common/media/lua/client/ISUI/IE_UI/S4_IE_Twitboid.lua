@@ -86,10 +86,19 @@ function S4_IE_Twitboid:createChildren()
     self.Rightbar:addChild(ISLabel:new(10, 100, S4_UI.FH_S, "4. #Bitten", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
 
     -- Main Feed Area
-    self.FeedArea = ISScrollingListBox:new(121, 0, self:getWidth() - 271, self:getHeight())
+    self.FeedArea = ISPanel:new(121, 0, self:getWidth() - 271, self:getHeight())
     self.FeedArea.backgroundColor = {r=0, g=0, b=0, a=1}
     self.FeedArea:initialise()
     self.FeedArea:instantiate()
+    self.FeedArea:addScrollBars()
+    self.FeedArea:setScrollChildren(true)
+    self.FeedArea.prerender = function(pnl)
+        ISPanel.prerender(pnl)
+        pnl:setStencilRect(0, 0, pnl.width, pnl.height)
+    end
+    self.FeedArea.postrender = function(pnl)
+        pnl:clearStencilRect()
+    end
     self:addChild(self.FeedArea)
     
     -- Compositor / Postear
@@ -114,6 +123,7 @@ function S4_IE_Twitboid:createChildren()
         postPanel.borderColor = {r=0.2, g=0.2, b=0.2, a=1}
         postPanel:initialise()
         postPanel:instantiate()
+        postPanel.onMouseWheel = function(child, del) return self.FeedArea:onMouseWheel(del) end
         self.FeedArea:addChild(postPanel)
         
         local displayName = post.name or "Survivor"
@@ -123,9 +133,9 @@ function S4_IE_Twitboid:createChildren()
         local hLabel = ISLabel:new(10, 5, S4_UI.FH_S, headerText, 0.5, 0.5, 0.5, 1, UIFont.Small, true)
         postPanel:addChild(hLabel)
         
-        local bodyLines = luautils.split(post.text, "\n")
         local ty = 25
-        for _, line in ipairs(bodyLines) do
+        local wrappedText = S4_UI.SplitText(post.text, postPanel:getWidth() - 40, UIFont.Small)
+        for _, line in ipairs(wrappedText) do
             local tLabel = ISLabel:new(10, ty, S4_UI.FH_S, line, 1, 1, 1, 1, UIFont.Small, true)
             postPanel:addChild(tLabel)
             ty = ty + 15
@@ -159,11 +169,11 @@ function S4_IE_Twitboid:createChildren()
         bLike:initialise()
         postPanel:addChild(bLike)
         
-        postPanel:setHeight(by + 30)
+        postPanel:setHeight(by + 40)
         
         feedY = feedY + postPanel:getHeight() + 10
     end
-    self.FeedArea:setScrollHeight(feedY + 20)
+    self.FeedArea:setScrollHeight(feedY + 50)
 end
 
 function S4_IE_Twitboid:onAction(btn)

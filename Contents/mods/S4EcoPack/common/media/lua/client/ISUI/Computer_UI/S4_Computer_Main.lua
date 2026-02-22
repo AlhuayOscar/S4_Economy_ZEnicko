@@ -305,7 +305,7 @@ function S4_Computer_Main:createChildren()
             r = 189 / 255, g = 190 / 255, b = 189 / 255, a = 0.3
         }
         self.Btn_KarmaAdmin.IconName = "Karma Admin"
-        self.Btn_KarmaAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_Settings.png"))
+        self.Btn_KarmaAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_MyDoc.png"))
         self.Btn_KarmaAdmin:forceImageSize(IconSize, IconSize)
         self.Btn_KarmaAdmin.render = S4_Computer_Main.BtnRender
         self.Btn_KarmaAdmin:initialise()

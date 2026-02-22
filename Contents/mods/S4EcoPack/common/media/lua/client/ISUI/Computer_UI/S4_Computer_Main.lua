@@ -124,6 +124,10 @@ function S4_Computer_Main:createChildren()
         Name = "Crimeboid.net",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Crimeboid.png")
     }
+    S4_Category.ComputerIconData["Zeddit"] = {
+        Name = "Zeddit",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+    }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
@@ -436,6 +440,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Crimeboid)
         end
         self.TopApp = self.Crimeboid
+    elseif internal == "Zeddit" then
+        if self.Zeddit then
+            if not self.Zeddit:isVisible() then
+                self.Zeddit:setVisible(true)
+            end
+            self.Zeddit:bringToTop()
+        else
+            self.Zeddit = S4_InternetExplorer:new(self)
+            self.Zeddit:initialise()
+            self.Zeddit.TitleName = "Zeddit - The Front Page of Knox"
+            self.Zeddit.AddressText = "http://zeddit.com/frontpage"
+            self.Zeddit.PageType = internal
+            self:addChild(self.Zeddit)
+            self:AddTaskBar(self.Zeddit)
+        end
+        self.TopApp = self.Zeddit
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then

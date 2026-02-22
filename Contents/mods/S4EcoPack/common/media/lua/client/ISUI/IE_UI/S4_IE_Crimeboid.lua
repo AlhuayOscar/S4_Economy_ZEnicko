@@ -56,6 +56,12 @@ function S4_IE_Crimeboid:createChildren()
     self.BtnIdentity.textColor = {r=1, g=0.2, b=0.2, a=1}
     self.NavBar:addChild(self.BtnIdentity)
 
+    self.BtnRecords = ISButton:new(40 + btnW*3, 5, btnW, 30, "[ Criminal Records ]", self, S4_IE_Crimeboid.switchTab)
+    self.BtnRecords.internal = "Records"
+    self.BtnRecords.backgroundColor = {r=0.2, g=0, b=0, a=1}
+    self.BtnRecords.textColor = {r=1, g=0.2, b=0.2, a=1}
+    self.NavBar:addChild(self.BtnRecords)
+
     -- Main Content Area
     self.ContentArea = ISPanel:new(10, 100, w - 20, h - 110)
     self.ContentArea.backgroundColor = {r=0, g=0, b=0, a=0.8}
@@ -79,6 +85,7 @@ function S4_IE_Crimeboid:switchTab(btn)
     if self.currentTab == "Market" then self:renderMarket()
     elseif self.currentTab == "Bounty" then self:renderBounty()
     elseif self.currentTab == "Identity" then self:renderIdentity()
+    elseif self.currentTab == "Records" then self:renderRecords()
     end
 end
 
@@ -149,6 +156,53 @@ function S4_IE_Crimeboid:renderIdentity()
     self.ContentArea:addChild(btnWipe)
 end
 
+function S4_IE_Crimeboid:renderRecords()
+    local cw = self.ContentArea:getWidth()
+    local stats = S4_PlayerStats.getStats(self.player)
+
+    self.ContentArea:addChild(ISLabel:new(10, 10, S4_UI.FH_L, getText("IGUI_S4_Crime_Records_Title"), 0.5, 0.5, 1, 1, UIFont.Large, true))
+    self.ContentArea:addChild(ISLabel:new(10, 45, S4_UI.FH_S, getText("IGUI_S4_Crime_Records_Desc"), 0.8, 0.8, 0.8, 1, UIFont.Small, false))
+    
+    local y = 80
+    
+    -- Karma Bribe
+    local kmPnl = ISPanel:new(10, y, cw - 20, 60)
+    kmPnl.backgroundColor = {r=0.1, g=0.1, b=0.1, a=1}
+    kmPnl.borderColor = {r=0.5, g=0, b=0, a=1}
+    self.ContentArea:addChild(kmPnl)
+    
+    kmPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, "Moral Alignment (Current: " .. stats.Karma .. ")", 1, 1, 1, 1, UIFont.Small, true))
+    kmPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, false))
+    
+    local btnK = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveKarma") .. " - $10,000", self, S4_IE_Crimeboid.onBribeKarma)
+    btnK.backgroundColor = {r=0.4, g=0, b=0, a=1}
+    if stats.Karma > 20 then btnK.enable = false; btnK.title = "Max Reached" end
+    kmPnl:addChild(btnK)
+    
+    y = y + 70
+    
+    -- Faction Bribes
+    for faction, rep in pairs(stats.Factions) do
+        local fPnl = ISPanel:new(10, y, cw - 20, 60)
+        fPnl.backgroundColor = {r=0.1, g=0.1, b=0.1, a=1}
+        fPnl.borderColor = {r=0.5, g=0, b=0, a=1}
+        self.ContentArea:addChild(fPnl)
+        
+        local factionName = getText("IGUI_S4_Faction_" .. faction)
+        fPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, factionName .. " (Current: " .. rep .. ")", 1, 1, 1, 1, UIFont.Small, true))
+        fPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, "Limit: Cannot exceed +20 via bribes.", 0.6, 0.6, 0.6, 1, UIFont.Small, false))
+        
+        local btnF = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveRep") .. " - $15,000", self, S4_IE_Crimeboid.onBribeFaction)
+        btnF.internal = faction
+        btnF.backgroundColor = {r=0.4, g=0, b=0, a=1}
+        
+        if rep > 20 then btnF.enable = false; btnF.title = "Max Reached" end
+        fPnl:addChild(btnF)
+        
+        y = y + 70
+    end
+end
+
 function S4_IE_Crimeboid:onBuy(btn)
     self.ComUI:AddMsgBox("Transaction Failed", false, "Insufficient Funds / Network Monitored.", false, false)
 end
@@ -159,6 +213,15 @@ end
 
 function S4_IE_Crimeboid:onWipe(btn)
     self.ComUI:AddMsgBox("Identity Forge", false, "Network Error. FBI monitoring detected.", false, false)
+end
+
+function S4_IE_Crimeboid:onBribeKarma(btn)
+    self.ComUI:AddMsgBox("Transaction Pending", false, "Simulated: Bribe sent. Karma will change shortly.", false, false)
+end
+
+function S4_IE_Crimeboid:onBribeFaction(btn)
+    local faction = btn.internal
+    self.ComUI:AddMsgBox("Transaction Pending", false, "Simulated: Paid off " .. faction .. " contacts.", false, false)
 end
 
 function S4_IE_Crimeboid:render()

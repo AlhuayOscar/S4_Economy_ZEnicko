@@ -420,4 +420,10 @@ IGUI_EN = {
     IGUI_S4_Relationship_Neutral = "Neutral",
     IGUI_S4_Relationship_Hostile = "Hostile",
     IGUI_S4_Relationship_Enemy = "Archenemy",
+
+    /* Crimeboid Record & Identity */
+    IGUI_S4_Crime_Records_Title = "Criminal Records",
+    IGUI_S4_Crime_Records_Desc = "Pay off corrupt officials to improve your Karma/Reputation. Max +20% per operation.",
+    IGUI_S4_Crime_ImproveKarma = "Bribe for Karma (+10)",
+    IGUI_S4_Crime_ImproveRep = "Pay Faction Bribe (+20)"
 }

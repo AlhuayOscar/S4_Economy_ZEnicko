@@ -116,6 +116,10 @@ end
 function S4_Computer_Main:createChildren()
     ISPanel.createChildren(self)
 
+    S4_Category.ComputerIconData["Twitboid"] = {
+        Name = "Twitboid",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+    }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
@@ -159,6 +163,15 @@ function S4_Computer_Main:createChildren()
     S4_Category.ComputerIconData["GoodShop"] = {
         Name = "Good Shop",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
+    }
+    S4_Category.ComputerIconData["VehicleShop"] = {
+        Name = "Vehicle Shop",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
+    }
+
+    S4_Category.ComputerIconData["Jobs"] = {
+        Name = "Jobs",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
     }
 
     if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.Blackjack then
@@ -372,20 +385,37 @@ function S4_Computer_Main:BtnClick(Button)
         end
         self.TopApp = self.MyCom
     elseif internal == "MyDoc" then
-        -- if self.MyDoc then
-        --     if not self.MyDoc:isVisible() then
-        --         self.MyDoc:setVisible(true)
-        --     end
-        --     self.MyDoc:bringToTop()
-        -- else
-        --     self.MyDoc = S4_System:new(self)
-        --     self.MyDoc:initialise()
-        --     self.MyDoc.TitleName = "MyDoc UI Test"
-        --     self.MyDoc.PageType = internal
-        --     self:addChild(self.MyDoc)
-        --     self:AddTaskBar(self.MyDoc)
-        -- end
-        -- self.TopApp = self.MyDoc
+        if self.MyDoc then
+            if not self.MyDoc:isVisible() then
+                self.MyDoc:setVisible(true)
+            end
+            self.MyDoc:bringToTop()
+        else
+            self.MyDoc = S4_InternetExplorer:new(self)
+            self.MyDoc:initialise()
+            self.MyDoc.TitleName = "My Documents - Internet Explorer"
+            self.MyDoc.AddressText = "file://C:/Users/" .. self.player:getUsername() .. "/Documents"
+            self.MyDoc.PageType = internal
+            self:addChild(self.MyDoc)
+            self:AddTaskBar(self.MyDoc)
+        end
+        self.TopApp = self.MyDoc
+    elseif internal == "Twitboid" then
+        if self.Twitboid then
+            if not self.Twitboid:isVisible() then
+                self.Twitboid:setVisible(true)
+            end
+            self.Twitboid:bringToTop()
+        else
+            self.Twitboid = S4_InternetExplorer:new(self)
+            self.Twitboid:initialise()
+            self.Twitboid.TitleName = "Twitboid - Internet Explorer"
+            self.Twitboid.AddressText = "http://twitboid.com/home"
+            self.Twitboid.PageType = internal
+            self:addChild(self.Twitboid)
+            self:AddTaskBar(self.Twitboid)
+        end
+        self.TopApp = self.Twitboid
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then
@@ -538,6 +568,27 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.GoodShop)
         end
         self.TopApp = self.GoodShop
+    elseif internal == "VehicleShop" then
+        if self.VehicleShop then
+            ModData.request("S4_ShopData")
+            ModData.request("S4_PlayerShopData")
+            if not self.VehicleShop:isVisible() then
+                self.VehicleShop:setVisible(true)
+            end
+            if self.VehicleShop.ReloadUI then
+                self.VehicleShop:ReloadUI()
+            end
+            self.VehicleShop:bringToTop()
+        else
+            self.VehicleShop = S4_InternetExplorer:new(self)
+            self.VehicleShop:initialise()
+            self.VehicleShop.TitleName = "Vehicle Shop - Internet Explorer"
+            self.VehicleShop.AddressText = "http://hind.com/VehicleShop/home"
+            self.VehicleShop.PageType = internal
+            self:addChild(self.VehicleShop)
+            self:AddTaskBar(self.VehicleShop)
+        end
+        self.TopApp = self.VehicleShop
     elseif internal == "GoodShopAdmin" then
         if self.GoodShopAdmin then
             ModData.request("S4_ShopData")
@@ -573,6 +624,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:addChild(self.BlackJack)
             self:AddTaskBar(self.BlackJack)
         end
+    elseif internal == "Jobs" then
+        if self.Jobs then
+            if not self.Jobs:isVisible() then
+                self.Jobs:setVisible(true)
+            end
+            self.Jobs:bringToTop()
+        else
+            self.Jobs = S4_InternetExplorer:new(self)
+            self.Jobs:initialise()
+            self.Jobs.TitleName = "Knox Jobs - Internet Explorer"
+            self.Jobs.AddressText = "http://hind.com/Jobs/home"
+            self.Jobs.PageType = internal
+            self:addChild(self.Jobs)
+            self:AddTaskBar(self.Jobs)
+        end
+        self.TopApp = self.Jobs
     end
 end
 

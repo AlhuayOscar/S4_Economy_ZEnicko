@@ -417,32 +417,60 @@ end
 function S4_Utils.CheckInvCash(player, item)
     local playerInv = player:getInventory()
     if not item then return end
-    if item:getFullType() == "Base.Money" then
-        local BRand = ZombRand(10001)
-        if BRand == 1234 then
-            local zRand = ZombRand(30)
-            playerInv:AddItems("S4Item.Money10000", 2)
-            playerInv:AddItems("S4Item.Money1", zRand)
-        elseif BRand >= 9900 then
-            local mRand = ZombRand(11)
-            playerInv:AddItems("S4Item.Money100", mRand)
-            local zRand = ZombRand(30)
-            playerInv:AddItems("S4Item.Money1", zRand)
-        else
-            local zRand = ZombRand(100)
-            playerInv:AddItems("S4Item.Money1", zRand)
-        end
-    elseif item:getFullType() == "Base.MoneyBundle" then
-        local BRand = ZombRand(10001)
-        if BRand == 5678 then
-            playerInv:AddItems("S4Item.Money10000x100", 1)
-        elseif BRand >= 9000 then
-            playerInv:AddItems("S4Item.Money100x100", 1)
-        else
-            playerInv:AddItems("S4Item.Money1x100", 1)
+
+    local isDirty = false
+    if item:hasModData() and item:getModData().S4DirtyMoney then
+        isDirty = true
+    else
+        local dn = string.lower(item:getName() or "")
+        local dnn = string.lower(item:getDisplayName() or "")
+        if string.find(dn, "dirty") or string.find(dnn, "dirty") or string.find(dn, "suci") or string.find(dnn, "suci") then
+            isDirty = true
         end
     end
+
+    if isDirty then
+        if player.setHaloNote then
+            player:setHaloNote("They can't be used... Taxes are no joke", 255, 60, 60, 300)
+        end
         if item:getWorldItem() then
+            item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
+            ISInventoryPage.dirtyUI()
+        else
+            if item:getContainer() then
+                item:getContainer():Remove(item)
+            else
+                playerInv:Remove(item)
+            end
+        end
+        return
+    end
+
+    if item:getFullType() == "Base.Money" then
+        local BRand = ZombRand(10001)
+        local totalToCheck = 0
+        if BRand == 1234 then
+            totalToCheck = 20000 + ZombRand(31)
+        elseif BRand >= 9900 then
+            totalToCheck = (ZombRand(11) * 100) + ZombRand(30)
+        else
+            totalToCheck = ZombRand(100)
+        end
+        S4_Utils.AddConsolidatedMoney(player, totalToCheck)
+    elseif item:getFullType() == "Base.MoneyBundle" then
+        local BRand = ZombRand(10001)
+        local totalToCheck = 0
+        if BRand == 5678 then
+            totalToCheck = 1000000
+        elseif BRand >= 9000 then
+            totalToCheck = 10000
+        else
+            totalToCheck = 100
+        end
+        S4_Utils.AddConsolidatedMoney(player, totalToCheck)
+    end
+
+    if item:getWorldItem() then
         item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
         ISInventoryPage.dirtyUI()
     else
@@ -452,5 +480,112 @@ function S4_Utils.CheckInvCash(player, item)
             playerInv:Remove(item)
         end
     end
-
 end
+
+-- Distribute money using high denominations to avoid performance lag
+function S4_Utils.AddConsolidatedMoney(player, val)
+    if not val or val <= 0 then return end
+    local inv = player:getInventory()
+    local remaining = val
+
+    -- Denominations: 
+    -- 1,000,000 (S4Item.Money10000x100)
+    -- 100,000 (S4Item.Money1000x100)
+    -- 10,000 (S4Item.Money100x100)
+    -- 1,000 (S4Item.Money1000)
+    -- 100 (S4Item.Money100)
+    
+    local d1M = math.floor(remaining / 1000000)
+    remaining = remaining % 1000000
+
+    local d100K = math.floor(remaining / 100000)
+    remaining = remaining % 100000
+    
+    local d10K = math.floor(remaining / 10000)
+    remaining = remaining % 10000
+
+    local d1K = math.floor(remaining / 1000)
+    remaining = remaining % 1000
+    
+    local d100 = math.floor(remaining / 100)
+    remaining = remaining % 100
+
+    if d1M > 0 then inv:AddItems("S4Item.Money10000x100", d1M) end
+    if d100K > 0 then inv:AddItems("S4Item.Money1000x100", d100K) end
+    if d10K > 0 then inv:AddItems("S4Item.Money100x100", d10K) end
+    if d1K > 0 then inv:AddItems("S4Item.Money1000", d1K) end
+    if d100 > 0 then inv:AddItems("S4Item.Money100", d100) end
+
+    -- The 'Performance Fix' part: instead of giving many items of Money1, give ONE.
+    if remaining > 0 then
+        local item = inv:AddItem("S4Item.Money1")
+        item:getModData().S4_ConsolidatedValue = remaining
+        -- Format name as "$1,234 Cash"
+        local formattedName = "$" .. S4_UI.getNumCommas(remaining) .. " Cash"
+        item:setName(formattedName)
+        S4_Utils.SnycObject(item)
+    end
+
+    if player.setHaloNote then
+        player:setHaloNote("+" .. S4_UI.getNumCommas(val), 100, 255, 100, 200)
+    end
+end
+
+-- Get the real value of an item, considering consolidated bucks
+function S4_Utils.getConsolidatedValue(item)
+    if not item then return 0 end
+    local fullType = item:getFullType()
+    
+    -- Check if it's a consolidated Bucks note
+    if item:hasModData() and item:getModData().S4_ConsolidatedValue then
+        return item:getModData().S4_ConsolidatedValue
+    end
+    
+    -- Otherwise use default setting
+    return S4_Setting.MoneyList[fullType] or 0
+end
+
+-- Calculate randomized value for vanilla money items (Simple version)
+function S4_Utils.getVanillaMoneyValue(item)
+    if not item then return 0 end
+    
+    local isDirty = false
+    if item:hasModData() and item:getModData().S4DirtyMoney then
+        isDirty = true
+    else
+        local dn = string.lower(item:getName() or "")
+        local dnn = string.lower(item:getDisplayName() or "")
+        if string.find(dn, "dirty") or string.find(dnn, "dirty") or string.find(dn, "suci") or string.find(dnn, "suci") then
+            isDirty = true
+        end
+    end
+    if isDirty then return -1 end
+
+    local fullType = item:getFullType()
+    local totalValue = 0
+
+    if fullType == "Base.Money" then
+        local BRand = ZombRand(10001)
+        if BRand == 1234 then
+            totalValue = 20000 + ZombRand(31)
+        elseif BRand >= 9900 then
+            totalValue = (ZombRand(11) * 100) + ZombRand(31)
+        else
+            totalValue = ZombRand(101)
+        end
+    elseif fullType == "Base.MoneyBundle" then
+        for i = 1, 100 do
+            local BRand = ZombRand(10001)
+            if BRand == 1234 then
+                totalValue = totalValue + 20000 + ZombRand(31)
+            elseif BRand >= 9900 then
+                totalValue = totalValue + (ZombRand(11) * 100) + ZombRand(31)
+            else
+                totalValue = totalValue + ZombRand(101)
+            end
+        end
+    end
+
+    return totalValue
+end
+

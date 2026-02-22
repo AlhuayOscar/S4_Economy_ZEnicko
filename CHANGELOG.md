@@ -2,6 +2,82 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.3.1] - 2026-02-20
+
+### Patch: Vehicle Preview UI & Job Expansion
+
+- **UI Fix:** Fixed overlap in vehicle preview window where control buttons were covering the specifications text.
+- **Documentation:** Added "Armored Truck Attack" to `Jobs_Proposal.md`, detailing a multi-stage heist involving decoy vehicles and revenge lore.
+
+## [1.3.0] - 2026-02-20
+
+## Feature: Global Economy Overhaul
+
+- **High-Stakes Pager Rewards:**
+  - Standard mission rewards boosted to **$15,000 - $60,000**.
+  - High-tier multi-part missions (Heists) now scale up to a maximum of **$323,000**.
+  - Balanced payouts to allow vehicle purchases ($450k+) within **10-15 missions**.
+- **Shop Data Cleanup & Categorization:**
+  - Fixed categories for over 13,000 items in `S4_Shop_Data.lua`.
+  - Moved metals, tools, and ammo out of the "Food" section.
+  - Implemented specific sub-categories: **HandGun, Rifle, Shotgun, Tools, Medical, Ammo, GunParts, VehicleParts**.
+- **Food Scarcity & Inflation:**
+  - Doubled the **BuyPrice** for all items in the "Food" category.
+  - Reduced **Stock** for food items to a range of **1-2 units**, forcing players to rely more on looting/farming.
+- **Daily Deals System:**
+  - Implemented automatic **Daily Recommended Items** (Hot Items) rotation in the server.
+  - Picks 5-15 random items every day with a **5% to 30% discount**.
+  - Resets previous discounts/hot status daily to keep the market dynamic.
+
+## [1.2.2] - 2026-02-20
+
+## Patch: Pager Missions Stability + New Mission Set
+
+- Added new Rosewood-focused mission set for Pager contracts (simple eliminate + photo/evidence flow).
+- Hardened Pager mission/lore string fallbacks to avoid nil-format crashes after mission completion.
+- Note: **UNSTABLE LOCATIONS AND COORDINATES OR LACKING PRECISION**.
+
+## [1.2.1] - 2026-02-19
+
+## Feature: Pager Mission Evidence Flow
+
+- Added mission-point target system for Pager contracts with map marker support and debug fixed-point mode.
+- Added target elimination progression (`killsDone/killGoal`) and auto-complete when mission targets are eliminated.
+- Added evidence object pipeline for Pager missions:
+  - Work-object metadata (`S4WorkObject`, `S4WorkCode`, lore fields).
+  - Valuable halo notifications when evidence is found.
+  - Evidence-loss warning: `Object destroyed, you will have to explain it to the client`.
+- Added disposable camera mission capture flow:
+  - Inventory context option `Use Disposable Camera`.
+  - Requires being within 10 tiles from the active/completed mission point.
+  - Generates mission evidence item directly and consumes one disposable camera.
+- Added post-completion camera support:
+  - Last completed mission point is cached so players can recreate destroyed evidence by returning to the location.
+- Improved compatibility/fallback behavior for mission evidence item resolution across different item IDs/builds.
+- Removed rich-text RGB formatting from evidence tooltip for consistent display across UI contexts.
+
+## [1.2.0] - 2026-02-18
+
+## Feature: Dynamic Job System (Knox Careers)
+
+- **Comprehensive Job Grid:** Implemented an interactive UI with 8 distinct career paths:
+  - Call Center, Graphic Designer, Insurance Seller, Programmer, Banker, Cleaner, Journalist, and Spy.
+- **Generic Action Framework:** Refactored the underlying system to handle all jobs through a single data-driven Timed Action, supporting dynamic salaries and XP.
+- **Equipment & Dress Codes:**
+  - Implemented strict inventory requirements for each profession using verified vanilla Item IDs.
+  - Added clothing requirements (Suits, Ties, Formal Shirts) for corporate roles.
+  - Specialized gear checks: Firearm + Ammo (7+) for Cleaners/Spies, Electronics (Visors, CD Players, Pagers, Cordless Phones) for Programmers.
+  - Document requirements: Passports, Stock Certificates, Business Cards, Index Cards, and Press IDs.
+- **Dynamic Pain Mechanics:**
+  - **Risk-Based System:** Pain probability now scales with daily hours worked, player level (resilience), and negative stats (Fatigue, Hunger, Stress, Thirst).
+  - **Periodic Sounds:** Characters now groan in pain periodically during work if they are in poor condition or overworked.
+  - **Back Pain Injury:** High-risk sessions can lead to actual back pain injuries, with intensity scaling based on accumulated stress.
+- **Economic & Progression Balance:**
+  - **Difficulty Scaling:** Job XP thresholds now scale based on profession difficulty (e.g., Spy requires 40% more XP than Call Center).
+  - **Salary Balancing:** Adjusted base pay (Call Center nerfed to $125/2h) and high-risk bonuses (Spy/Cleaner/Journalist boosted up to 125%).
+  - payments are automated every 2 working hours and logged in the ZomBank system.
+
+
 ## [1.1.4] - 2026-02-17
 
 ## Feature: Random News Events & Custom Notifications

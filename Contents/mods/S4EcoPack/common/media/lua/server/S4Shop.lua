@@ -355,8 +355,12 @@ function S4Shop.ShopBuy(player, args)
     PlayerShopModData.Delivery[DeliveryTime].XYZCode = DeliveryAddress
     PlayerShopModData.Delivery[DeliveryTime].List = {}
     for ItemName, Amount in pairs(ItemList) do
-        PlayerShopModData.Delivery[DeliveryTime].List[ItemName] = Amount
-        ShopModData[ItemName].Stock = ShopModData[ItemName].Stock - Amount
+        if ShopModData[ItemName] then
+            PlayerShopModData.Delivery[DeliveryTime].List[ItemName] = Amount
+            ShopModData[ItemName].Stock = ShopModData[ItemName].Stock - Amount
+        else
+            print("[S4Shop] Warning: Item not found in ShopModData during purchase: " .. tostring(ItemName))
+        end
     end
     PlayerShopModData.BuyTotal = PlayerShopModData.BuyTotal + TotalPrice
     PlayerShopModData.Cart = {}
@@ -425,6 +429,6 @@ function S4Shop.SyncShop(player, args)
         sendServerCommand(player, "S4SD", "SyncResult", {success = false, hadChanges = false})
         return
     end
-    local success, hadChanges = applyShopDataFromLua(true, true)
+    local success, hadChanges = applyShopDataFromLua(true, false)
     sendServerCommand(player, "S4SD", "SyncResult", {success = success, hadChanges = hadChanges})
 end

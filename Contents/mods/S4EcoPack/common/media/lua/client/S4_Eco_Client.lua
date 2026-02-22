@@ -31,6 +31,7 @@ local function reloadOpenShopWindows(modKey)
     end
 
     safeReload(ComUI.GoodShop, modKey)
+    safeReload(ComUI.VehicleShop, modKey)
     safeReload(ComUI.GoodShopAdmin, modKey)
 end
 
@@ -65,6 +66,8 @@ function S4_Eco_Client.OnConnected()
     ModData.request("S4_PlayerXpData")
     -- Server Data
     ModData.request("S4_ServerData")
+
+    S4_Eco_Client.RegisterMoveableATMs()
 end
 Events.OnConnected.Add(S4_Eco_Client.OnConnected)
 
@@ -107,6 +110,40 @@ local Object_Range = 10
 -- local Computer_LightList = {}
 local Computer_Sprite = {"appliances_com_01_72", "appliances_com_01_73", "appliances_com_01_74", "appliances_com_01_75",
                          "appliances_com_01_76", "appliances_com_01_77", "appliances_com_01_78", "appliances_com_01_79"}
+
+local function setSpriteMoveableWeight(spriteName, weight)
+    if not spriteName or not weight then
+        return
+    end
+    local sprite = getSprite(spriteName)
+    if not sprite or not sprite.getProperties then
+        return
+    end
+    local props = sprite:getProperties()
+    if not props or not props.Set then
+        return
+    end
+
+    props:Set("IsMoveAble", "true")
+    props:Set("PickUpWeight", tostring(weight))
+end
+
+function S4_Eco_Client.RegisterMoveableATMs()
+    -- Standing ATM (heavier)
+    local normalATM = {"location_business_bank_01_64", "location_business_bank_01_65", "location_business_bank_01_66",
+                       "location_business_bank_01_67"}
+    -- Wall ATM (lighter)
+    local wallATM = {"location_business_bank_01_68", "location_business_bank_01_69", "location_business_bank_01_70",
+                     "location_business_bank_01_71"}
+
+    for i = 1, #normalATM do
+        setSpriteMoveableWeight(normalATM[i], 40)
+    end
+    for i = 1, #wallATM do
+        setSpriteMoveableWeight(wallATM[i], 25)
+    end
+end
+Events.OnGameStart.Add(S4_Eco_Client.RegisterMoveableATMs)
 
 function S4_Eco_Client.ObjectEffect()
     local Multi = false

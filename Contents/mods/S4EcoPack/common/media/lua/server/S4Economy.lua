@@ -64,6 +64,55 @@ function S4Economy.AddMoney(player, args)
     ModData.transmit("S4_CardData")
 end
 
+-- Mission reward deposit to player's main card.
+function S4Economy.AddMissionReward(player, args)
+    if not player then
+        return
+    end
+
+    local userName = player:getUsername()
+    local playerDataAll = ModData.get("S4_PlayerData")
+    local cardDataAll = ModData.get("S4_CardData")
+    local cardLogAll = ModData.get("S4_CardLog")
+    if not playerDataAll or not cardDataAll or not cardLogAll then
+        return
+    end
+
+    local playerData = playerDataAll[userName]
+    if not playerData or not playerData.MainCard then
+        return
+    end
+
+    local cardNum = playerData.MainCard
+    local account = cardDataAll[cardNum]
+    local cardLog = cardLogAll[cardNum]
+    if not account or not cardLog then
+        return
+    end
+
+    local amount = math.floor(tonumber(args and args[1]) or 0)
+    if amount < 200 then
+        amount = 200
+    elseif amount > 500 then
+        amount = 500
+    end
+
+    account.Money = account.Money + amount
+
+    local logTime = (args and args[2]) or S4_Utils.getLogTime()
+    local logTimeMin = S4_Utils.getLogTimeMin(logTime)
+    cardLog[logTime] = {
+        Type = "Deposit",
+        Money = amount,
+        Sender = "S4 Pager Jobs",
+        Receiver = userName,
+        DisplayTime = logTimeMin
+    }
+
+    ModData.transmit("S4_CardData")
+    ModData.transmit("S4_CardLog")
+end
+
 -- Decrease card balance
 function S4Economy.RemoveMoney(player, args)
     local CardNum = args[1]

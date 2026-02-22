@@ -21,8 +21,8 @@ function S4_ATM_Transfer_Cash:initialise()
     end
     self.AtmUI.MenuBtn4.internal = "Transfer_Ok"
     self.AtmUI.MenuBtn4:setTitle(getText("IGUI_S4_ATM_Transfer_Ok"))
-    self.AtmUI.MenuBtn5.internal = "Undo"
-    self.AtmUI.MenuBtn5:setTitle(getText("IGUI_S4_ATM_Cancel"))
+    self.AtmUI.MenuBtn5.internal = "TransferCash_Return"
+    self.AtmUI.MenuBtn5:setTitle(getText("IGUI_S4_ATM_ReturnCash"))
     self.AtmUI.MenuBtn6.internal = "Undo"
     self.AtmUI.MenuBtn6:setTitle(getText("IGUI_S4_ATM_Undo"))
     self.AtmUI.MenuBtn2:setVisible(false)
@@ -33,6 +33,12 @@ function S4_ATM_Transfer_Cash:initialise()
 
     self.CashValue = 0
     self.CashItems = {}
+    
+    self.Username = self.player:getUsername()
+    local AtmModData = self.AtmUI.Obj:getModData()
+    if AtmModData.S4_PendingTransfers and AtmModData.S4_PendingTransfers[self.Username] then
+        self.CashValue = AtmModData.S4_PendingTransfers[self.Username].Value or 0
+    end
 end
 
 function S4_ATM_Transfer_Cash:createChildren()
@@ -159,6 +165,14 @@ function S4_ATM_Transfer_Cash:AtcionTransfer()
                     local ReceiverCardNum = selectedData.MainCard
                     local LogTime = S4_Utils.getLogTime()
                     sendClientCommand("S4ED", "TransferCash", {ReceiverCardNum, self.CashValue, LogTime})
+                    
+                    -- Clear Pending
+                    local AtmModData = self.AtmUI.Obj:getModData()
+                    if AtmModData.S4_PendingTransfers then
+                        AtmModData.S4_PendingTransfers[self.Username] = nil
+                        S4_Utils.SnycObject(self.AtmUI.Obj)
+                    end
+
                     -- Initialization and main screen
                     self.CashValue = 0
                     self.CashItems = {}
@@ -174,16 +188,48 @@ function S4_ATM_Transfer_Cash:AtcionTransfer()
         self:setMsg(getText("IGUI_S4_ATM_Msg_Transfer_ReceiverFail"))
     end
 end
-
 function S4_ATM_Transfer_Cash:onMouseUp_Insert()
     ISPanel.onMouseUp(self, x, y)
     if ISMouseDrag.dragging then
         local items = S4_Utils.getMoveItemTable(ISMouseDrag.dragging)
         if #items > 0 then
+            local AtmModData = self.TransferUI.AtmUI.Obj:getModData()
+            if not AtmModData.S4_PendingTransfers then AtmModData.S4_PendingTransfers = {} end
+            if not AtmModData.S4_PendingTransfers[self.TransferUI.Username] then 
+                AtmModData.S4_PendingTransfers[self.TransferUI.Username] = { Value = 0, Counts = {} }
+            end
+            local Pending = AtmModData.S4_PendingTransfers[self.TransferUI.Username]
+
             for _, item in pairs(items) do
-                if item and S4_Setting.MoneyList[item:getFullType()] then
-                    self.TransferUI.CashValue = self.TransferUI.CashValue + S4_Setting.MoneyList[item:getFullType()]
-                    table.insert(self.TransferUI.CashItems, item)
+                local fullType = item:getFullType()
+                local val = 0
+                local isConsolidated = false
+                if item:hasModData() and item:getModData().S4_ConsolidatedValue then
+                    val = item:getModData().S4_ConsolidatedValue
+                    isConsolidated = true
+                elseif S4_Setting.MoneyList[fullType] then
+                    val = S4_Setting.MoneyList[fullType]
+                elseif fullType == "Base.Money" or fullType == "Base.MoneyBundle" then
+                    val = S4_Utils.getVanillaMoneyValue(item)
+                    if val == -1 then -- Dirty money
+                        if self.TransferUI.player.setHaloNote then
+                            self.TransferUI.player:setHaloNote(getText("IGUI_S4_ATM_Msg_DirtyMoney"), 255, 60, 60, 300)
+                        end
+                        val = 0
+                    end
+                end
+
+                if val > 0 or fullType == "Base.Money" or fullType == "Base.MoneyBundle" then
+                    self.TransferUI.CashValue = self.TransferUI.CashValue + val
+                    
+                    Pending.Value = Pending.Value + val
+                    if isConsolidated then
+                        if not Pending.ConsolidatedItems then Pending.ConsolidatedItems = {} end
+                        table.insert(Pending.ConsolidatedItems, {t = fullType, v = val})
+                    else
+                        Pending.Counts[fullType] = (Pending.Counts[fullType] or 0) + 1
+                    end
+
                     if item:getWorldItem() then
                         item:getWorldItem():getSquare():transmitRemoveItemFromSquare(item:getWorldItem())
                         ISInventoryPage.dirtyUI()
@@ -196,7 +242,31 @@ function S4_ATM_Transfer_Cash:onMouseUp_Insert()
                     end
                 end
             end
+            S4_Utils.SnycObject(self.TransferUI.AtmUI.Obj)
         end
+    end
+end
+
+function S4_ATM_Transfer_Cash:ActionReturn()
+    local AtmModData = self.AtmUI.Obj:getModData()
+    if AtmModData.S4_PendingTransfers and AtmModData.S4_PendingTransfers[self.Username] then
+        local Pending = AtmModData.S4_PendingTransfers[self.Username]
+        local Inv = self.player:getInventory()
+        for type, count in pairs(Pending.Counts) do
+            Inv:AddItems(type, count)
+        end
+        if Pending.ConsolidatedItems then
+            for _, data in ipairs(Pending.ConsolidatedItems) do
+                local item = Inv:AddItem(data.t)
+                item:getModData().S4_ConsolidatedValue = data.v
+                item:setName(tostring(data.v) .. " Bucks")
+                S4_Utils.SnycObject(item)
+            end
+        end
+        AtmModData.S4_PendingTransfers[self.Username] = nil
+        S4_Utils.SnycObject(self.AtmUI.Obj)
+        self.CashValue = 0
+        self:setMsg(getText("IGUI_S4_ATM_Msg_Deposit_Returned"))
     end
 end
 
@@ -223,14 +293,6 @@ function S4_ATM_Transfer_Cash:setTitleInfo(Title, Info)
 end
 
 function S4_ATM_Transfer_Cash:close()
-    if #self.CashItems > 0 then
-        for _, item in pairs(self.CashItems) do
-            local Inv = self.player:getInventory()
-            Inv:AddItem(item)
-        end
-        self.CashValue = 0
-        self.CashItems = {}
-    end
     self:setVisible(false)
     self:removeFromUIManager()
 end

@@ -53,4 +53,53 @@ module Base {
 			item 1 S4Item.Signal,
 		}
 	}
+
+    craftRecipe CraftS4VehiclesFlare
+	{
+        timedAction = DismantleElectrical,
+		Time = 100,
+		SkillRequired = Electricity:2,
+		Tags = AnySurfaceCraft,
+        category = Electrical,
+		AutoLearnAny = Electricity:4,
+		xpAward = Electricity:2,
+		inputs
+		{
+			item 3 [Base.ElectricWire] flags[NoBrokenItems],
+			item 2 [Base.ElectronicsScrap] flags[NoBrokenItems],
+			item 2 [Base.Receiver] flags[NoBrokenItems],
+			item 1 [Base.RadioTransmitter] flags[NoBrokenItems],
+			item 8 [Base.Screws] flags[NoBrokenItems],
+			item 1 tags[Aluminum] flags[NoBrokenItems],
+			item 1 tags[Screwdriver] mode:keep flags[MayDegradeLight;NoBrokenItems],
+		}
+		outputs
+		{
+			item 1 S4Item.VehiclesFlare,
+		}
+	}
+
+    craftRecipe CraftS4SatelliteDish
+	{
+        timedAction = DismantleElectrical,
+		Time = 200,
+		SkillRequired = MetalWelding:4;Electricity:2,
+		Tags = AnySurfaceCraft,
+        category = Metalworking,
+		xpAward = MetalWelding:3;Electricity:2,
+		inputs
+		{
+			item 8 [Base.SheetMetal] flags[NoBrokenItems],
+			item 3 [Base.MetalBar] flags[NoBrokenItems],
+			item 1 [Base.RadioTransmitter] flags[NoBrokenItems],
+			item 1 [Base.Receiver] flags[NoBrokenItems],
+			item 4 [Base.ElectricWire] flags[NoBrokenItems],
+			item 1 [Base.BlowTorch] mode:keep flags[MayDegradeLight;NoBrokenItems],
+			item 1 [Base.WeldingMask] mode:keep flags[NoBrokenItems],
+		}
+		outputs
+		{
+			item 1 Base.Mov_SatelliteDish,
+		}
+	}
 }

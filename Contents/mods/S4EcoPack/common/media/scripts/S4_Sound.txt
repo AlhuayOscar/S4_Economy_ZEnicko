@@ -18,12 +18,78 @@ module Base {
         }
     }
 
+    sound ATMBeep {
+        category = Object,
+        clip {
+            file = media/sound/QoL/ATMbeep.mp3,
+            volume = 0.5,
+        }
+    }
+
+    sound ATMGoodbye {
+        category = Object,
+        clip {
+            file = media/sound/QoL/goodbyeMachine.wav,
+            volume = 0.55,
+        }
+    }
+
     sound S4_BootingSound { 
         category = Object, 
 
         clip { 
             file = media/sound/S4_BootingSound.ogg,
             volume = 0.5,
+        }
+    }
+    sound S4_Typing {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/typing.mp3,
+            volume = 0.5,
+            looped = true,
+        }
+    }
+
+    sound pageGrab {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/pagerGrab.wav,
+            volume = 0.6,
+        }
+    }
+
+    sound AlarmGoesBoom {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/AlarmGoesBoom.mp3,
+            volume = 0.8,
+            looped = true,
+        }
+    }
+
+    sound ThisisARobbery {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/ThisIsARobbery.mp3,
+            volume = 0.9,
+        }
+    }
+
+    sound RazormindTest {
+        category = Object,
+        clip {
+            file = media/sound/Jobs/RazormindTEST.mp3,
+            volume = 0.7,
+            looped = true,
+        }
+    }
+
+    sound S4_QoL_ButtonPush {
+        category = Object,
+        clip {
+            file = media/sound/QoL/buttonPush.mp3,
+            volume = 0.6,
         }
     }
 }

@@ -149,7 +149,7 @@ function S4_IE_Twitboid:createChildren()
         bReboid:initialise()
         postPanel:addChild(bReboid)
         
-        local likes = ZomboidRand(0, 500)
+        local likes = ZombRand(0, 500)
         local bLike = ISButton:new(150, by, btnW, 20, "<3 " .. likes, self, S4_IE_Twitboid.onAction)
         bLike.internal = "like"
         bLike.backgroundColor = {r=0, g=0, b=0, a=0}

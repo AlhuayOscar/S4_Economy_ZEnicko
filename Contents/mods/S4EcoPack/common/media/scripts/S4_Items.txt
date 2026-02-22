@@ -1,8 +1,4 @@
 module S4Item {
-	imports {
-		Base
-	}
-
     /* Dinero de S4 */
     item Money1
     {
@@ -11,7 +7,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "$1",
         Icon = Money,
-        WorldStaticModel = Money,
     }
 	item Money100
     {
@@ -20,7 +15,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "$100",
         Icon = Money,
-        WorldStaticModel = Money,
     }
 	item Money10000
     {
@@ -29,7 +23,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "$10000",
         Icon = Money,
-        WorldStaticModel = Money,
     }
 	item Money1000
     {
@@ -38,7 +31,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "$1000",
         Icon = Money,
-        WorldStaticModel = Money,
     }
     item Money1x100
     {
@@ -47,7 +39,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "Bundle of $100",
         Icon = Money_Stack,
-        WorldStaticModel = MoneyBundle,
     }
     item Money100x100
     {
@@ -56,7 +47,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "Bundle of $10000",
         Icon = Money_Stack,
-        WorldStaticModel = MoneyBundle,
     }
     item Money10000x100
     {
@@ -65,7 +55,6 @@ module S4Item {
         Type = Normal,
         DisplayName = "Bundle of $1000000",
         Icon = Money_Stack,
-        WorldStaticModel = MoneyBundle,
     }
 	item Money1000x100
     {
@@ -74,107 +63,24 @@ module S4Item {
         Type = Normal,
         DisplayName = "Bundle of $100000",
         Icon = Money_Stack,
-        WorldStaticModel = MoneyBundle,
-    }
-
-    /* Billetera Equipada (S4Wallet) */
-    item S4Wallet
-    {
-        Type = InventoryContainer,
-        DisplayName = Leather Wallet (Hooked),
-        Icon = Wallet,
-        Weight = 0.05,
-        Capacity = 10,
-        WeightReduction = 80,
-        CanBeEquipped = Inventory,
-        Tooltip = Tooltip_S4Wallet,
     }
 
     /* Otros ítems */
-    item CardReader {
-		Type = Normal,
-		Icon = S4_CardReader,
-		Weight = 0.5,
-		DisplayName = CardReader,
-		WorldStaticModel = S4Model.CardReader,
-	}
-    item Signal {
-		Type = Normal,
-		Icon = S4_Signal,
-		Weight = 1,
-		DisplayName = Signal,
-		WorldStaticModel = S4Model.Signal,
-	}
-    item VehiclesFlare {
-		Type = Normal,
-		Icon = S4_Signal,
-		Weight = 1,
-		DisplayName = Vehicles Flare,
-		WorldStaticModel = S4Model.Signal,
-	}
+    item CardReader { Type = Normal, Icon = S4_CardReader, Weight = 0.5, DisplayName = CardReader }
+    item Signal { Type = Normal, Icon = S4_Signal, Weight = 1, DisplayName = Signal }
+    item VehiclesFlare { Type = Normal, Icon = S4_Signal, Weight = 1, DisplayName = Vehicles Flare }
+    item SellPackingBox { Type = Normal, Icon = S4_Box, Weight = 0, DisplayName = "PackingBox(Sell)" }
+    item BuyPackingBox { Type = Normal, Icon = S4_Box, Weight = 0, DisplayName = "PackingBox(Buy)" }
 
-    item SellPackingBox {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 0,
-		DisplayName = PackingBox(Sell),
-		WorldStaticModel = S4Model.PackingBox,
-	}
-    item BuyPackingBox {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 0,
-		DisplayName = PackingBox(Buy),
-		WorldStaticModel = S4Model.PackingBox,
-	}
-
-    /* AirDrop Boxes */
-    item AirDropBox_Weapon {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
-    item AirDropBox_Ammo {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
-    item AirDropBox_Food {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
-    item AirDropBox_Medical {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
-    item AirDropBox_Materials {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
-    item AirDropBox_Etc {
-		Type = Normal,
-		Icon = S4_Box,
-		Weight = 500,
-		DisplayName = AirDropBox,
-		WorldStaticModel = S4Model.AirDropBox,
-	}
+    /* AirDrops */
+    item AirDropBox_Weapon { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
+    item AirDropBox_Ammo { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
+    item AirDropBox_Food { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
+    item AirDropBox_Medical { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
+    item AirDropBox_Materials { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
+    item AirDropBox_Etc { Type = Normal, Icon = S4_Box, Weight = 500, DisplayName = AirDropBox }
 }
 
 module Base {
-    item MoneyBundle {
-        Weight = 0.18,
-    }
+    item MoneyBundle { Weight = 0.18 }
 }

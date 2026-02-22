@@ -116,6 +116,10 @@ end
 function S4_Computer_Main:createChildren()
     ISPanel.createChildren(self)
 
+    S4_Category.ComputerIconData["Twitboid"] = {
+        Name = "Twitboid",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+    }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
@@ -381,20 +385,37 @@ function S4_Computer_Main:BtnClick(Button)
         end
         self.TopApp = self.MyCom
     elseif internal == "MyDoc" then
-        -- if self.MyDoc then
-        --     if not self.MyDoc:isVisible() then
-        --         self.MyDoc:setVisible(true)
-        --     end
-        --     self.MyDoc:bringToTop()
-        -- else
-        --     self.MyDoc = S4_System:new(self)
-        --     self.MyDoc:initialise()
-        --     self.MyDoc.TitleName = "MyDoc UI Test"
-        --     self.MyDoc.PageType = internal
-        --     self:addChild(self.MyDoc)
-        --     self:AddTaskBar(self.MyDoc)
-        -- end
-        -- self.TopApp = self.MyDoc
+        if self.MyDoc then
+            if not self.MyDoc:isVisible() then
+                self.MyDoc:setVisible(true)
+            end
+            self.MyDoc:bringToTop()
+        else
+            self.MyDoc = S4_InternetExplorer:new(self)
+            self.MyDoc:initialise()
+            self.MyDoc.TitleName = "My Documents - Internet Explorer"
+            self.MyDoc.AddressText = "file://C:/Users/" .. self.player:getUsername() .. "/Documents"
+            self.MyDoc.PageType = internal
+            self:addChild(self.MyDoc)
+            self:AddTaskBar(self.MyDoc)
+        end
+        self.TopApp = self.MyDoc
+    elseif internal == "Twitboid" then
+        if self.Twitboid then
+            if not self.Twitboid:isVisible() then
+                self.Twitboid:setVisible(true)
+            end
+            self.Twitboid:bringToTop()
+        else
+            self.Twitboid = S4_InternetExplorer:new(self)
+            self.Twitboid:initialise()
+            self.Twitboid.TitleName = "Twitboid - Internet Explorer"
+            self.Twitboid.AddressText = "http://twitboid.com/home"
+            self.Twitboid.PageType = internal
+            self:addChild(self.Twitboid)
+            self:AddTaskBar(self.Twitboid)
+        end
+        self.TopApp = self.Twitboid
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then

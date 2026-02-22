@@ -4,8 +4,9 @@ function S4_IE_MyDoc:new(IEUI, x, y, width, height)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
     self.__index = self
-    o.backgroundColor = {r=10/255, g=15/255, b=25/255, a=1} -- Dark slate
-    o.borderColor = {r=0, g=1, b=1, a=0.3} -- Cyan border (Hitech)
+    -- Tech/CRT background color
+    o.backgroundColor = {r=0.02, g=0.08, b=0.05, a=1}
+    o.borderColor = {r=0, g=0.6, b=0.4, a=0.8}
     o.IEUI = IEUI
     o.ComUI = IEUI.ComUI
     o.player = IEUI.player
@@ -18,109 +19,187 @@ end
 
 function S4_IE_MyDoc:createChildren()
     ISPanel.createChildren(self)
+    -- Instead of using static labels for everything, we'll draw some elements in render
+    -- But we will use labels for text to simplify font handling
     
     local stats = S4_PlayerStats.getStats(self.player)
+    local margin = 20
     
-    -- Main Grid
-    local margin = 15
-    local panelW = (self:getWidth() - (margin * 3)) / 2
-    local topH = 200
+    local pWidth = self:getWidth()
+    local pHeight = self:getHeight()
     
-    -- Panel 1: Stats & Karma (Left Top)
-    local p1 = ISPanel:new(margin, margin, panelW, topH)
-    p1.backgroundColor = {r=0, g=0.1, b=0.2, a=0.5}
-    p1.borderColor = {r=0, g=0.5, b=1, a=1}
-    self:addChild(p1)
+    local leftW = (pWidth / 2) - margin * 1.5
+    local rightW = leftW
     
-    p1:addChild(ISLabel:new(10, 10, S4_UI.FH_L, "SURVIVOR DOSSIER", 0, 1, 1, 1, UIFont.Large, true))
-    p1:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "ID: " .. self.player:getUsername(), 0.8, 0.8, 0.8, 1, UIFont.Small, true))
-    p1:addChild(ISLabel:new(10, 60, S4_UI.FH_S, "Status: Alive", 0, 1, 0, 1, UIFont.Small, true))
+    -- LEFT PANEL: KARMA & FACTIONS
+    self.LeftPanel = ISPanel:new(margin, margin, leftW, pHeight - margin*2)
+    self.LeftPanel.backgroundColor = {r=0, g=0.05, b=0.02, a=0.8}
+    self.LeftPanel.borderColor = {r=0.2, g=0.8, b=0.6, a=0.5}
+    self:addChild(self.LeftPanel)
     
-    -- Karma
-    local kmY = 90
-    p1:addChild(ISLabel:new(10, kmY, S4_UI.FH_M, "MORAL ALIGNMENT", 0.5, 0.8, 1, 1, UIFont.Medium, true))
+    -- Title
+    self.LeftPanel:addChild(ISLabel:new(20, 15, S4_UI.FH_L, "KARMA METER", 0.5, 1, 0.8, 1, UIFont.Large, true))
     
-    local karmaText = "Neutral Worker"
-    local karmaColor = {r=0.6, g=0.6, b=0.6}
-    if stats.Karma > 80 then karmaText = "Guardian of Knox"; karmaColor = {r=0, g=1, b=1}
-    elseif stats.Karma > 30 then karmaText = "Good Samaritan"; karmaColor = {r=0, g=0.8, b=0}
-    elseif stats.Karma < -80 then karmaText = "Public Enemy #1"; karmaColor = {r=1, g=0, b=0}
-    elseif stats.Karma < -30 then karmaText = "Outlaw Scavenger"; karmaColor = {r=0.8, g=0.4, b=0}
-    end
+    -- We will draw the Karma bar in leftpanel:render
     
-    p1:addChild(ISLabel:new(10, kmY + 25, S4_UI.FH_L, karmaText, karmaColor.r, karmaColor.g, karmaColor.b, 1, UIFont.Large, true))
-    p1:addChild(ISLabel:new(10, kmY + 50, S4_UI.FH_S, "Rating: " .. stats.Karma .. "/100", 0.5, 0.5, 0.5, 1, UIFont.Small, true))
-
-
-    -- Panel 2: Factions (Right Top)
-    local p2 = ISPanel:new(margin * 2 + panelW, margin, panelW, topH)
-    p2.backgroundColor = {r=0, g=0.1, b=0.2, a=0.5}
-    p2.borderColor = {r=0, g=0.5, b=1, a=1}
-    self:addChild(p2)
+    local factionY = 250
+    self.LeftPanel:addChild(ISLabel:new(20, factionY, S4_UI.FH_M, "FACTION INTEL", 0.4, 0.8, 0.6, 1, UIFont.Medium, true))
     
-    p2:addChild(ISLabel:new(10, 10, S4_UI.FH_M, "FACTION INTEL", 0.5, 0.8, 1, 1, UIFont.Medium, true))
-    
-    local yF = 40
+    factionY = factionY + 40
+    local i = 0
     for faction, rep in pairs(stats.Factions) do
         local fName = getText("IGUI_S4_Faction_" .. faction)
-        local rCol = {r=0.6, g=0.6, b=0.6}
-        local rTxt = "Neutral"
-        if rep > 50 then rCol={r=0,g=1,b=0}; rTxt="Ally"
-        elseif rep < -50 then rCol={r=1,g=0,b=0}; rTxt="Hostile" end
-        
-        p2:addChild(ISLabel:new(10, yF, S4_UI.FH_S, fName .. ":", 0.8, 0.8, 0.8, 1, UIFont.Small, true))
-        p2:addChild(ISLabel:new(150, yF, S4_UI.FH_S, rTxt .. " ["..rep.."]", rCol.r, rCol.g, rCol.b, 1, UIFont.Small, true))
-        yF = yF + 25
-    end
-
-
-    -- Panel 3: Collected Files / Database (Bottom Full Width)
-    local p3H = self:getHeight() - topH - (margin * 3)
-    local p3 = ISPanel:new(margin, topH + (margin * 2), self:getWidth() - (margin * 2), p3H)
-    p3.backgroundColor = {r=0, g=0.05, b=0.1, a=0.8}
-    p3.borderColor = {r=0, g=0.5, b=1, a=0.5}
-    self:addChild(p3)
-    
-    p3:addChild(ISLabel:new(10, 10, S4_UI.FH_M, "DECRYPTED FILES & LOGS", 0, 1, 0.5, 1, UIFont.Medium, true))
-    
-    -- Mockup File List
-    local fileY = 40
-    local files = {
-        "[AUDIO] Military Comms - Day 3",
-        "[MEMO] Patient 0 - Spiffo's Kitchen",
-        "[EMAIL] Evacuation Orders (Classified)",
-        "[LOG] Subject 14 Escape."
-    }
-    
-    for i, file in ipairs(files) do
-        local fBtn = ISButton:new(10, fileY, 300, 20, file, self, S4_IE_MyDoc.onFileClick)
-        fBtn.backgroundColor = {r=0, g=0, b=0, a=0}
-        fBtn.borderColor = {r=0, g=0, b=0, a=0}
-        fBtn.textColor = {r=0.5, g=0.8, b=1, a=1}
-        fBtn:initialise()
-        p3:addChild(fBtn)
-        fileY = fileY + 25
+        self.LeftPanel:addChild(ISLabel:new(20, factionY + (i*50), S4_UI.FH_S, fName, 0.8, 0.9, 0.8, 1, UIFont.Small, true))
+        -- Bar will be drawn in render
+        i = i + 1
     end
     
-    -- Decisions timeline
-    p3:addChild(ISLabel:new(350, 10, S4_UI.FH_M, "TIMELINE (EVENTS)", 0.8, 0.8, 0, 1, UIFont.Medium, true))
-    local tY = 40
+    -- RIGHT PANEL: DECISIONS TIMELINE
+    self.RightPanel = ISPanel:new(margin*2 + leftW, margin, rightW, pHeight - margin*2)
+    self.RightPanel.backgroundColor = {r=0, g=0.05, b=0.02, a=0.8}
+    self.RightPanel.borderColor = {r=0.2, g=0.8, b=0.6, a=0.5}
+    self:addChild(self.RightPanel)
+    
+    self.RightPanel:addChild(ISLabel:new(20, 15, S4_UI.FH_L, "DECISIONS TIMELINE", 0.5, 1, 0.8, 1, UIFont.Large, true))
+    
+    local tY = 70
     local count = 0
+    
+    -- Helper local table
+    local decList = {}
     for k, v in pairs(stats.Decisions) do
-        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "- " .. k .. ": " .. tostring(v), 0.7, 0.7, 0.7, 1, UIFont.Small, true))
-        tY = tY + 20
-        count = count + 1
+        table.insert(decList, {name=k, value=tostring(v)})
     end
-    if count == 0 then
-        p3:addChild(ISLabel:new(350, tY, S4_UI.FH_S, "No major events recorded.", 0.4, 0.4, 0.4, 1, UIFont.Small, true))
+    
+    if #decList == 0 then
+        self.RightPanel:addChild(ISLabel:new(50, tY, S4_UI.FH_S, "No major events recorded.", 0.5, 0.5, 0.5, 1, UIFont.Small, true))
+    else
+        for _, dec in ipairs(decList) do
+            self.RightPanel:addChild(ISLabel:new(60, tY, S4_UI.FH_M, dec.name, 0.8, 1, 0.8, 1, UIFont.Medium, true))
+            
+            -- Result/Value
+            local valColor = {r=0.6, g=0.6, b=0.6}
+            local valText = dec.value
+            if type(dec.value) == "boolean" then valText = "Completed" end
+            
+            self.RightPanel:addChild(ISLabel:new(60, tY + 25, S4_UI.FH_S, valText, 0.6, 0.8, 1, 1, UIFont.Small, true))
+            
+            tY = tY + 70
+            count = count + 1
+            if tY > self.RightPanel:getHeight() - 50 then break end
+        end
     end
-end
-
-function S4_IE_MyDoc:onFileClick(btn)
-    -- Aquí se podría abrir un S4_System:new con el texto de la nota
-    self.ComUI:AddMsgBox("File Reader - Decrypted", false, "Content locked or corrupted.", false, false)
+    
+    -- Override renders to draw custom graphics
+    local origLeftRender = self.LeftPanel.render
+    self.LeftPanel.render = function(pnl)
+        origLeftRender(pnl)
+        
+        -- Draw custom Karma progress bar (horizontal gradient simulation)
+        local barX = 20
+        local barY = 80
+        local barW = pnl:getWidth() - 40
+        local barH = 30
+        
+        -- Background for bar
+        pnl:drawRect(barX, barY, barW, barH, 0.5, 0.1, 0.1, 0.1)
+        pnl:drawRectBorder(barX, barY, barW, barH, 1, 0.2, 0.8, 0.6)
+        
+        -- Current Karma Value
+        local plyStats = S4_PlayerStats.getStats(pnl.parent.player)
+        local karmaNormalized = (plyStats.Karma + 100) / 200 -- 0.0 to 1.0 (since karma is -100 to 100)
+        if karmaNormalized < 0 then karmaNormalized = 0 end
+        if karmaNormalized > 1 then karmaNormalized = 1 end
+        
+        local fillW = barW * karmaNormalized
+        local r, g, b = 1, 0.8, 0 -- Yellow default
+        if plyStats.Karma > 20 then
+            r, g, b = 0.2, 1, 0.2 -- Greenish
+        elseif plyStats.Karma < -20 then
+            r, g, b = 1, 0.2, 0.2 -- Redish
+        end
+        
+        pnl:drawRect(barX + 2, barY + 2, fillW - 4, barH - 4, 0.8, r, g, b)
+        
+        -- Karma Text
+        local kText = "NEUTRAL"
+        if plyStats.Karma > 80 then kText = "SAVIOR"
+        elseif plyStats.Karma > 30 then kText = "GOOD"
+        elseif plyStats.Karma < -80 then kText = "PSYCHOPATH"
+        elseif plyStats.Karma < -30 then kText = "BANDIT"
+        end
+        
+        pnl:drawTextCentre("KARMA: " .. kText .. " (" .. plyStats.Karma .. ")", pnl:getWidth() / 2, barY + barH + 15, r, g, b, 1, UIFont.Large)
+        
+        -- Draw Faction bars
+        local fYOffset = 315
+        for faction, rep in pairs(plyStats.Factions) do
+            local fbX = 20
+            local fbY = fYOffset
+            local fbW = pnl:getWidth() - 90
+            local fbH = 15
+            
+            pnl:drawRect(fbX, fbY, fbW, fbH, 0.4, 0, 0, 0)
+            pnl:drawRectBorder(fbX, fbY, fbW, fbH, 0.8, 0.4, 0.5, 0.5)
+            
+            local repNorm = (rep + 100) / 200
+            if repNorm < 0 then repNorm = 0 end
+            if repNorm > 1 then repNorm = 1 end
+            
+            local fR, fG, fB = 0.6, 0.6, 0.6
+            if rep > 20 then fR, fG, fB = 0.2, 0.8, 1
+            elseif rep < -20 then fR, fG, fB = 1, 0.3, 0.1 end
+            
+            pnl:drawRect(fbX + 1, fbY + 1, (fbW - 2) * repNorm, fbH - 2, 0.8, fR, fG, fB)
+            pnl:drawTextRight(tostring(rep) .. "%", fbX + fbW + 40, fbY - 2, fR, fG, fB, 1, UIFont.Small)
+            
+            fYOffset = fYOffset + 50
+        end
+    end
+    
+    local origRightRender = self.RightPanel.render
+    self.RightPanel.render = function(pnl)
+        origRightRender(pnl)
+        
+        local plyStats = S4_PlayerStats.getStats(pnl.parent.player)
+        
+        -- Draw the vertical connecting line for timeline
+        local tCount = 0
+        for k, _ in pairs(plyStats.Decisions) do tCount = tCount + 1 end
+        
+        if tCount > 0 then
+            local lineX = 35
+            local startY = 80
+            local endY = startY + ((tCount - 1) * 70)
+            if endY > pnl:getHeight() - 50 then endY = pnl:getHeight() - 50 end
+            
+            pnl:drawRect(lineX, startY, 4, endY - startY, 0.8, 0.2, 0.8, 0.5)
+            
+            -- Draw nodes
+            local nY = startY
+            for i = 1, tCount do
+                if nY > endY + 10 then break end
+                -- Node outer rect
+                pnl:drawRect(lineX - 4, nY - 4, 12, 12, 1, 0.1, 0.2, 0.1)
+                -- Node inner dot
+                pnl:drawRect(lineX - 2, nY - 2, 8, 8, 1, 0.4, 1, 0.6)
+                
+                nY = nY + 70
+            end
+        end
+    end
 end
 
 function S4_IE_MyDoc:render()
     ISPanel.render(self)
+    
+    -- CRT scanlines effect (simple alternating rows or overlay block)
+    -- This makes it look like Zomdows 88
+    local w = self:getWidth()
+    local h = self:getHeight()
+    
+    local numLines = math.floor(h / 4)
+    for i=0, numLines do
+        self:drawRect(0, i*4, w, 1, 0.05, 0, 0, 0)
+    end
 end

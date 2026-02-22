@@ -49,6 +49,7 @@ function S4_IE_Weather:createChildren()
         local btnSub = ISButton:new(20, y, 200, 40, "Subscribe Now", self, S4_IE_Weather.onSub)
         btnSub.backgroundColor = {r=0.2, g=0.4, b=0.8, a=1}
         btnSub.textColor = {r=1, g=1, b=1, a=1}
+        btnSub:initialise()
         self.ContentArea:addChild(btnSub)
     else
         self.ContentArea:addChild(ISLabel:new(20, y, S4_UI.FH_L, "7-Day Advanced Forecast (85% Precision)", 0.2, 0.3, 0.5, 1, UIFont.Large, true))
@@ -77,6 +78,7 @@ function S4_IE_Weather:createChildren()
             pnl:addChild(ISLabel:new(300, 18, S4_UI.FH_S, day.desc, 0.4, 0.4, 0.4, 1, UIFont.Small, true))
             
             local viewBtn = ISButton:new(pnl:getWidth() - 120, 10, 110, 30, "Hourly Breakdown", self, S4_IE_Weather.onHourly)
+            viewBtn:initialise()
             pnl:addChild(viewBtn)
             
             y = y + 60

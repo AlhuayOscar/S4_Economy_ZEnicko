@@ -42,24 +42,28 @@ function S4_IE_Crimeboid:createChildren()
     self.BtnMarket.internal = "Market"
     self.BtnMarket.backgroundColor = {r=0.2, g=0, b=0, a=1}
     self.BtnMarket.textColor = {r=1, g=0.2, b=0.2, a=1}
+    self.BtnMarket:initialise()
     self.NavBar:addChild(self.BtnMarket)
     
     self.BtnBounty = ISButton:new(20 + btnW, 5, btnW, 30, "[ Hit Contracts ]", self, S4_IE_Crimeboid.switchTab)
     self.BtnBounty.internal = "Bounty"
     self.BtnBounty.backgroundColor = {r=0.2, g=0, b=0, a=1}
     self.BtnBounty.textColor = {r=1, g=0.2, b=0.2, a=1}
+    self.BtnBounty:initialise()
     self.NavBar:addChild(self.BtnBounty)
 
     self.BtnIdentity = ISButton:new(30 + btnW*2, 5, btnW, 30, "[ Forged Identity ]", self, S4_IE_Crimeboid.switchTab)
     self.BtnIdentity.internal = "Identity"
     self.BtnIdentity.backgroundColor = {r=0.2, g=0, b=0, a=1}
     self.BtnIdentity.textColor = {r=1, g=0.2, b=0.2, a=1}
+    self.BtnIdentity:initialise()
     self.NavBar:addChild(self.BtnIdentity)
 
     self.BtnRecords = ISButton:new(40 + btnW*3, 5, btnW, 30, "[ Criminal Records ]", self, S4_IE_Crimeboid.switchTab)
     self.BtnRecords.internal = "Records"
     self.BtnRecords.backgroundColor = {r=0.2, g=0, b=0, a=1}
     self.BtnRecords.textColor = {r=1, g=0.2, b=0.2, a=1}
+    self.BtnRecords:initialise()
     self.NavBar:addChild(self.BtnRecords)
 
     -- Main Content Area
@@ -109,6 +113,7 @@ function S4_IE_Crimeboid:renderMarket()
         local btnBuy = ISButton:new(cw - 120, 15, 90, 30, "Buy $" .. S4_UI.getNumCommas(item.price), self, S4_IE_Crimeboid.onBuy)
         btnBuy.internal = "buy_" .. i
         btnBuy.backgroundColor = {r=0.4, g=0, b=0, a=1}
+        btnBuy:initialise()
         pnl:addChild(btnBuy)
         
         y = y + 70
@@ -140,6 +145,7 @@ function S4_IE_Crimeboid:renderBounty()
     
     local btnPut = ISButton:new(330, 180, 100, 30, "Place Hit", self, S4_IE_Crimeboid.onBounty)
     btnPut.backgroundColor = {r=0.6, g=0, b=0, a=1}
+    btnPut:initialise()
     self.ContentArea:addChild(btnPut)
 end
 
@@ -150,6 +156,7 @@ function S4_IE_Crimeboid:renderIdentity()
     
     local btnWipe = ISButton:new(10, 80, 200, 40, "Reset Karma to 0 ($50,000)", self, S4_IE_Crimeboid.onWipe)
     btnWipe.backgroundColor = {r=0, g=0.3, b=0.6, a=1}
+    btnWipe:initialise()
     self.ContentArea:addChild(btnWipe)
 end
 
@@ -174,6 +181,7 @@ function S4_IE_Crimeboid:renderRecords()
     local btnK = ISButton:new(cw - 220, 15, 200, 30, getText("IGUI_S4_Crime_ImproveKarma") .. " - $10,000", self, S4_IE_Crimeboid.onBribeKarma)
     btnK.backgroundColor = {r=0.4, g=0, b=0, a=1}
     if stats.Karma > 20 then btnK.enable = false; btnK.title = "Max Reached" end
+    btnK:initialise()
     kmPnl:addChild(btnK)
     
     y = y + 70
@@ -194,6 +202,7 @@ function S4_IE_Crimeboid:renderRecords()
         btnF.backgroundColor = {r=0.4, g=0, b=0, a=1}
         
         if rep > 20 then btnF.enable = false; btnF.title = "Max Reached" end
+        btnF:initialise()
         fPnl:addChild(btnF)
         
         y = y + 70

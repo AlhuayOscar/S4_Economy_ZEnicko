@@ -45,18 +45,21 @@ function S4_IE_Logistics:createChildren()
     self.BtnWarehouses.internal = "Warehouses"
     self.BtnWarehouses.backgroundColor = {r=0.7, g=0.7, b=0.75, a=1}
     self.BtnWarehouses.textColor = {r=0.1, g=0.1, b=0.1, a=1}
+    self.BtnWarehouses:initialise()
     self.NavBar:addChild(self.BtnWarehouses)
     
     self.BtnStocks = ISButton:new(20 + btnW, 5, btnW, 30, "[ Corporate Stocks ]", self, S4_IE_Logistics.switchTab)
     self.BtnStocks.internal = "Stocks"
     self.BtnStocks.backgroundColor = {r=0.7, g=0.7, b=0.75, a=1}
     self.BtnStocks.textColor = {r=0.1, g=0.1, b=0.1, a=1}
+    self.BtnStocks:initialise()
     self.NavBar:addChild(self.BtnStocks)
 
     self.BtnContracts = ISButton:new(30 + btnW*2, 5, btnW, 30, "[ Cargo Contracts ]", self, S4_IE_Logistics.switchTab)
     self.BtnContracts.internal = "Contracts"
     self.BtnContracts.backgroundColor = {r=0.7, g=0.7, b=0.75, a=1}
     self.BtnContracts.textColor = {r=0.1, g=0.1, b=0.1, a=1}
+    self.BtnContracts:initialise()
     self.NavBar:addChild(self.BtnContracts)
 
     -- Main Content Area
@@ -128,6 +131,7 @@ function S4_IE_Logistics:renderWarehouses()
         local btnOpen = ISButton:new(pnl:getWidth() - 100, 20, 80, 30, "Open", self, S4_IE_Logistics.onAction)
         btnOpen.backgroundColor = self.accentColor
         btnOpen.textColor = {r=1, g=1, b=1, a=1}
+        btnOpen:initialise()
         pnl:addChild(btnOpen)
         
         y = y + 80
@@ -136,6 +140,7 @@ function S4_IE_Logistics:renderWarehouses()
     local btnBuy = ISButton:new(15, y + 20, 200, 30, "Purchase New Warehouse ($15,000)", self, S4_IE_Logistics.onAction)
     btnBuy.backgroundColor = {r=0.2, g=0.6, b=0.2, a=1}
     btnBuy.textColor = {r=1, g=1, b=1, a=1}
+    btnBuy:initialise()
     self.ContentArea:addChild(btnBuy)
 end
 
@@ -178,12 +183,14 @@ function S4_IE_Logistics:renderStocks()
         btnSell.internal = st.symbol
         btnSell.backgroundColor = {r=0.9, g=0.9, b=0.9, a=1}
         if st.held < 10 then btnSell.enable = false end
+        btnSell:initialise()
         pnl:addChild(btnSell)
         
         local btnBuy = ISButton:new(cw - 80, 15, 60, 30, "Buy 10", self, S4_IE_Logistics.onActionBuy)
         btnBuy.internal = st.symbol
         btnBuy.backgroundColor = {r=0.2, g=0.6, b=0.2, a=1}
         btnBuy.textColor = {r=1, g=1, b=1, a=1}
+        btnBuy:initialise()
         pnl:addChild(btnBuy)
         
         y = y + 90
@@ -219,6 +226,7 @@ function S4_IE_Logistics:renderContracts()
     local btnOrder = ISButton:new(cw - 220, 15, 180, 30, "Order to Muldraugh ($5,000)", self, S4_IE_Logistics.onAction)
     btnOrder.backgroundColor = self.accentColor
     btnOrder.textColor = {r=1, g=1, b=1, a=1}
+    btnOrder:initialise()
     pnl:addChild(btnOrder)
 end
 

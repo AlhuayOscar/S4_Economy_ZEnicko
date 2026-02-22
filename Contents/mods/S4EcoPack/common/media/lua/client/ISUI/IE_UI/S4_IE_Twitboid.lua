@@ -136,6 +136,7 @@ function S4_IE_Twitboid:createChildren()
         bReply.backgroundColor = {r=0, g=0, b=0, a=0}
         bReply.borderColor = {r=0, g=0, b=0, a=0}
         bReply.textColor = {r=0.6, g=0.6, b=0.7, a=1}
+        bReply:initialise()
         postPanel:addChild(bReply)
         
         local bReboid = ISButton:new(70, by, btnW + 20, 20, "ReBoid", self, S4_IE_Twitboid.onAction)
@@ -143,6 +144,7 @@ function S4_IE_Twitboid:createChildren()
         bReboid.backgroundColor = {r=0, g=0, b=0, a=0}
         bReboid.borderColor = {r=0, g=0, b=0, a=0}
         bReboid.textColor = {r=0.6, g=0.8, b=0.6, a=1}
+        bReboid:initialise()
         postPanel:addChild(bReboid)
         
         local likes = math.random(0, 500)
@@ -151,6 +153,7 @@ function S4_IE_Twitboid:createChildren()
         bLike.backgroundColor = {r=0, g=0, b=0, a=0}
         bLike.borderColor = {r=0, g=0, b=0, a=0}
         bLike.textColor = {r=0.8, g=0.4, b=0.5, a=1}
+        bLike:initialise()
         postPanel:addChild(bLike)
         
         postPanel:setHeight(by + 30)

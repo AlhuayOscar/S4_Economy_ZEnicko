@@ -91,6 +91,7 @@ function S4_IE_Taxes:createChildren()
     local btnPay = ISButton:new(cW - 220, y + 35, 180, 40, "Submit Payment ($5750)", self, S4_IE_Taxes.onPay)
     btnPay.backgroundColor = {r=0.2, g=0.5, b=0.8, a=1}
     btnPay.textColor = {r=1, g=1, b=1, a=1}
+    btnPay:initialise()
     self.ContentArea:addChild(btnPay)
 end
 

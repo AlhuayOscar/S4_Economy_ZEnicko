@@ -117,6 +117,7 @@ function S4_IE_Zeddit:rebuildUI()
     logoBtn.backgroundColor = {r=1, g=1, b=1, a=1}
     logoBtn.textColor = self.baseColor
     logoBtn.borderColor = {r=1, g=1, b=1, a=1}
+    logoBtn:initialise()
     self.Banner:addChild(logoBtn)
     
     self.Banner:addChild(ISLabel:new(100, 10, S4_UI.FH_M, "The Front Page of Knox", 0.6, 0.6, 0.6, 1, UIFont.Medium, true))
@@ -142,6 +143,7 @@ function S4_IE_Zeddit:rebuildUI()
             btn.textColor = {r=0.2, g=0.2, b=0.2, a=1}
         end
         btn.borderColor = {r=0, g=0, b=0, a=0}
+        btn:initialise()
         self.Sidebar:addChild(btn)
         sy = sy + 30
     end
@@ -190,6 +192,7 @@ function S4_IE_Zeddit:renderFeed()
             tBtn.backgroundColor = {r=1, g=1, b=1, a=0}
             tBtn.borderColor = {r=0, g=0, b=0, a=0}
             tBtn.textColor = {r=0.1, g=0.1, b=0.1, a=1}
+            tBtn:initialise()
             pnl:addChild(tBtn)
             
             -- Comments count
@@ -206,6 +209,7 @@ function S4_IE_Zeddit:renderThread()
     local th = self.activeThread
     
     local backBtn = ISButton:new(20, 10, 100, 25, "< Back to Feed", self, S4_IE_Zeddit.onLogoClick)
+    backBtn:initialise()
     self.Content:addChild(backBtn)
     
     -- Main Post

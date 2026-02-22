@@ -54,6 +54,7 @@ function S4_IE_Recover:createChildren()
         local btnRec = ISButton:new(pnl:getWidth() - 180, 10, 170, 30, "Dispatch Team ($" .. c.price .. ")", self, S4_IE_Recover.onDebug)
         btnRec.backgroundColor = {r=0.5, g=0.1, b=0.1, a=1}
         btnRec.textColor = {r=1, g=1, b=1, a=1}
+        btnRec:initialise()
         pnl:addChild(btnRec)
         
         y = y + 60

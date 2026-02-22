@@ -58,6 +58,7 @@ function S4_IE_Recon:createChildren()
         buyBtn.internal = p.type
         buyBtn.backgroundColor = {r=0.2, g=0.4, b=0.2, a=1}
         buyBtn.textColor = {r=0.8, g=1, b=0.8, a=1}
+        buyBtn:initialise()
         pnl:addChild(buyBtn)
         
         y = y + 90

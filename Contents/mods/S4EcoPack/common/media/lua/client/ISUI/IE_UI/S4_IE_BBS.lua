@@ -64,6 +64,7 @@ function S4_IE_BBS:createChildren()
         local downBtn = ISButton:new(pnl:getWidth() - 130, 15, 120, 30, "DOWNLOAD", self, S4_IE_BBS.onDownload)
         downBtn.backgroundColor = {r=0, g=0.5, b=0, a=1}
         downBtn.textColor = {r=0, g=1, b=0, a=1}
+        downBtn:initialise()
         pnl:addChild(downBtn)
         
         y = y + 70

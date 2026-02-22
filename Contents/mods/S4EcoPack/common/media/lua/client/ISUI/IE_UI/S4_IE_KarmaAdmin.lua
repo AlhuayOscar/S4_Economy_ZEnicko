@@ -43,12 +43,15 @@ function S4_IE_KarmaAdmin:rebuildUI()
     self.ContentList:addChild(ISLabel:new(10, y, S4_UI.FH_M, "Current Karma: " .. stats.Karma, 0.8, 0.8, 1, 1, UIFont.Medium, true))
     
     local bKarmaPlus10 = ISButton:new(200, y - 5, 80, 30, "+10", self, S4_IE_KarmaAdmin.onKPlus)
+    bKarmaPlus10:initialise()
     bKarmaPlus10:initialise(); self.ContentList:addChild(bKarmaPlus10)
     
     local bKarmaMinus10 = ISButton:new(290, y - 5, 80, 30, "-10", self, S4_IE_KarmaAdmin.onKMinus)
+    bKarmaMinus10:initialise()
     bKarmaMinus10:initialise(); self.ContentList:addChild(bKarmaMinus10)
     
     local bKarmaReset = ISButton:new(380, y - 5, 80, 30, "Reset (0)", self, S4_IE_KarmaAdmin.onKReset)
+    bKarmaReset:initialise()
     bKarmaReset:initialise(); self.ContentList:addChild(bKarmaReset)
     
     y = y + 50
@@ -59,9 +62,11 @@ function S4_IE_KarmaAdmin:rebuildUI()
         self.ContentList:addChild(ISLabel:new(20, y, S4_UI.FH_S, faction .. ": " .. rep, 1, 1, 1, 1, UIFont.Small, true))
         
         local bFPlus = ISButton:new(200, y - 5, 60, 25, "+10", self, S4_IE_KarmaAdmin.onFPlus)
+        bFPlus:initialise()
         bFPlus.internal = faction; bFPlus:initialise(); self.ContentList:addChild(bFPlus)
 
         local bFMinus = ISButton:new(270, y - 5, 60, 25, "-10", self, S4_IE_KarmaAdmin.onFMinus)
+        bFMinus:initialise()
         bFMinus.internal = faction; bFMinus:initialise(); self.ContentList:addChild(bFMinus)
         
         y = y + 40
@@ -72,9 +77,11 @@ function S4_IE_KarmaAdmin:rebuildUI()
     y = y + 40
     
     local bDecA = ISButton:new(10, y, 200, 30, "Trigger 'Fled Ambush'", self, S4_IE_KarmaAdmin.onDec1)
+    bDecA:initialise()
     bDecA:initialise(); self.ContentList:addChild(bDecA)
     
     local bDecB = ISButton:new(220, y, 200, 30, "Trigger 'Saved Trader'", self, S4_IE_KarmaAdmin.onDec2)
+    bDecB:initialise()
     bDecB:initialise(); self.ContentList:addChild(bDecB)
     
     y = y + 40
@@ -82,12 +89,15 @@ function S4_IE_KarmaAdmin:rebuildUI()
     y = y + 40
     
     local bSpawnWH = ISButton:new(10, y, 200, 30, "Spawn Test Warehouse", self, S4_IE_KarmaAdmin.onSpawnWH)
+    bSpawnWH:initialise()
     bSpawnWH:initialise(); self.ContentList:addChild(bSpawnWH)
     
     local bAddStock = ISButton:new(220, y, 200, 30, "Add 10 SPIFF Stocks", self, S4_IE_KarmaAdmin.onAddStock)
+    bAddStock:initialise()
     bAddStock:initialise(); self.ContentList:addChild(bAddStock)
     
     local bRemStock = ISButton:new(430, y, 200, 30, "Remove 10 SPIFF Stocks", self, S4_IE_KarmaAdmin.onRemStock)
+    bRemStock:initialise()
     bRemStock:initialise(); self.ContentList:addChild(bRemStock)
 end
 

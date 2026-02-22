@@ -66,11 +66,13 @@ function S4_IE_Community:createChildren()
         local btnYes = ISButton:new(pnl:getWidth() - 150, 20, 60, 30, "Vote YES", self, S4_IE_Community.onVote)
         btnYes.backgroundColor = {r=0.2, g=0.6, b=0.2, a=1}
         btnYes.textColor = {r=1, g=1, b=1, a=1}
+        btnYes:initialise()
         pnl:addChild(btnYes)
 
         local btnNo = ISButton:new(pnl:getWidth() - 80, 20, 60, 30, "Vote NO", self, S4_IE_Community.onVote)
         btnNo.backgroundColor = {r=0.8, g=0.2, b=0.2, a=1}
         btnNo.textColor = {r=1, g=1, b=1, a=1}
+        btnNo:initialise()
         pnl:addChild(btnNo)
         
         y = y + 90

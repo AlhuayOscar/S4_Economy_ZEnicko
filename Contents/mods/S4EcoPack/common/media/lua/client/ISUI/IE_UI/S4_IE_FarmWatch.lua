@@ -49,6 +49,7 @@ function S4_IE_FarmWatch:createChildren()
         local btnSub = ISButton:new(20, y, 250, 40, "Subscribe ($500/mo)", self, S4_IE_FarmWatch.onSub)
         btnSub.backgroundColor = {r=0.2, g=0.6, b=0.2, a=1}
         btnSub.textColor = {r=1, g=1, b=1, a=1}
+        btnSub:initialise()
         self.ContentArea:addChild(btnSub)
     else
         self.ContentArea:addChild(ISLabel:new(20, y, S4_UI.FH_M, "Active Scans: Knox County Agricultural Blocks", 0.1, 0.4, 0.1, 1, UIFont.Medium, true))

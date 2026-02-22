@@ -54,6 +54,7 @@ function S4_IE_Repair:createChildren()
         local rBtn = ISButton:new(pnl:getWidth() - 160, 5, 150, 35, "Full Repair ($" .. item.cost .. ")", self, S4_IE_Repair.onDebug)
         rBtn.backgroundColor = {r=0.2, g=0.5, b=0.2, a=1}
         rBtn.textColor = {r=1, g=1, b=1, a=1}
+        rBtn:initialise()
         pnl:addChild(rBtn)
         
         y = y + 55

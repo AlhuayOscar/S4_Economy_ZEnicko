@@ -130,35 +130,35 @@ function S4_Computer_Main:createChildren()
     }
     S4_Category.ComputerIconData["Logistics"] = {
         Name = "S4 Logistics",
-        Icon = getTexture("media/textures/S4_Icon/Logistics.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Logistics.png")
     }
     S4_Category.ComputerIconData["Taxes"] = {
         Name = "S4 Regional Taxes",
-        Icon = getTexture("media/textures/S4_Icon/Taxes.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Taxes.png")
     }
     S4_Category.ComputerIconData["Community"] = {
         Name = "Community Hub",
-        Icon = getTexture("media/textures/S4_Icon/Community.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Community.png")
     }
     S4_Category.ComputerIconData["FarmWatch"] = {
         Name = "FarmWatch",
-        Icon = getTexture("media/textures/S4_Icon/FarmWatch.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_FarmWatch.png")
     }
     S4_Category.ComputerIconData["Recon"] = {
         Name = "Scout & Recon",
-        Icon = getTexture("media/textures/S4_Icon/Recon.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Recon.png")
     }
     S4_Category.ComputerIconData["Recover"] = {
         Name = "Corpse Recovery",
-        Icon = getTexture("media/textures/S4_Icon/RecoverBody.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_RecoverBody.png")
     }
     S4_Category.ComputerIconData["Repair"] = {
         Name = "Tool Repair",
-        Icon = getTexture("media/textures/S4_Icon/Repair.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Repair.png")
     }
     S4_Category.ComputerIconData["Weather"] = {
         Name = "Knox Weather",
-        Icon = getTexture("media/textures/S4_Icon/Weather.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Weather.png")
     }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
@@ -206,7 +206,7 @@ function S4_Computer_Main:createChildren()
     }
     S4_Category.ComputerIconData["VehicleShop"] = {
         Name = "Vehicle Shop",
-        Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Vehicle.png")
     }
 
     S4_Category.ComputerIconData["Jobs"] = {

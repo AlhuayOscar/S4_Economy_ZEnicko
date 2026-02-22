@@ -160,6 +160,10 @@ function S4_Computer_Main:createChildren()
         Name = "Knox Weather",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Weather.png")
     }
+    S4_Category.ComputerIconData["BBS"] = {
+        Name = "Knox BBS",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Network.png")
+    }
     S4_Category.ComputerIconData["MyCom"] = {
         Name = "My Computer",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
@@ -230,7 +234,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -633,6 +637,20 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Weather)
         end
         self.TopApp = self.Weather
+    elseif internal == "BBS" then
+        if self.BBS then
+            if not self.BBS:isVisible() then self.BBS:setVisible(true) end
+            self.BBS:bringToTop()
+        else
+            self.BBS = S4_InternetExplorer:new(self)
+            self.BBS:initialise()
+            self.BBS.TitleName = "Knox Telecom B.B.S. Terminal"
+            self.BBS.AddressText = "local://dialup_modem_com1"
+            self.BBS.PageType = internal
+            self:addChild(self.BBS)
+            self:AddTaskBar(self.BBS)
+        end
+        self.TopApp = self.BBS
     elseif internal == "KarmaAdmin" then
         if self.KarmaAdmin then
             if not self.KarmaAdmin:isVisible() then

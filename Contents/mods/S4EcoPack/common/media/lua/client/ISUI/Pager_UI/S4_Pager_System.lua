@@ -1761,7 +1761,7 @@ function S4_Pager_System.onZombieDead(zombie, player, opts)
             mission.zombieInventoryDropDone = true
             mission.zombieInventoryDropCode = code
             if player.setHaloNote then
-                player:setHaloNote("Se encontro algo... parece valioso", 245, 225, 140, 260)
+                player:setHaloNote("There's something here... Seems worthy...", 245, 225, 140, 260)
             end
         end
     end

@@ -3,6 +3,7 @@ module S4Item {
 		Base
 	}
 
+    /* Dinero de S4 */
     item Money1
     {
         DisplayCategory = Money,
@@ -76,6 +77,20 @@ module S4Item {
         WorldStaticModel = MoneyBundle,
     }
 
+    /* Billetera Equipada (S4Wallet) */
+    item S4Wallet
+    {
+        Type = InventoryContainer,
+        DisplayName = Leather Wallet (Hooked),
+        Icon = Wallet,
+        Weight = 0.05,
+        Capacity = 10,
+        WeightReduction = 80,
+        CanBeEquipped = Inventory,
+        Tooltip = Tooltip_S4Wallet,
+    }
+
+    /* Otros ítems */
     item CardReader {
 		Type = Normal,
 		Icon = S4_CardReader,
@@ -97,6 +112,7 @@ module S4Item {
 		DisplayName = Vehicles Flare,
 		WorldStaticModel = S4Model.Signal,
 	}
+
     item SellPackingBox {
 		Type = Normal,
 		Icon = S4_Box,
@@ -111,6 +127,8 @@ module S4Item {
 		DisplayName = PackingBox(Buy),
 		WorldStaticModel = S4Model.PackingBox,
 	}
+
+    /* AirDrop Boxes */
     item AirDropBox_Weapon {
 		Type = Normal,
 		Icon = S4_Box,
@@ -153,18 +171,6 @@ module S4Item {
 		DisplayName = AirDropBox,
 		WorldStaticModel = S4Model.AirDropBox,
 	}
-
-    item Wallet
-    {
-        Type = Container,
-        DisplayName = Leather Wallet,
-        Icon = Wallet,
-        Weight = 0.05,
-        Capacity = 5,
-        WeightReduction = 80,
-        CanBeEquipped = Inventory,
-        Tooltip = Wallet for your cash and cards,
-    }
 }
 
 module Base {

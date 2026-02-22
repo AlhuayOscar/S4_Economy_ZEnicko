@@ -20,7 +20,7 @@ local function S4_AddLootDistributions()
         if ProceduralDistributions.list[container] then
             table.insert(ProceduralDistributions.list[container].items, "Base.MoneyBundle")
             table.insert(ProceduralDistributions.list[container].items, 5) -- 5% chance
-            table.insert(ProceduralDistributions.list[container].items, "S4Item.Wallet")
+            table.insert(ProceduralDistributions.list[container].items, "Base.Wallet")
             table.insert(ProceduralDistributions.list[container].items, 2) -- 2% chance for wallet
         end
     end

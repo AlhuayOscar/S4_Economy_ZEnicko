@@ -30,6 +30,13 @@ All notable changes to this project are documented in this file.
 - **Engine Optimization & Stability:**
   - Added Python pipeline fix script.
   - Fixed Kahlua/Java engine crashes (`Object tried to call nil in createChildren`) across all IE modules caused by missing `initialise()` calls on ISButton classes.
+  - Fixed Kahlua engine crashes in `S4_IE_Twitboid` and `S4_IE_KarmaAdmin` caused by unsupported `math.random` usage; replaced with engine-native `ZombRand()`.
+- **UI Bug Fixes:**
+  - Fixed `Knox BBS`, `Weather App`, `Taxes`, and `Twitboid` overflowing bottom bounds by fully migrating their static inner panels to dynamic `ISScrollingListBox` containers.
+  - Fixed `Crimeboid` "Bribe/Pay Faction" buttons visually clipping outside the right edge of the screen by dynamically recalculating their coordinate offset.
+  - Fixed `Vehicle Shop` interface superimposing the GoodShop shopping cart behind the vehicle queue buttons.
+  - Increased `Pager Terminal` window height from 280 to 330 to safely accommodate all tracking texts without squashing sentences together.
+  - Replaced bugged `°C` Unicode character symbol in the Weather App with standard `Cel` text to ensure compatibility.
 
 ## [1.4.0] - 2026-02-21
 

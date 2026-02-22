@@ -1,0 +1,126 @@
+[h1]S4 Economy (ZEnicko Version)[/h1]
+
+[b]S4 Economy[/b] is a comprehensive multiplayer economy overhaul for Project Zomboid (B42). It transforms the survival experience by introducing a multi-layered financial system, digital connectivity, and corporate logistics. This isn't just a shop; it's a new way to live—and die—in Knox Country.
+
+[hr][/hr]
+
+[h1]English[/h1]
+
+[h2]Overview[/h2]
+S4 Economy brings a realistic digital infrastructure to the apocalypse. Manage your wealth through a secure banking system, trade via a deep-web interface, and set up complex delivery networks to survive the Kentucky nightmare.
+
+[h2]Required Hardware[/h2]
+To fully access the S4 network, you will need:
+[list]
+[*] [b]Computer:[/b] Your gateway to the system.
+[*] [b]Credit Card:[/b] Register at an ATM to store funds.
+[*] [b]Power Bar:[/b] Essential to power your workstation.
+[*] [b]Satellite Antenna:[/b] Must be placed [b]outside[/b] to provide an internet uplink.
+[*] [b]Card Reader:[/b] A mod attachment to scan your physical card.
+[*] [b]Signal Device:[/b] Used on the ground to mark the airdrop delivery spot.
+[/list]
+
+[hr][/hr]
+
+[h2]Setup Guide: Step-by-Step[/h2]
+
+1. [b]Financial Foundation:[/b] Find an [b]ATM[/b] in the world to register your first Credit Card. Set it as your [b]Main Account[/b] to ensure all sales and rewards are funneled correctly.
+2. [b]The Workstation:[/b] Place your [b]Computer[/b] and install a [b]Power Bar[/b]. Ensure you have a working electricity source (Generator or Power Grid).
+3. [b]Digital Uplink:[/b] Place a [b]Satellite Antenna[/b] outdoors. Use [b]Electric Wire[/b] to connect the antenna to your computer.
+4. [b]Establishing Connectivity:[/b] Turn on the computer and open [b]Internet Explorer[/b]. Navigate to the [b]Survivor Network[/b] homepage.
+   [i]Note: You can find the [b]Card Reader recipe[/b] here.[/i]
+   Purchase a Network Contract (Day/Week/Month/Year) to unlock the internet.
+5. [b]Preparing for Logistics:[/b] Once online, visit the [b]Good Shop[/b] homepage. Here you can find the [b]Signal Device recipe[/b].
+6. [b]Full Integration:[/b] Manufacture both the [b]Card Reader[/b] and [b]Signal Device[/b] at a workbench. Install the Card Reader onto your computer.
+7. [b]Ready to Trade:[/b] Insert your registered card into the computer. You are now ready to buy supplies or sell your hard-earned loot! Use the [b]Signal Device[/b] on the ground outside to mark where you want your deliveries to land.
+
+[hr][/hr]
+
+[h2]Admin: Managing the Shop[/h2]
+[list]
+[*] [b]Debug Mode:[/b] In Singleplayer, entering debug mode unlocks the [b]GoodShop Admin[/b] icon on the computer desktop.
+[*] [b]Customization:[/b] The shop starts empty by default. Register items, set dynamic prices, and adjust stock levels manually.
+[*] [b]Exporting:[/b] Configurations are saved at C:\Users\Username\Zomboid\Lua\S4Economy. It is highly recommended to create an add-on mod containing your exports to use on dedicated servers.
+[/list]
+
+[hr][/hr]
+
+[h2]Future Roadmap & Idea Branches[/h2]
+We are currently developing several expansion modules in dedicated branches to further expand Knox OS:
+[list]
+[*] [b]DeadZone (deadZone)[/b]: Combat-focused "Farming Zones" to earn high-risk bounties.
+[*] [b]SafeZone (safezone)[/b]: Premium subscription-based area protection services.
+[*] [b]Jobs (jobs)[/b]: Fully functional career system (Programmer, Banker, Journalist, Hitman, etc.).
+[*] [b]Twitboid (Twitboid)[/b]: Social network-style quest, rumor, and contract interaction system.
+[*] [b]Crimeboid.net (Crimeboid.net)[/b]: A dark web portal for illicit activities, hacking, and sabotage.
+[*] [b]VehicleShop (vehicleShop)[/b]: Corporate vehicle dealership featuring heavy aerial delivery.
+[*] [b]Zomboid.net (Zomboid.net)[/b]: Global chat and marketplace shared across inter-connected servers.
+[/list]
+
+[hr][/hr]
+
+[h1]Español[/h1]
+
+[h2]Resumen[/h2]
+S4 Economy transforma la supervivencia en Project Zomboid introduciendo una infraestructura digital realista y funcional. Gestiona tu riqueza a través de un sistema bancario seguro, comercia mediante una interfaz de "deep-web" y configura redes de entrega logísticas complejas para sobrevivir a la pesadilla de Kentucky.
+
+[h2]Hardware Requerido[/h2]
+Para acceder totalmente a la red S4, necesitarás:
+[list]
+[*] [b]Computadora:[/b] Tu portal principal al sistema.
+[*] [b]Tarjeta de Crédito:[/b] Regístrala en un ATM (Cajero) para guardar fondos.
+[*] [b]Power Bar (Multitoma):[/b] Esencial para encender tu PC.
+[*] [b]Antena Satelital:[/b] Se coloca en el [b]exterior[/b] para proveer internet.
+[*] [b]Lector de Tarjetas:[/b] Accesorio para leer tu tarjeta física.
+[*] [b]Dispositivo de Señal:[/b] Marca en el suelo dónde caerán tus entregas aéreas.
+[/list]
+
+[hr][/hr]
+
+[h2]Guía de Configuración: Paso a Paso[/h2]
+
+1. [b]Base Financiera:[/b] Busca un [b]ATM (Cajero Automático)[/b] para registrar tu tarjeta. Asegúrate de marcarla como [b]Cuenta Principal[/b] para recibir el dinero de tus ventas y contratos correctamente.
+2. [b]La Estación de Trabajo:[/b] Coloca tu [b]Computadora[/b] e instala la [b]Power Bar[/b]. Asegúrate de tener una fuente de electricidad activa (Generador o red eléctrica viva).
+3. [b]Enlace Digital:[/b] Coloca una [b]Antena Satelital[/b] afuera. Usa un [b]Cable Eléctrico[/b] para conectar la antena a la computadora.
+4. [b]Estableciendo Conexión:[/b] Enciende la PC y abre el [b]Internet Explorer[/b]. Ve a la página principal de [b]Survivor Network[/b].
+   [i]Nota: Aquí encontrarás la [b]receta del Lector de Tarjetas[/b].[/i]
+   Firma un Contrato de Red (Día/Semana/Mes/Año) para desbloquear el acceso a internet.
+5. [b]Preparando la Logística:[/b] Una vez en línea, visita la web de [b]Good Shop[/b]. Allí podrás obtener la [b]receta del Dispositivo de Señal[/b].
+6. [b]Integración Total:[/b] Fabrica el [b]Lector de Tarjetas[/b] y el [b]Dispositivo de Señal[/b] en tu base. Instala el Lector en tu computadora.
+7. [b]¡Listo para Comerciar!:[/b] Inserta tu tarjeta registrada en la PC. ¡Ya puedes comprar suministros vitales o vender tu botín! Usa el [b]Dispositivo de Señal[/b] en el suelo (exterior) para marcar dónde quieres que caigan tus paquetes de entrega.
+
+[hr][/hr]
+
+[h2]Admin: Gestión de la Tienda[/h2]
+[list]
+[*] [b]Modo Debug:[/b] En Singleplayer, entrar en modo Debug o tener nivel de Admin desbloquea el icono confidencial de [b]GoodShop Admin[/b] en la computadora.
+[*] [b]Personalización:[/b] La tienda empieza vacía. Como administrador deberás registrar objetos, ajustar precios y manejar el stock manualmente o mediante scripts.
+[*] [b]Exportación:[/b] Las configuraciones editadas se guardarán físicamente en C:\Users\Usuario\Zomboid\Lua\S4Economy. Se recomienda empaquetar un mod add-on con estos archivos exportados para aplicarlos globalmente en servidores dedicados.
+[/list]
+
+[hr][/hr]
+
+[h2]Roadmap de Futuras Ideas[/h2]
+Estamos desarrollando activamente nuevos módulos de expansión separados en ramas dedicadas:
+[list]
+[*] [b]DeadZone (deadZone)[/b]: Zonas de farmeo de combate instanciado para ganar recompensas.
+[*] [b]SafeZone (safezone)[/b]: Servicio premium de protección de áreas seguras por suscripción.
+[*] [b]Jobs (jobs)[/b]: Sistema de carreras profesionales y oficios (Programador, Banquero, Limpiador, etc.).
+[*] [b]Twitboid (Twitboid)[/b]: Sistema de misiones tipo red social, foros y contratos comunitarios.
+[*] [b]Crimeboid.net (Crimeboid.net)[/b]: La "Dark Web", portal para actividades ilícitas, borrado de identidad y sabotaje.
+[*] [b]VehicleShop (vehicleShop)[/b]: Concesionario de vehículos premium con entrega vía carga pesada.
+[*] [b]Zomboid.net (Zomboid.net)[/b]: Red de chat global y mercado mercantil compartido entre múltiples servidores.
+[/list]
+
+[hr][/hr]
+
+[h2]Créditos y Licencias[/h2]
+[list]
+[*] [b]ZEnicko:[/b] Desarrollador/Maintainer de la versión actual y módulos de expansión de servidor.
+[*] [b]Pkoko:[/b] Autor original del código e idea del mod base.
+[*] [b]Base Mod:[/b] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=3480405054]S4 Economy[Shop] en Steam Workshop[/url]
+[*] [b]Perfil del Autor Original:[/b] [url=https://steamcommunity.com/profiles/76561198867336456]Pkoko en Steam[/url]
+[*] [b]Licencias:[/b] Código fuente bajo Apache-2.0 | Assets visuales bajo CC BY 4.0
+[/list]
+
+[i]Full credits for the base mechanics, initial UI layout, and core item configurations belong strictly to Pkoko.[/i]

@@ -10,13 +10,13 @@
 S4 Economy brings a realistic digital infrastructure to the apocalypse. Manage your wealth through a secure banking system, trade via a deep-web interface, and set up complex delivery networks to survive the Kentucky nightmare.
 
 ### 💻 Required Hardware
-To fully access the S4 network, you will need to gather or craft specific hardware:
-*   🖥️ **Computer:** Your gateway to the system where most functions are accessed.
-*   💳 **Credit Card:** Your digital wallet. Register it at an ATM to store, receive, and transfer funds.
-*   🔌 **Power Bar:** Essential to power your workstation (requires active electricity).
+To fully access the S4 network, you will need:
+*   🖥️ **Computer:** Your gateway to the system.
+*   💳 **Credit Card:** Register at an ATM to store funds.
+*   🔌 **Power Bar:** Essential to power your workstation.
 *   📡 **Satellite Antenna:** Must be placed **outside** to provide an internet uplink.
-*   🖲️ **Card Reader:** A mod-specific attachment for your computer to scan your physical card.
-*   📍 **Signal Device:** Used on the ground to mark coordinates for airdrop deliveries of your purchases.
+*   🖲️ **Card Reader:** A mod attachment to scan your physical card.
+*   📍 **Signal Device:** Used on the ground to mark the airdrop delivery spot.
 
 ---
 
@@ -60,13 +60,13 @@ We are currently developing several expansion modules in dedicated branches to f
 S4 Economy transforma la supervivencia en Project Zomboid introduciendo una infraestructura digital realista y funcional. Gestiona tu riqueza a través de un sistema bancario seguro, comercia mediante una interfaz de "deep-web" y configura redes de entrega logísticas complejas para sobrevivir a la pesadilla de Kentucky.
 
 ### 💻 Hardware Requerido
-Para acceder totalmente a la red S4, necesitarás recolectar u obtener el siguiente equipo:
-*   🖥️ **Computadora:** Tu portal principal al sistema. La mayoría de las funciones operan desde aquí.
-*   💳 **Tarjeta de Crédito:** Tu billetera digital. Regístrala en un ATM (Cajero Automático) para guardar y transferir fondos.
-*   🔌 **Power Bar (Multitoma):** Esencial para enchufar y encender tu estación de trabajo.
-*   📡 **Antena Satelital:** Debe colocarse exclusivamente en el **exterior** para proveer el enlace a internet.
-*   🖲️ **Lector de Tarjetas:** Un accesorio fabricable para que la PC pueda leer tu tarjeta física.
-*   📍 **Dispositivo de Señal:** Se usa en el suelo para marcar las coordenadas donde caerán tus entregas aéreas.
+Para acceder totalmente a la red S4, necesitarás:
+*   🖥️ **Computadora:** Tu portal principal al sistema.
+*   💳 **Tarjeta de Crédito:** Regístrala en un ATM (Cajero) para guardar fondos.
+*   🔌 **Power Bar (Multitoma):** Esencial para encender tu PC.
+*   📡 **Antena Satelital:** Se coloca en el **exterior** para proveer internet.
+*   🖲️ **Lector de Tarjetas:**  Accesorio para leer tu tarjeta física.
+*   📍 **Dispositivo de Señal:** Marca en el suelo dónde caerán tus entregas aéreas.
 
 ---
 

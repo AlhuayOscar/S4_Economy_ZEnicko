@@ -14,7 +14,8 @@ local S4_IE_Class = {
     Twitboid = "S4_IE_Twitboid",
     MyDoc = "S4_IE_MyDoc",
     Crimeboid = "S4_IE_Crimeboid",
-    Zeddit = "S4_IE_Zeddit"
+    Zeddit = "S4_IE_Zeddit",
+    KarmaAdmin = "S4_IE_KarmaAdmin"
 }
 
 function S4_InternetExplorer:initialise()

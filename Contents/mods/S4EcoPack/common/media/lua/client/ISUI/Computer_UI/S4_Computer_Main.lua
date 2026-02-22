@@ -251,17 +251,29 @@ function S4_Computer_Main:createChildren()
         self.Btn_GoodshopAdmin.borderColor.a = 0
         self.Btn_GoodshopAdmin.backgroundColor.a = 0
         self.Btn_GoodshopAdmin.backgroundColorMouseOver = {
-            r = 189 / 255,
-            g = 190 / 255,
-            b = 189 / 255,
-            a = 0.3
+            r = 189 / 255, g = 190 / 255, b = 189 / 255, a = 0.3
         }
         self.Btn_GoodshopAdmin.IconName = "Good Shop Admin"
         self.Btn_GoodshopAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_IE.png"))
-        self.Btn_GoodshopAdmin:forceImageSize(IconSize, IconSize) -- Need to change icon size depending on resolution
+        self.Btn_GoodshopAdmin:forceImageSize(IconSize, IconSize)
         self.Btn_GoodshopAdmin.render = S4_Computer_Main.BtnRender
         self.Btn_GoodshopAdmin:initialise()
         self:addChild(self.Btn_GoodshopAdmin)
+        
+        self.Btn_KarmaAdmin = ISButton:new(ABtnX, 20 + BtnH + 10, BtnW, BtnH, "", self, S4_Computer_Main.BtnClick)
+        self.Btn_KarmaAdmin.font = UIFont.Small
+        self.Btn_KarmaAdmin.internal = "KarmaAdmin"
+        self.Btn_KarmaAdmin.borderColor.a = 0
+        self.Btn_KarmaAdmin.backgroundColor.a = 0
+        self.Btn_KarmaAdmin.backgroundColorMouseOver = {
+            r = 189 / 255, g = 190 / 255, b = 189 / 255, a = 0.3
+        }
+        self.Btn_KarmaAdmin.IconName = "Karma Admin"
+        self.Btn_KarmaAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_Settings.png"))
+        self.Btn_KarmaAdmin:forceImageSize(IconSize, IconSize)
+        self.Btn_KarmaAdmin.render = S4_Computer_Main.BtnRender
+        self.Btn_KarmaAdmin:initialise()
+        self:addChild(self.Btn_KarmaAdmin)
     end
 end
 
@@ -473,6 +485,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Zeddit)
         end
         self.TopApp = self.Zeddit
+    elseif internal == "KarmaAdmin" then
+        if self.KarmaAdmin then
+            if not self.KarmaAdmin:isVisible() then
+                self.KarmaAdmin:setVisible(true)
+            end
+            self.KarmaAdmin:bringToTop()
+        else
+            self.KarmaAdmin = S4_InternetExplorer:new(self)
+            self.KarmaAdmin:initialise()
+            self.KarmaAdmin.TitleName = "System - S4 PlayerStats Admin Tool"
+            self.KarmaAdmin.AddressText = "local://root/admin/karma_manager.exe"
+            self.KarmaAdmin.PageType = internal
+            self:addChild(self.KarmaAdmin)
+            self:AddTaskBar(self.KarmaAdmin)
+        end
+        self.TopApp = self.KarmaAdmin
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then

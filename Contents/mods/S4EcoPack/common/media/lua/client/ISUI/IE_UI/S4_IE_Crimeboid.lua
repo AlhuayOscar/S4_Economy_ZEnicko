@@ -75,15 +75,8 @@ function S4_IE_Crimeboid:switchTab(btn)
     self.currentTab = btn.internal
     
     -- Clear content area completely
-    local toRemove = {}
-    local children = self.ContentArea:getChildren()
-    if children then
-        for i=1, #children do
-            table.insert(toRemove, children[i])
-        end
-    end
-    for _, child in ipairs(toRemove) do
-        self.ContentArea:removeChild(child)
+    if self.ContentArea then
+        self.ContentArea:clearChildren()
     end
     
     if self.currentTab == "Market" then self:renderMarket()

@@ -66,6 +66,12 @@ function S4_IE_Twitboid:createChildren()
     local menuFollow = ISLabel:new(10, 80, S4_UI.FH_M, "@ Following", 0.6, 0.6, 0.6, 1, UIFont.Medium, true)
     self.Sidebar:addChild(menuFollow)
 
+    local menuNotif = ISLabel:new(10, 110, S4_UI.FH_M, "! Notifications", 0.6, 0.6, 0.6, 1, UIFont.Medium, true)
+    self.Sidebar:addChild(menuNotif)
+    
+    local menuProfile = ISLabel:new(10, 140, S4_UI.FH_M, "$ Profile", 0.6, 0.6, 0.6, 1, UIFont.Medium, true)
+    self.Sidebar:addChild(menuProfile)
+
     -- Trending (Sidebar Right)
     self.Rightbar = ISPanel:new(self:getWidth() - 150, y, 150, self:getHeight())
     self.Rightbar.backgroundColor = {r=15/255, g=20/255, b=25/255, a=1}
@@ -121,9 +127,44 @@ function S4_IE_Twitboid:createChildren()
             postPanel:addChild(tLabel)
             ty = ty + 15
         end
-        postPanel:setHeight(ty + 10)
+        
+        -- Interactive buttons
+        local btnW = 50
+        local by = ty + 10
+        local bReply = ISButton:new(10, by, btnW, 20, "Reply", self, S4_IE_Twitboid.onAction)
+        bReply.internal = "reply"
+        bReply.backgroundColor = {r=0, g=0, b=0, a=0}
+        bReply.borderColor = {r=0, g=0, b=0, a=0}
+        bReply.textColor = {r=0.6, g=0.6, b=0.7, a=1}
+        postPanel:addChild(bReply)
+        
+        local bReboid = ISButton:new(70, by, btnW + 20, 20, "ReBoid", self, S4_IE_Twitboid.onAction)
+        bReboid.internal = "reboid"
+        bReboid.backgroundColor = {r=0, g=0, b=0, a=0}
+        bReboid.borderColor = {r=0, g=0, b=0, a=0}
+        bReboid.textColor = {r=0.6, g=0.8, b=0.6, a=1}
+        postPanel:addChild(bReboid)
+        
+        local likes = math.random(0, 500)
+        local bLike = ISButton:new(150, by, btnW, 20, "<3 " .. likes, self, S4_IE_Twitboid.onAction)
+        bLike.internal = "like"
+        bLike.backgroundColor = {r=0, g=0, b=0, a=0}
+        bLike.borderColor = {r=0, g=0, b=0, a=0}
+        bLike.textColor = {r=0.8, g=0.4, b=0.5, a=1}
+        postPanel:addChild(bLike)
+        
+        postPanel:setHeight(by + 30)
         
         feedY = feedY + postPanel:getHeight() + 10
+    end
+end
+
+function S4_IE_Twitboid:onAction(btn)
+    local act = btn.internal
+    if act == "like" then
+        btn.textColor = {r=1, g=0.1, b=0.2, a=1}
+    else
+        self.ComUI:AddMsgBox("Twitboid", false, "Feature locked in offline mode.", false, false)
     end
 end
 

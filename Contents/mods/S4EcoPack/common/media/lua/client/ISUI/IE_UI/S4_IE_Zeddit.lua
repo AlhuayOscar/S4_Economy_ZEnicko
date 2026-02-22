@@ -100,11 +100,8 @@ function S4_IE_Zeddit:createChildren()
 end
 
 function S4_IE_Zeddit:rebuildUI()
-    local children = self:getChildren()
-    if children then
-        for i=#children, 1, -1 do
-            self:removeChild(children[i])
-        end
+    if self.Content then
+        self.Content:clearChildren()
     end
     
     local w = self:getWidth()
@@ -225,28 +222,39 @@ function S4_IE_Zeddit:renderThread()
     local bodyLines = luautils.split(th.body, "\n")
     local by = 55
     for _, line in ipairs(bodyLines) do
-        pnl:addChild(ISLabel:new(60, by, S4_UI.FH_S, line, 0.2, 0.2, 0.2, 1, UIFont.Small, false))
+        -- Check if line is too long, we might need manual wrapping but assuming short lines for now,
+        -- setting true for bLeft property is critical.
+        pnl:addChild(ISLabel:new(60, by, S4_UI.FH_S, line, 0.2, 0.2, 0.2, 1, UIFont.Small, true))
         by = by + 15
     end
+    pnl:setHeight(by + 10)
     
     -- Comments Section
-    self.Content:addChild(ISLabel:new(20, 180, S4_UI.FH_M, "Comments (" .. #th.comments .. ")", 0.3, 0.3, 0.3, 1, UIFont.Medium, true))
+    self.Content:addChild(ISLabel:new(20, by + 65, S4_UI.FH_M, "Comments (" .. #th.comments .. ")", 0.3, 0.3, 0.3, 1, UIFont.Medium, true))
     
-    local cy = 210
+    local cy = by + 95
     for _, c in ipairs(th.comments) do
-        local cPnl = ISPanel:new(20, cy, cw - 40, 60)
+        local cPnl = ISPanel:new(20, cy, cw - 40, 80)
         cPnl.backgroundColor = {r=1, g=1, b=1, a=1}
         cPnl.borderColor = {r=0.9, g=0.9, b=0.9, a=1}
         self.Content:addChild(cPnl)
         
         cPnl:addChild(ISLabel:new(10, 5, S4_UI.FH_S, c.author .. " • " .. c.time, 0.5, 0.5, 0.5, 1, UIFont.Small, true))
-        cPnl:addChild(ISLabel:new(10, 25, S4_UI.FH_S, c.text, 0.2, 0.2, 0.2, 1, UIFont.Small, false))
+        
+        -- Comment wrapping
+        local cLines = luautils.split(c.text, "\n")
+        local lY = 25
+        for _, cl in ipairs(cLines) do
+            cPnl:addChild(ISLabel:new(10, lY, S4_UI.FH_S, cl, 0.2, 0.2, 0.2, 1, UIFont.Small, true))
+            lY = lY + 15
+        end
         
         local voteColor = {r=0.5, g=0.5, b=0.5}
         if c.votes > 0 then voteColor = self.baseColor end
-        cPnl:addChild(ISLabel:new(10, 40, S4_UI.FH_S, "^ " .. c.votes, voteColor.r, voteColor.g, voteColor.b, 1, UIFont.Small, true))
+        cPnl:addChild(ISLabel:new(10, lY + 5, S4_UI.FH_S, "^ " .. c.votes, voteColor.r, voteColor.g, voteColor.b, 1, UIFont.Small, true))
         
-        cy = cy + 70
+        cPnl:setHeight(lY + 25)
+        cy = cy + cPnl:getHeight() + 10
         if cy > self.Content:getHeight() - 70 then break end
     end
 end

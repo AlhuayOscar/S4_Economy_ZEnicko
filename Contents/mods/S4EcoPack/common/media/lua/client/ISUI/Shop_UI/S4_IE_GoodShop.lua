@@ -63,6 +63,7 @@ function S4_IE_GoodShop:initialise()
             Data.SellAuthority = ShopModData[Data.FullType].SellAuthority or 0
             Data.Discount = ShopModData[Data.FullType].Discount or 0
             Data.HotItem = ShopModData[Data.FullType].HotItem or 0
+            Data.DemandFaction = ShopModData[Data.FullType].DemandFaction or nil
             if PlayerShopModData.FavoriteList[Data.FullType] then
                 Data.Favorite = true
             end
@@ -538,6 +539,7 @@ function S4_IE_GoodShop:ReloadData(ReloadType, PreserveView, hadChanges)
                     Data.SellAuthority = ShopModData[Data.FullType].SellAuthority or 0
                     Data.Discount = ShopModData[Data.FullType].Discount or 0
                     Data.HotItem = ShopModData[Data.FullType].HotItem or 0
+                    Data.DemandFaction = ShopModData[Data.FullType].DemandFaction or nil
                     if PlayerShopModData.FavoriteList[Data.FullType] then
                         Data.Favorite = true
                     end

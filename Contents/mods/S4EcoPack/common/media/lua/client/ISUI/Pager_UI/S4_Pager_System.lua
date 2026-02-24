@@ -1,3 +1,4 @@
+require "shared/S4_FactionZones"
 S4_Pager_System = S4_Pager_System or {}
 
 local function asText(value, fallback)
@@ -198,6 +199,24 @@ local function findDuffelBagItem(player)
     return nil
 end
 
+local function countBundlesInContainer(container)
+    if not container then return 0 end
+    local count = 0
+    local items = container:getItems()
+    if not items then return 0 end
+    for i = 0, items:size() - 1 do
+        local it = items:get(i)
+        if it and it.getFullType then
+            if it:getFullType() == "Base.MoneyBundle" then
+                count = count + 1
+            elseif it:getCategory() == "Container" then
+                count = count + countBundlesInContainer(it:getInventory())
+            end
+        end
+    end
+    return count
+end
+
 local function hasDuffelBagAndBundles(player, requiredCount)
     if not player then
         return false, 0, false
@@ -206,27 +225,21 @@ local function hasDuffelBagAndBundles(player, requiredCount)
     if not inv then
         return false, 0, false
     end
-    local items = inv:getItems()
-    if not items then
-        return false, 0, false
-    end
 
-    local bundles = 0
+    local bundles = countBundlesInContainer(inv)
+    
     local hasDuffel = false
     local duffelItem = nil
+    local items = inv:getItems()
     for i = 0, items:size() - 1 do
         local it = items:get(i)
-        if it and it.getFullType then
-            local ft = tostring(it:getFullType() or "")
-            if ft == "Base.MoneyBundle" then
-                bundles = bundles + 1
-            end
-            if isDuffelBagItem(it) then
-                hasDuffel = true
-                duffelItem = duffelItem or it
-            end
+        if it and isDuffelBagItem(it) then
+            hasDuffel = true
+            duffelItem = it
+            break
         end
     end
+
     local need = math.max(1, math.floor(requiredCount or 10))
     return hasDuffel and bundles >= need, bundles, hasDuffel, duffelItem
 end
@@ -239,22 +252,28 @@ local function consumeMoneyBundles(player, count)
     if not inv then
         return 0
     end
-    local items = inv:getItems()
-    if not items then
-        return 0
-    end
+    
     local removed = 0
     local need = math.max(1, math.floor(count or 10))
-    for i = items:size() - 1, 0, -1 do
-        if removed >= need then
-            break
-        end
-        local it = items:get(i)
-        if it and it.getFullType and tostring(it:getFullType() or "") == "Base.MoneyBundle" then
-            inv:Remove(it)
-            removed = removed + 1
+
+    local function removeRecursive(container)
+        local items = container:getItems()
+        if not items then return end
+        for i = items:size() - 1, 0, -1 do
+            if removed >= need then break end
+            local it = items:get(i)
+            if it and it.getFullType then
+                if tostring(it:getFullType() or "") == "Base.MoneyBundle" then
+                    container:Remove(it)
+                    removed = removed + 1
+                elseif it:getCategory() == "Container" then
+                    removeRecursive(it:getInventory())
+                end
+            end
         end
     end
+    
+    removeRecursive(inv)
     return removed
 end
 
@@ -538,9 +557,10 @@ function S4_Pager_System.getEscapeDistanceState(player, mission)
 end
 
 function S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
-    if not player or not mission then
-        return false
-    end
+    return true
+end
+--[[
+function S4_Pager_System.spawnStashMoneyMissionSupplies_OLD(player, mission)
     local pData = player:getModData()
     if mission.suppliesSpawned or (pData and pData.S4KnoxPart2SuppliesSpawned) then
         return true
@@ -625,6 +645,7 @@ function S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
     end
     return addedBundles > 0
 end
+]]
 
 function S4_Pager_System.isPlayerOnMissionSpot(player, mission)
     if not player or not mission then
@@ -1442,24 +1463,14 @@ function S4_Pager_System.completeMission(player, opts)
     S4_Pager_System.stopMissionPersistentAudio(player)
 
     if asText(mission.missionGroup, "") == "RosewoodKnoxBankHeist" and tonumber(mission.missionPart) == 1 then
-        mission.requiredItemType = mission.requiredItemType or "Base.MoneyBundle"
-        mission.requiredItemCount = mission.requiredItemCount or 10
-        mission.sourceAreaMinX = mission.sourceAreaMinX or mission.areaMinX
-        mission.sourceAreaMaxX = mission.sourceAreaMaxX or mission.areaMaxX
-        mission.sourceAreaMinY = mission.sourceAreaMinY or mission.areaMinY
-        mission.sourceAreaMaxY = mission.sourceAreaMaxY or mission.areaMaxY
-        mission.duffelSpawnX = mission.duffelSpawnX or 8078
-        mission.duffelSpawnY = mission.duffelSpawnY or 11602
-        mission.duffelSpawnZ = mission.duffelSpawnZ or 0
-        mission.moneyDropX = mission.moneyDropX or 8091
-        mission.moneyDropY = mission.moneyDropY or 11592
-        pcall(function()
-            S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
-        end)
+        -- No longer spawning bundles on ground, extract from safe instead
+        -- pcall(function()
+        --     S4_Pager_System.spawnStashMoneyMissionSupplies(player, mission)
+        -- end)
     end
 
     local isSequenced = mission.missionPart and mission.missionPartTotal
-    local rewardAmount = isSequenced and ZombRand(10000, 53001) or ZombRand(4000, 23001)
+    local rewardAmount = isSequenced and ZombRand(6000, 31801) or ZombRand(2400, 13801)
     
     local finalReward = rewardAmount
     local hasMask, hasVest, hasHalloweenMask = checkMissionGearRequirements(player, mission)
@@ -1490,6 +1501,60 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
+    -- Add Karma Bonus
+    if S4_PlayerStats and S4_PlayerStats.addKarma then
+        S4_PlayerStats.addKarma(player, 0.01)
+    end
+
+    -- Update Faction Loyalty & Reputation
+    if S4_FactionZones and S4_FactionZones.getZoneAt and S4_PlayerStats then
+        local currentZone = S4_FactionZones.getZoneAt(player:getX(), player:getY())
+        local faction = currentZone and currentZone.defaultOwner or "Survivors"
+        local stats = S4_PlayerStats.getStats(player)
+        
+        pData.S4_LastFaction = pData.S4_LastFaction or ""
+        pData.S4_FactionStreak = pData.S4_FactionStreak or 0
+        
+        if pData.S4_LastFaction == faction then
+            -- Same faction, increase streak
+            pData.S4_FactionStreak = pData.S4_FactionStreak + 1
+            if pData.S4_FactionStreak >= 2 then
+                S4_PlayerStats.addFactionRep(player, faction, 0.01)
+                if player.setHaloNote then
+                    player:setHaloNote(string.format("Loyalty Bonus: +0.01 %s", faction), 100, 255, 100, 350)
+                end
+            else
+                if player.setHaloNote then
+                    player:setHaloNote("Trust Building... (1 more mission for Bonus)", 200, 200, 255, 300)
+                end
+            end
+        else
+            -- Faction switched! 
+            if pData.S4_LastFaction ~= "" then
+                -- Penalty for switching allegiance: -5 Karma
+                S4_PlayerStats.addKarma(player, -5)
+                
+                -- 70% chance of -0.01 rep penalty for operating in a new faction's city
+                if ZombRand(100) < 70 then
+                    S4_PlayerStats.addFactionRep(player, faction, -0.01)
+                    if player.setHaloNote then
+                        player:setHaloNote(string.format("Outsider Penalty: -0.01 %s", faction), 255, 150, 100, 350)
+                    end
+                end
+
+                if player.setHaloNote then
+                    player:setHaloNote("Allegiance Switched: -5 Karma", 255, 100, 100, 400)
+                end
+            end
+            
+            pData.S4_LastFaction = faction
+            pData.S4_FactionStreak = 1
+            if player.setHaloNote then
+                player:setHaloNote("New Alliance: " .. faction, 200, 200, 255, 300)
+            end
+        end
+    end
+
     if mission.missionGroup and mission.missionPart then
         local group = mission.missionGroup
         local part = tonumber(mission.missionPart) or 1
@@ -1513,6 +1578,7 @@ function S4_Pager_System.completeMission(player, opts)
     pData.S4PagerMission = nil
     if player.setHaloNote then
         player:setHaloNote(opts.reasonText or "Pager mission complete", opts.r or 80, opts.g or 220, opts.b or 80, 300)
+        player:setHaloNote(string.format("Reward: $%d sent to bank", finalReward), 100, 255, 100, 350)
         if penaltyApplied then
             player:setHaloNote(string.format("Penalizacion -%d%% por equipo incompleto", penaltyPct), 220, 90, 90, 300)
         end
@@ -1859,6 +1925,7 @@ function S4_Pager_System.sayRobberyLine(player)
     elseif player.setHaloNote then
         player:setHaloNote(line, 230, 230, 230, 180)
     end
+    addSound(player, player:getX(), player:getY(), player:getZ(), 60, 100)
 end
 
 local function startMissionPersistentAudio(player, mission)
@@ -1951,6 +2018,7 @@ function S4_Pager_System.triggerRobberyAlarm(player, mission)
         if ok and sid then
             md.S4PagerAlarmSoundId = sid
         end
+        addSound(player, player:getX(), player:getY(), player:getZ(), 100, 100)
     end
 
     return true
@@ -2155,7 +2223,7 @@ function S4_Pager_System.RenderDrillProgress()
         getTextManager():DrawStringCentre(UIFont.Medium, sw / 2, 80, string.format("Drilling the safe... %d%%", pct), 0.2, 0.8, 0.2, 1.0)
     end
 end
-Events.OnPostRender.Add(S4_Pager_System.RenderDrillProgress)
+Events.OnPreUIDraw.Add(S4_Pager_System.RenderDrillProgress)
 
 function S4_Pager_System.OnShoutKeyPressed(key)
     if getCore and getCore().getKey and key == getCore():getKey("Shout") then
@@ -2166,6 +2234,11 @@ function S4_Pager_System.OnShoutKeyPressed(key)
         if mission and mission.status == "active" then
             local state = S4_Pager_System.getMissionSpotState(player, mission)
             if state == "on_spot" then
+                -- Block vanilla shout by updating the last shout timer (if available)
+                if player.setLastShoutTime then
+                    player:setLastShoutTime(getGameTime():getWorldAgeHours())
+                end
+                
                 S4_Pager_System.sayRobberyLine(player)
                 S4_Pager_System.triggerRobberyAlarm(player, mission)
             end

@@ -78,8 +78,20 @@ function S4Economy.AddMissionReward(player, args)
         return
     end
 
+    local amount = math.floor(tonumber(args and args[1]) or 0)
+    if amount < 0 then amount = 0 end
+    if amount > 1000000 then amount = 1000000 end
+
     local playerData = playerDataAll[userName]
     if not playerData or not playerData.MainCard then
+        if playerData then
+            playerData.PendingMissionRewards = (playerData.PendingMissionRewards or 0) + amount
+            playerData.PendingMissionCount = (playerData.PendingMissionCount or 0) + 1
+            ModData.transmit("S4_PlayerData")
+        end
+        if player and player.setHaloNote then
+            player:setHaloNote("Payment pending: No Bank Card. Claim via Computer!", 220, 180, 80, 300)
+        end
         return
     end
 
@@ -88,13 +100,6 @@ function S4Economy.AddMissionReward(player, args)
     local cardLog = cardLogAll[cardNum]
     if not account or not cardLog then
         return
-    end
-
-    local amount = math.floor(tonumber(args and args[1]) or 0)
-    if amount < 200 then
-        amount = 200
-    elseif amount > 500 then
-        amount = 500
     end
 
     account.Money = account.Money + amount
@@ -111,6 +116,57 @@ function S4Economy.AddMissionReward(player, args)
 
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_CardLog")
+end
+
+function S4Economy.ClaimPendingMissionRewards(player, args)
+    if not player then return end
+    local userName = player:getUsername()
+    local playerDataAll = ModData.get("S4_PlayerData")
+    local cardDataAll = ModData.get("S4_CardData")
+    local cardLogAll = ModData.get("S4_CardLog")
+    
+    if not playerDataAll or not cardDataAll or not cardLogAll then return end
+    
+    local playerData = playerDataAll[userName]
+    if not playerData or not playerData.PendingMissionRewards or playerData.PendingMissionRewards <= 0 then
+        return
+    end
+    
+    if not playerData.MainCard then
+        if player.setHaloNote then
+            player:setHaloNote("Cannot claim: No Main Bank Card set!", 220, 80, 80, 300)
+        end
+        return
+    end
+    
+    local cardNum = playerData.MainCard
+    local account = cardDataAll[cardNum]
+    local cardLog = cardLogAll[cardNum]
+    if not account or not cardLog then return end
+    
+    local amount = playerData.PendingMissionRewards
+    account.Money = account.Money + amount
+    
+    local logTime = S4_Utils.getLogTime()
+    local logTimeMin = S4_Utils.getLogTimeMin(logTime)
+    cardLog[logTime] = {
+        Type = "Deposit",
+        Money = amount,
+        Sender = "S4 Mail Rewards",
+        Receiver = userName,
+        DisplayTime = logTimeMin
+    }
+    
+    playerData.PendingMissionRewards = 0
+    playerData.PendingMissionCount = 0
+    
+    ModData.transmit("S4_PlayerData")
+    ModData.transmit("S4_CardData")
+    ModData.transmit("S4_CardLog")
+    
+    if player.setHaloNote then
+        player:setHaloNote(string.format("Rewards claimed: $%d deposited!", amount), 100, 255, 100, 350)
+    end
 end
 
 -- Decrease card balance

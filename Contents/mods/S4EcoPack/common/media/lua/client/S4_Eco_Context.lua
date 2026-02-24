@@ -104,6 +104,71 @@ function S4_Action_ExtractSafeMoney:new(character, Obj)
     return o
 end
 
+local S4_Action_UnjamDrill = ISBaseTimedAction:derive("S4_Action_UnjamDrill")
+
+function S4_Action_UnjamDrill:isValid()
+    return self.Obj ~= nil
+end
+
+function S4_Action_UnjamDrill:waitToStart()
+    self.character:faceThisObject(self.Obj)
+    return self.character:shouldBeTurning()
+end
+
+function S4_Action_UnjamDrill:update()
+    self.character:faceThisObject(self.Obj)
+end
+
+function S4_Action_UnjamDrill:start()
+    self:setActionAnim("Loot")
+    self.character:SetVariable("LootPosition", "Mid")
+end
+
+function S4_Action_UnjamDrill:stop()
+    self.character:clearVariable("LootPosition")
+    ISBaseTimedAction.stop(self)
+end
+
+function S4_Action_UnjamDrill:perform()
+    self.character:clearVariable("LootPosition")
+    local pData = self.character:getModData()
+    local mission = pData.S4PagerMission
+    local now = S4_Pager_System.nowWorldHours()
+    if mission and mission.drillIsJammed then
+        mission.drillIsJammed = false
+        mission.drillNextJamRollHours = now + (10 / 60)
+        if mission.drillJamStartHours then
+            local jammedDuration = now - mission.drillJamStartHours
+            if jammedDuration > 0 then
+                mission.drillEndHours = mission.drillEndHours + jammedDuration
+            end
+            mission.drillJamStartHours = nil
+        end
+        if self.character.setHaloNote then
+            self.character:setHaloNote("Drill unjammed! It's working again.", 80, 220, 80, 250)
+        end
+    end
+    ISBaseTimedAction.perform(self)
+end
+
+function S4_Action_UnjamDrill:new(character, Obj)
+    local o = {}
+    setmetatable(o, self)
+    self.__index = self
+    o.character = character
+    o.Obj = Obj
+    o.stopOnWalk = true
+    o.stopOnRun = true
+    o.maxTime = 120
+    if PerformanceSettings and PerformanceSettings.getLockFPS then
+        o.maxTime = PerformanceSettings.getLockFPS() * 2
+    end
+    if o.character:isTimedActionInstant() then
+        o.maxTime = 1
+    end
+    return o
+end
+
 local function playComputerToggleSound()
     if getSoundManager and getSoundManager().playUISound then
         getSoundManager():playUISound("S4_QoL_ButtonPush")
@@ -804,18 +869,8 @@ function S4_Eco_Context.Safe_Action(Obj, player, Data)
     end
 
     if mission.drillIsJammed then
-        mission.drillIsJammed = false
-        mission.drillNextJamRollHours = now + (10 / 60)
-        if mission.drillJamStartHours then
-            local jammedDuration = now - mission.drillJamStartHours
-            if jammedDuration > 0 then
-                mission.drillEndHours = mission.drillEndHours + jammedDuration
-            end
-            mission.drillJamStartHours = nil
-        end
-        if player.setHaloNote then
-            player:setHaloNote("Drill unjammed! It's working again.", 80, 220, 80, 250)
-        end
+        local action = S4_Action_UnjamDrill:new(player, Obj)
+        ISTimedActionQueue.add(action)
         return
     end
 

@@ -1,3 +1,4 @@
+require "shared/S4_FactionZones"
 S4_IE_Recon = ISPanel:derive("S4_IE_Recon")
 
 function S4_IE_Recon:new(IEUI, x, y, width, height)
@@ -64,8 +65,31 @@ function S4_IE_Recon:createChildren()
         y = y + 90
     end
     
-    self.StatusText = ISLabel:new(20, y + 20, S4_UI.FH_M, "SYSTEM STATUS: STANDBY", 0.6, 0.6, 0.6, 1, UIFont.Medium, true)
+    self.StatusText = ISLabel:new(20, y + 20, S4_UI.FH_M, "SYSTEM STATUS: UPLINK ACTIVE", 0.6, 1, 0.6, 1, UIFont.Medium, true)
     self.ContentArea:addChild(self.StatusText)
+    
+    y = y + 60
+    
+    -- TERRITORY OVERVIEW
+    self.ContentArea:addChild(ISLabel:new(20, y, S4_UI.FH_M, "TERRITORY CONTROL OVERVIEW:", 0.8, 0.8, 1, 1, UIFont.Medium, true))
+    y = y + 30
+    
+    local territory = S4_FactionZones.init()
+    for _, z in ipairs(S4_FactionZones.Zones) do
+        local zData = territory.Zones[z.id]
+        if zData and z.id ~= "wilderness" then
+            local color = {r=0.6, g=0.6, b=0.6}
+            if zData.owner == "Survivors" then color = {r=0.2, g=1, b=0.2}
+            elseif zData.owner == "Military" then color = {r=0.2, g=0.2, b=1}
+            elseif zData.owner == "TraderUnion" then color = {r=1, g=1, b=0.2}
+            elseif zData.owner == "Banditos" then color = {r=1, g=0.2, b=0.2} end
+            
+            local tInfo = string.format("- %s: %s (%d%%)", z.name, zData.owner, zData.influence)
+            local tLabel = ISLabel:new(30, y, S4_UI.FH_S, tInfo, color.r, color.g, color.b, 1, UIFont.Small, true)
+            self.ContentArea:addChild(tLabel)
+            y = y + 20
+        end
+    end
 end
 
 function S4_IE_Recon:onScan(btn)

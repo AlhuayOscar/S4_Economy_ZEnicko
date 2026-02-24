@@ -24,7 +24,9 @@ local S4_IE_Class = {
     Recover = "S4_IE_Recover",
     Repair = "S4_IE_Repair",
     Weather = "S4_IE_Weather",
-    BBS = "S4_IE_BBS"
+    BBS = "S4_IE_BBS",
+    Mail = "S4_IE_Mail",
+    MNS = "S4_IE_MNS"
 }
 
 function S4_InternetExplorer:initialise()

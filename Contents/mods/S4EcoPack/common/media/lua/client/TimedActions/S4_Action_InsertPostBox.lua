@@ -42,7 +42,7 @@ function S4_Action_InsertPostBox:perform()
         local LogTime = S4_Utils.getLogTime()
         local Price = BoxModData.S4Price
         local CardNumber = BoxModData.S4CardNumber
-        sendClientCommand("S4SD", "ShopSell", {CardNumber, Price, LogTime})
+        sendClientCommand("S4SD", "ShopSell", {CardNumber, Price, LogTime, BoxModData.S4ItemList})
         local BoxUserName = BoxModData.S4Master
         sendClientCommand("S4PD", "AddSellTotal", {BoxUserName, Price})
     end

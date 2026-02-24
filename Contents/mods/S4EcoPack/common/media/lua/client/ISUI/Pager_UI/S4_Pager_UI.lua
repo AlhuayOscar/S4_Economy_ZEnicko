@@ -314,12 +314,21 @@ function S4_Pager_UI:onStartMission()
         return
     end
     local startAt = nowWorldHours()
+    local durationHours = self.pendingMission.durationHours
+    if self.pendingMission.missionGroup == "RosewoodKnoxBankHeist" then
+        if tonumber(self.pendingMission.missionPart) == 2 then
+            durationHours = 40 / 60
+        elseif tonumber(self.pendingMission.missionPart) == 3 then
+            durationHours = 30 / 60
+        end
+    end
+
     local m = {
         status = "active",
         missionName = self.pendingMission.missionName,
         startWorldHours = startAt,
-        endWorldHours = startAt + self.pendingMission.durationHours,
-        durationHours = self.pendingMission.durationHours,
+        endWorldHours = startAt + durationHours,
+        durationHours = durationHours,
         objective = self.pendingMission.objective,
         location = self.pendingMission.location,
         targetX = self.pendingMission.targetX,

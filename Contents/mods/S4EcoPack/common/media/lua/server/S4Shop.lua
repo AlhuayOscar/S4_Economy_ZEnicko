@@ -154,17 +154,33 @@ local function buildShopEntry(Data, CurrentCategory)
     if not category or category == "" then
         category = CurrentCategory or "Etc"
     end
-    return {
-        BuyPrice = tonumber(Data and Data.BuyPrice) or 0,
-        SellPrice = tonumber(Data and Data.SellPrice) or 0,
-        Stock = tonumber(Data and Data.Stock) or 0,
-        Restock = tonumber(Data and Data.Restock) or 0,
-        Category = category,
-        BuyAuthority = tonumber(Data and Data.BuyAuthority) or 0,
-        SellAuthority = tonumber(Data and Data.SellAuthority) or 0,
-        Discount = tonumber(Data and Data.Discount) or 0,
-        HotItem = tonumber(Data and Data.HotItem) or 0
+        HotItem = tonumber(Data and Data.HotItem) or 0,
+        DemandFaction = Data and Data.DemandFaction or nil
     }
+end
+
+function S4Shop.GenerateDemand()
+    local ShopModData = ModData.get("S4_ShopData")
+    if not ShopModData then return end
+    
+    -- Pick 5 to 30 random items
+    local allItems = {}
+    for name, data in pairs(ShopModData) do
+        data.DemandFaction = nil -- Reset previous demand
+        table.insert(allItems, name)
+    end
+    
+    local count = ZombRand(5, 31)
+    local factions = {"Survivors", "Military", "TraderUnion", "Banditos"}
+    
+    for i=1, count do
+        if #allItems == 0 then break end
+        local idx = ZombRand(#allItems) + 1
+        local itemName = table.remove(allItems, idx)
+        local faction = factions[ZombRand(#factions) + 1]
+        ShopModData[itemName].DemandFaction = faction
+    end
+    print("[S4Shop] Generated demand for " .. count .. " items.")
 end
 
 local function getShopDataState(shopData)
@@ -213,6 +229,7 @@ local function applyShopDataFromLua(overwriteExisting, removeMissing)
 
     local newState = getShopDataState(ShopModData)
     if oldState ~= newState then
+        S4Shop.GenerateDemand()
         ModData.transmit("S4_ShopData")
         return true, true -- success, hadChanges
     end
@@ -400,6 +417,21 @@ function S4Shop.ShopSell(player, args)
     }
     ModData.transmit("S4_CardData")
     ModData.transmit("S4_CardLog")
+
+    -- Award Faction Reputation for Denmand Items
+    local ItemList = args[4]
+    if ItemList and S4_PlayerStats then
+        local ShopModData = ModData.get("S4_ShopData")
+        for itemName, amount in pairs(ItemList) do
+            if ShopModData[itemName] and ShopModData[itemName].DemandFaction then
+                local faction = ShopModData[itemName].DemandFaction
+                S4_PlayerStats.addFactionRep(player, faction, 0.01)
+                if player.setHaloNote then
+                    player:setHaloNote(string.format("Demand Met: +0.01 %s", faction), 255, 255, 100, 300)
+                end
+            end
+        end
+    end
 end
 
 function S4Shop.ShopDataAddon(player, args)

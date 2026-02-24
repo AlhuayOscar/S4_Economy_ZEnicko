@@ -199,6 +199,12 @@ function S4_ItemBoxButton:render()
 				local NameY = 15 + self.ImgSize
 				self:drawText(FixName, NameX, NameY, 0.8, 0.8, 0.8, 1, UIFont.Small)
 			end
+			-- Demand Indicator
+			if self.item and self.item.DemandFaction then
+				local label = "DEMAND"
+				local labelW = getTextManager():MeasureStringX(UIFont.Small, label)
+				self:drawText(label, self.width - labelW - 5, 5, 1, 1, 0, 1, UIFont.Small)
+			end
 		end
 	end
 end

@@ -395,6 +395,10 @@ function S4_ItemListBox:setItemBtn()
                                 self["Btn" .. i].Authority = true
                             end
                         end
+                        if Data.DemandFaction then
+                            local factionColor = " <RGB:1,1,0> " -- Yellow for Demand
+                            TooltipText = TooltipText .. " <LINE> " .. factionColor .. "DEMAND: " .. Data.DemandFaction .. " (+0.01 Rep)"
+                        end
                         self["Btn" .. i]:setTooltip(TooltipText)
                     end
                     Check = true

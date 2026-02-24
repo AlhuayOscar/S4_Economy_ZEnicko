@@ -129,7 +129,7 @@ function S4_IE_MyDoc:createChildren()
         elseif plyStats.Karma < -30 then kText = "BANDIT"
         end
         
-        pnl:drawTextCentre("KARMA: " .. kText .. " (" .. plyStats.Karma .. ")", pnl:getWidth() / 2, barY + barH + 15, r, g, b, 1, UIFont.Large)
+        pnl:drawTextCentre("KARMA: " .. kText .. " (" .. string.format("%.2f", plyStats.Karma) .. ")", pnl:getWidth() / 2, barY + barH + 15, r, g, b, 1, UIFont.Large)
         
         -- Draw Faction bars
         local fYOffset = 315
@@ -151,7 +151,7 @@ function S4_IE_MyDoc:createChildren()
             elseif rep < -20 then fR, fG, fB = 1, 0.3, 0.1 end
             
             pnl:drawRect(fbX + 1, fbY + 1, (fbW - 2) * repNorm, fbH - 2, 0.8, fR, fG, fB)
-            pnl:drawTextRight(tostring(rep) .. "%", fbX + fbW + 40, fbY - 2, fR, fG, fB, 1, UIFont.Small)
+            pnl:drawTextRight(string.format("%.2f %%", rep), fbX + fbW + 40, fbY - 2, fR, fG, fB, 1, UIFont.Small)
             
             fYOffset = fYOffset + 50
         end

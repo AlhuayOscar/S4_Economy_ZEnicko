@@ -1,0 +1,24 @@
+Resumen de Actualizaciones: Sistema de Karma, Facciones y Economía Dinámica
+
+1. Nuevo Sistema MNS (Messenger Network Service)
+   - Implementado un cliente tipo "MSN Messenger" paródico (S4_IE_MNS.lua).
+   - Guía MNS (Bot) añadida por defecto.
+   - Nueva base de datos de NPCs (S4_MNS_Database.lua) con Lore, estado, estados de ánimo y pistas de misiones.
+   - Intercomunicación con Twitboid: Al publicar en Twitboid hay un 30% de probabilidad de desbloquear un nuevo contacto MNS y recibir su lore/pistas.
+
+2. Actualización de Pager y Misiones (Karma)
+   - Completar misiones del Pager ahora otorga +0.01 Karma positivo.
+   - La visualización del Karma en las apps de My Documents (Dossier) y Karma Admin ha sido actualizada para mostrar 2 decimales (ej. 100.00).
+
+3. Sistema de Control de Territorio y Lealtad:
+   - Nuevo archivo `S4_FactionZones.lua` para delimitar zonas del mapa para las facciones (Survivors, Military, TraderUnion, Banditos).
+   - "Streak" (Rachas) de Misiones: Realizar misiones en el territorio de una misma facción aumenta tu reputación (+0.01 a partir de la segunda misión consecutiva).
+   - Penalización por cambio de bando: Si realizas una misión para una facción distinta, te penalizará con -5.00 Karma (Traición), y tendrás un 70% de probabilidades de perder -0.01 reputación con la nueva facción al ser visto como un "Forastero". La racha se reinicia.
+   - Actualizada la App Recon (S4_IE_Recon) para ver el estado general del territorio (Quién controla qué y en qué porcentaje).
+
+4. Sistema de Demanda en el GoodShop:
+   - Los items en la tienda general (GoodShop) ahora tienen sistema de demanda por facciones.
+   - De forma aleatoria, entre 5 y 30 items tendrán demanda activa solicitada por alguna de las facciones.
+   - Vender un item bajo demanda (sin importar la cantidad) otorgará un bono inmediato de +0.01 a la reputación de la facción correspondiente.
+   - Interfaz de Tienda actulizada: Los items en demanda mostrarán una llamativa etiqueta "DEMAND" de color amarillo en su botón, y la información adicional sobre la ganancia de reputación podrá leerse en el Tooltip.
+   - Actualizada la lógica de los buzones (PostBox) para verificar las demandas antes de procesar las ventas en el servidor.

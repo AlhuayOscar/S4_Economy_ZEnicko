@@ -208,6 +208,37 @@ function S4_IE_Twitboid:onPost(button)
         end
         
         if isClient() then ModData.transmit("S4_TwitboidGlobal") end
+
+        -- Random chance to get a new MNS contact!
+        if ZombRand(100) < 30 then
+            local pData = self.player:getModData()
+            pData.S4_MNS_Contacts = pData.S4_MNS_Contacts or {}
+            
+            -- Pick a random NPC from the database
+            if S4_MNS_Database and S4_MNS_Database.Users then
+                local randomIndex = ZombRand(#S4_MNS_Database.Users) + 1
+                local dbUser = S4_MNS_Database.Users[randomIndex]
+                
+                -- Check if already unlocked
+                local isUnlocked = false
+                for _, c in ipairs(pData.S4_MNS_Contacts) do
+                    if c.id == dbUser.id then isUnlocked = true break end
+                end
+                
+                if not isUnlocked then
+                    table.insert(pData.S4_MNS_Contacts, {
+                        id = dbUser.id,
+                        messages = {
+                            {from=dbUser.name, text="Hey, I saw your post. We should talk."},
+                            {from=dbUser.name, text=dbUser.missionHint}
+                        }
+                    })
+                    if self.player.setHaloNote then
+                        self.player:setHaloNote("MNS: New Contact - " .. dbUser.name, 0, 200, 255, 300)
+                    end
+                end
+            end
+        end
         
         -- Recargar
         self.IEUI:ReloadUI()

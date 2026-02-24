@@ -40,7 +40,7 @@ function S4_IE_KarmaAdmin:rebuildUI()
     local y = 80
     
     -- KARMA SEC
-    self.ContentList:addChild(ISLabel:new(10, y, S4_UI.FH_M, "Current Karma: " .. stats.Karma, 0.8, 0.8, 1, 1, UIFont.Medium, true))
+    self.ContentList:addChild(ISLabel:new(10, y, S4_UI.FH_M, "Current Karma: " .. string.format("%.2f", stats.Karma), 0.8, 0.8, 1, 1, UIFont.Medium, true))
     
     local bKarmaPlus10 = ISButton:new(200, y - 5, 80, 30, "+10", self, S4_IE_KarmaAdmin.onKPlus)
     bKarmaPlus10:initialise()

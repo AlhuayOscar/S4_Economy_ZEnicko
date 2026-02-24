@@ -200,6 +200,14 @@ function S4_Computer_Main:createChildren()
         Name = "Knox News",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_News.png")
     }
+    S4_Category.ComputerIconData["MNS"] = {
+        Name = "MNS Messenger",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Community.png") -- Using Community icon as placeholder
+    }
+    S4_Category.ComputerIconData["Mail"] = {
+        Name = "Main Mail",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Community.png")
+    }
     S4_Category.ComputerIconData["ZomBank"] = {
         Name = "Zom Bank",
         Icon = getTexture("media/textures/S4_Icon/Icon_64_ZomBank.png")
@@ -234,7 +242,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Mail", "MNS", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -414,6 +422,18 @@ function S4_Computer_Main:render()
         else
             self.Btn_News.image = getTexture("media/textures/S4_Icon/Icon_64_News.png")
         end
+    end
+
+    -- Mail Notification
+    local userName = self.player:getUsername()
+    local playerData = ModData.get("S4_PlayerData") and ModData.get("S4_PlayerData")[userName]
+    if playerData and playerData.PendingMissionRewards and playerData.PendingMissionRewards > 0 then
+        self:drawText("Tienes un mensaje nuevo", TimeX - 180, StartTextY + 2, 1, 0, 0, 1, UI_Font)
+        if self.Btn_Mail then
+            self.Btn_Mail.image = getTexture("media/textures/S4_Icon/Icon_64_NewsIncoming.png") -- Using incoming icon as visual cue
+        end
+    elseif self.Btn_Mail then
+        self.Btn_Mail.image = getTexture("media/textures/S4_Icon/Icon_64_Community.png")
     end
 
     for i, TaskBarUI in ipairs(self.TaskBar) do
@@ -782,6 +802,34 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.News)
         end
         self.TopApp = self.News
+    elseif internal == "Mail" then
+        if self.MailUI then
+            if not self.MailUI:isVisible() then self.MailUI:setVisible(true) end
+            self.MailUI:bringToTop()
+        else
+            self.MailUI = S4_InternetExplorer:new(self)
+            self.MailUI:initialise()
+            self.MailUI.TitleName = "S4 Mail - Main Inbox"
+            self.MailUI.AddressText = "https://mail.s4-secure.net/inbox"
+            self.MailUI.PageType = internal
+            self:addChild(self.MailUI)
+            self:AddTaskBar(self.MailUI)
+        end
+        self.TopApp = self.MailUI
+    elseif internal == "MNS" then
+        if self.MNSUI then
+            if not self.MNSUI:isVisible() then self.MNSUI:setVisible(true) end
+            self.MNSUI:bringToTop()
+        else
+            self.MNSUI = S4_InternetExplorer:new(self)
+            self.MNSUI:initialise()
+            self.MNSUI.TitleName = "MNS Messenger"
+            self.MNSUI.AddressText = "local://mns_messenger.exe"
+            self.MNSUI.PageType = internal
+            self:addChild(self.MNSUI)
+            self:AddTaskBar(self.MNSUI)
+        end
+        self.TopApp = self.MNSUI
     elseif internal == "ZomBank" then
         if self.ZomBank then
             if not self.ZomBank:isVisible() then

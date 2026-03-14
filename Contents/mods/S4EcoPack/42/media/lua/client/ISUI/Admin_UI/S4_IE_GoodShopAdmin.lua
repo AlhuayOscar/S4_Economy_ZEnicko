@@ -42,16 +42,54 @@ function S4_IE_GoodShopAdmin:initialise()
     local AllItemList = getAllItems()
     for i = 0, AllItemList:size() - 1 do
         local item = AllItemList:get(i)
-        if item and item:getFullName() and item:getTypeString() then
+        local fullType = nil
+        local typeString = nil
+        local displayCategory = nil
+        local displayName = nil
+
+        if item and item.getFullName then
+            local okFullName, value = pcall(function()
+                return item:getFullName()
+            end)
+            if okFullName then
+                fullType = value
+            end
+        end
+        if item and item.getTypeString then
+            local okTypeString, value = pcall(function()
+                return item:getTypeString()
+            end)
+            if okTypeString then
+                typeString = value
+            end
+        end
+        if item and item.getDisplayCategory then
+            local okDisplayCategory, value = pcall(function()
+                return item:getDisplayCategory()
+            end)
+            if okDisplayCategory then
+                displayCategory = value
+            end
+        end
+        if item and item.getDisplayName then
+            local okDisplayName, value = pcall(function()
+                return item:getDisplayName()
+            end)
+            if okDisplayName then
+                displayName = value
+            end
+        end
+
+        if item and fullType and typeString then
             local Data = {}
-            local ListCategory = item:getDisplayCategory()
+            local ListCategory = displayCategory
             if not ListCategory or ListCategory == "" then
-                ListCategory = item:getTypeString() or "Etc"
+                ListCategory = typeString or "Etc"
             end
 
             Data.ListCategory = ListCategory
-            Data.FullType = item:getFullName()
-            Data.DisplayName = item:getDisplayName() or Data.FullType
+            Data.FullType = fullType
+            Data.DisplayName = displayName or Data.FullType
 
             local iconTexture = nil
             if item.getNormalTexture then

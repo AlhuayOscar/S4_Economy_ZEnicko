@@ -115,14 +115,14 @@ function S4_IE_Error:onChangeComboBox()
         local SelectNum = self.BuyPakcBox:getSelected()
         local SelectDay = self.BuyPakcBox:getOptionData(SelectNum)
         local Price = SandboxVars.S4SandBox.NetworkOneDayPrice
-        local Text1 = string.format(getText("IGUI_S4_SNetwork_DayText1"), SelectDay)
-        local Text2 = string.format(getText("IGUI_S4_SNetwork_DayText2"), SelectDay)
+        local Text1 = getText("IGUI_S4_SNetwork_DayText1", SelectDay)
+        local Text2 = getText("IGUI_S4_SNetwork_DayText2", SelectDay)
         if SelectNum ~= 1 then
             local Discount = SandboxVars.S4SandBox["NetPackDiscont"..SelectDay]
             local DiscountPrice = math.floor((Price * SelectDay) * (Discount * 0.01))
             Price = (Price * SelectDay) - DiscountPrice
         end
-        local Text3 = string.format(getText("IGUI_S4_SNetwork_DayText3"), Price)
+        local Text3 = getText("IGUI_S4_SNetwork_DayText3", Price)
         self.SelectTextLabel1:setName(Text1)
         self.SelectTextLabel2:setName(Text2)
         self.SelectTextLabel3:setName(Text3)

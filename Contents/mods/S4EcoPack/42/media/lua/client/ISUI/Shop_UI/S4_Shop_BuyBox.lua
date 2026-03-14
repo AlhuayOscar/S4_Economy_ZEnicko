@@ -58,26 +58,26 @@ function S4_Shop_BuyBox:createChildren()
     NameY = NameY + S4_UI.FH_L
     local BtnY = NameY
     
-    local PriceText = string.format(getText("IGUI_S4_Shop_BuyPrice"), S4_UI.getNumCommas(self.ItemData.BuyPrice))
+    local PriceText = getText("IGUI_S4_Shop_BuyPrice", S4_UI.getNumCommas(self.ItemData.BuyPrice))
     if self.ItemData.Discount > 0 then
         local FixPrice = math.floor(self.ItemData.BuyPrice - (self.ItemData.BuyPrice * (self.ItemData.Discount / 100)))
-        PriceText = string.format(getText("IGUI_S4_Shop_BuyPriceDiscount"), S4_UI.getNumCommas(FixPrice), S4_UI.getNumCommas(self.ItemData.BuyPrice))
+        PriceText = getText("IGUI_S4_Shop_BuyPriceDiscount", S4_UI.getNumCommas(FixPrice), S4_UI.getNumCommas(self.ItemData.BuyPrice))
     end
     self.PriceLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, PriceText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.PriceLabel)
     NameY = NameY + S4_UI.FH_M
 
-    local StockText = string.format(getText("IGUI_S4_Shop_Stock"), S4_UI.getNumCommas(self.ItemData.Stock))
+    local StockText = getText("IGUI_S4_Shop_Stock", S4_UI.getNumCommas(self.ItemData.Stock))
     self.StockLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, StockText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.StockLabel)
     NameY = NameY + S4_UI.FH_M
 
-    local AuthorityText = string.format(getText("IGUI_S4_Shop_BuyAuthority"), getText("IGUI_S4_Shop_Authority"..self.ItemData.BuyAuthority))
+    local AuthorityText = getText("IGUI_S4_Shop_BuyAuthority", getText("IGUI_S4_Shop_Authority"..self.ItemData.BuyAuthority))
     self.AuthorityLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, AuthorityText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.AuthorityLabel)
     NameY = NameY + S4_UI.FH_M
 
-    local DiscountText = string.format(getText("IGUI_S4_Shop_Discount"), self.ItemData.Discount) .. " %"
+    local DiscountText = getText("IGUI_S4_Shop_Discount", self.ItemData.Discount) .. " %"
     self.DiscountLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, DiscountText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.DiscountLabel)
     NameY = NameY + S4_UI.FH_M

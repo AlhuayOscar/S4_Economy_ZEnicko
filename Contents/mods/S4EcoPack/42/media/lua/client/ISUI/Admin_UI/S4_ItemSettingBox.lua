@@ -275,7 +275,7 @@ function S4_ItemSettingBox:DataUpdate()
         -- ItemNameLabel/CategoryLabel/StateLabel
         local MaxString = self:getWidth() - S4_UI.FH_L + (S4_UI.FH_M * 2) - 30
         local FixItemName = S4_UI.TextLimitOne(self.ItemData.DisplayName, MaxString, UIFont.Large)
-        local MixItemInfo = string.format(getText("IGUI_S4_ShopAdmin_ItemInfo"), self.ItemData.FullType, self.ItemData.ListCategory)
+        local MixItemInfo = getText("IGUI_S4_ShopAdmin_ItemInfo", self.ItemData.FullType, self.ItemData.ListCategory)
         local FixItemInfo = S4_UI.TextLimitOne(MixItemInfo, MaxString - 5, UIFont.Medium)
         self.ItemNameLabel:setName(FixItemName)
         self.CategoryLabel:setName(FixItemInfo)

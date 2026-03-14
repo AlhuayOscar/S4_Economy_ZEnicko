@@ -40,7 +40,7 @@ function S4_ATM_Balance:createChildren()
     local CardModData = ModData.get("S4_CardData")
     if self.AtmUI.CardNumber and CardModData[self.AtmUI.CardNumber] then
         local CardData = CardModData[self.AtmUI.CardNumber]
-        InfoText = string.format(getText("IGUI_S4_ATM_Info_Balance"), CardData.Master, self.AtmUI.CardNumber)
+        InfoText = getText("IGUI_S4_ATM_Info_Balance", CardData.Master, self.AtmUI.CardNumber)
         self.Money = CardData.Money
     end
 
@@ -82,7 +82,7 @@ function S4_ATM_Balance:render()
     self:drawText(getText("IGUI_S4_ATM_Balance_Info"), InfoX, self.PanelY, 1, 1, 1, 0.8, UIFont.Medium)
 
     local FixMoney = S4_UI.getNumCommas(self.Money)
-    local MoneyValue = string.format(getText("IGUI_S4_ATM_Money_Value"), FixMoney)
+    local MoneyValue = getText("IGUI_S4_ATM_Money_Value", FixMoney)
     local ValueW = getTextManager():MeasureStringX(UIFont.Large, MoneyValue)
     local ValueX = (self:getWidth() / 2) - (ValueW / 2)
     local r, g, b = 1, 1, 1

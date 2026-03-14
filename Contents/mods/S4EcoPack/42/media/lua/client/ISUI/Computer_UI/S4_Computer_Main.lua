@@ -79,6 +79,10 @@ function S4_Computer_Main:initialise()
 end
 
 function S4_Computer_Main:CheckModData()
+    if self.player then
+        S4_UI.normalizePlayerCreditCards(self.player)
+    end
+
     -- Reset flags to avoid stale data from other computers
     self.CardReaderInstall = false
     self.CardNumber = nil
@@ -98,10 +102,11 @@ function S4_Computer_Main:CheckModData()
         if ComModData.S4CardNumber then
             self.CardNumber = ComModData.S4CardNumber
             self.CardMaster = ComModData.S4CardMaster
-            local CardModData = ModData.get("S4_CardData")
-            if CardModData[ComModData.S4CardNumber] then
-                self.CardMoney = CardModData[ComModData.S4CardNumber].Money
-                self.CardPassword = CardModData[ComModData.S4CardNumber].Password
+            local cardData = S4_UI.getCardData(ComModData.S4CardNumber)
+            if cardData then
+                self.CardMaster = cardData.Master or self.CardMaster
+                self.CardMoney = cardData.Money
+                self.CardPassword = cardData.Password
             end
         end
     end

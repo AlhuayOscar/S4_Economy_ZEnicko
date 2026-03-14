@@ -20,6 +20,9 @@ end
 
 function S4_IE_ZomBank:initialise()
     ISPanel.initialise(self)
+    if self.ComUI and self.ComUI.CheckModData then
+        self.ComUI:CheckModData()
+    end
     local W, H, Count = S4_UI.getGoodShopSizeZ(self.ComUI)
     self.IEUI:FixUISize(817, H)
 
@@ -183,6 +186,9 @@ end
 
 function S4_IE_ZomBank:render()
     ISPanel.render(self)
+    if self.ComUI and self.ComUI.CheckModData then
+        self.ComUI:CheckModData()
+    end
     local CardNumber = self.ComUI.CardNumber
     local UserName = self.player:getUsername()
     local BalanceText = getText("IGUI_S4_Label_CardBalance") .. getText("IGUI_S4_Network_UnKnown")
@@ -190,12 +196,14 @@ function S4_IE_ZomBank:render()
     local balanceColor = {r=1, g=1, b=1}
     local debtColor = {r=1, g=1, b=1}
 
-    if CardNumber then
-        local CardModData = ModData.get("S4_CardData")
+    if CardNumber and CardNumber ~= "Null" then
         local LoanModData = ModData.get("S4_LoanData")
-        
-        if CardModData and CardModData[CardNumber] then
-            local money = CardModData[CardNumber].Money
+        local cardData = S4_UI.getCardData(CardNumber)
+
+        if cardData then
+            local money = cardData.Money or 0
+            self.ComUI.CardMaster = cardData.Master or self.ComUI.CardMaster
+            self.ComUI.CardMoney = money
             BalanceText = getText("IGUI_S4_Label_CardBalance") .. "$ " .. S4_UI.getNumCommas(money)
             if money < 0 then
                 balanceColor = {r=1, g=0, b=0}

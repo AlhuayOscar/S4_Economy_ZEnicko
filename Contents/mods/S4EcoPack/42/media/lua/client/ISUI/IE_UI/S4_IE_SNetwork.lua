@@ -46,7 +46,7 @@ function S4_IE_SNetwork:createChildren()
     local LogoInfoW = InfoPanelW + LogoW + 100
     WidthMax = math.max(WidthMax, LogoInfoW)
 
-    local HomeText1 = string.format(getText("IGUI_S4_SNetwork_Text1"), PlayerName)
+    local HomeText1 = getText("IGUI_S4_SNetwork_Text1", PlayerName)
     local HomeTextW1 = getTextManager():MeasureStringX(UIFont.Small, HomeText1) + 40
     local HomeTextW2 = getTextManager():MeasureStringX(UIFont.Small, getText("IGUI_S4_SNetwork_Text2")) + 40
     local HomeTextW3 = getTextManager():MeasureStringX(UIFont.Small, getText("IGUI_S4_SNetwork_Text3")) + 40
@@ -114,7 +114,7 @@ function S4_IE_SNetwork:createChildren()
     -- %s, welcome to Zom Network. (welcom SNetwerk. #usernaem)
     local HomeY = math.max(self.InfoPanel:getBottom(), self.LogoImg:getBottom()) + S4_UI.FH_S
     local HomeX1 = (WidthMax / 2) - ((HomeTextW1 - 40) / 2)
-    local HomeText1 = string.format(getText("IGUI_S4_SNetwork_Text1"), PlayerName)
+    local HomeText1 = getText("IGUI_S4_SNetwork_Text1", PlayerName)
     self.HomeLabel1 = ISLabel:new(HomeX1, HomeY, S4_UI.FH_S, HomeText1, 0, 0, 0, 1, UIFont.Small, true)
     self:addChild(self.HomeLabel1)
     HomeY = HomeY + S4_UI.FH_S
@@ -186,9 +186,9 @@ function S4_IE_SNetwork:createChildren()
         local SelectNum = self.BuyPakcBox:getSelected()
         local SelectDay = self.BuyPakcBox:getOptionData(SelectNum)
         local Price = SandboxVars.S4SandBox.NetworkOneDayPrice
-        local Text1 = string.format(getText("IGUI_S4_SNetwork_DayText1"), SelectDay)
-        local Text2 = string.format(getText("IGUI_S4_SNetwork_DayText2"), SelectDay)
-        local Text3 = string.format(getText("IGUI_S4_SNetwork_DayText3"), Price)
+        local Text1 = getText("IGUI_S4_SNetwork_DayText1", SelectDay)
+        local Text2 = getText("IGUI_S4_SNetwork_DayText2", SelectDay)
+        local Text3 = getText("IGUI_S4_SNetwork_DayText3", Price)
         self.SelectTextLabel1:setName(Text1)
         self.SelectTextLabel2:setName(Text2)
         self.SelectTextLabel3:setName(Text3)
@@ -277,14 +277,14 @@ function S4_IE_SNetwork:onChangeComboBox()
         local SelectNum = self.BuyPakcBox:getSelected()
         local SelectDay = self.BuyPakcBox:getOptionData(SelectNum)
         local Price = SandboxVars.S4SandBox.NetworkOneDayPrice
-        local Text1 = string.format(getText("IGUI_S4_SNetwork_DayText1"), SelectDay)
-        local Text2 = string.format(getText("IGUI_S4_SNetwork_DayText2"), SelectDay)
+        local Text1 = getText("IGUI_S4_SNetwork_DayText1", SelectDay)
+        local Text2 = getText("IGUI_S4_SNetwork_DayText2", SelectDay)
         if SelectNum ~= 1 then
             local Discount = SandboxVars.S4SandBox["NetPackDiscont"..SelectDay]
             local DiscountPrice = math.floor((Price * SelectDay) * (Discount * 0.01))
             Price = (Price * SelectDay) - DiscountPrice
         end
-        local Text3 = string.format(getText("IGUI_S4_SNetwork_DayText3"), Price)
+        local Text3 = getText("IGUI_S4_SNetwork_DayText3", Price)
         self.SelectTextLabel1:setName(Text1)
         self.SelectTextLabel2:setName(Text2)
         self.SelectTextLabel3:setName(Text3)

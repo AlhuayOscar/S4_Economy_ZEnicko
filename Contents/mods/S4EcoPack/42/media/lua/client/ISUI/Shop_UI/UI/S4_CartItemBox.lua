@@ -92,7 +92,7 @@ function S4_CartItemBox:SetData()
     if self.IconImage then self.IconImage:close() end
     if self.Data then
         local Lx = self:getHeight()
-        local DisplayName = string.format(getText("IGUI_S4_Cart_DisplayName"), self.Data.DisplayName)
+        local DisplayName = getText("IGUI_S4_Cart_DisplayName", self.Data.DisplayName)
         DisplayName = S4_UI.TextLimitOne(DisplayName, self:getWidth() - Lx - 10, UIFont.Large)
         self.NameLabel:setName(DisplayName)
         if self.Data.Texture then
@@ -119,8 +119,8 @@ function S4_CartItemBox:SetData()
             local Discount = S4_UI.getNumCommas(self.Data.ItemData.Discount)
             local FixPrice = math.floor(self.Data.ItemData.BuyPrice - (self.Data.ItemData.BuyPrice * (self.Data.ItemData.Discount / 100)))
             local TotalPrice = S4_UI.getNumCommas(FixPrice * self.Data.Amount) 
-            local InfoText = string.format(getText("IGUI_S4_Cart_BuyInfo"), Price, Stock, Discount) .. " %"
-            local TotalText = string.format(getText("IGUI_S4_Cart_TotalBuyPrice"), TotalPrice)
+            local InfoText = getText("IGUI_S4_Cart_BuyInfo", Price, Stock, Discount) .. " %"
+            local TotalText = getText("IGUI_S4_Cart_TotalBuyPrice", TotalPrice)
             self.InfoLabel:setName(InfoText)
             self.TotalLabel:setName(TotalText)
         elseif self.ParentsUI.CartType == "Sell" then
@@ -133,8 +133,8 @@ function S4_CartItemBox:SetData()
             local Price = self.Data.ItemData.SellPrice
             local PriceFix = Price - math.floor((Price * (SellCommission / 100)))
             local TotalPrice = S4_UI.getNumCommas(math.floor(PriceFix * self.Data.Amount))
-            local InfoText = string.format(getText("IGUI_S4_Cart_SellInfo"), S4_UI.getNumCommas(Price), InvStock, tostring(SellCommission)) .. " %"
-            local TotalText = string.format(getText("IGUI_S4_Cart_TotalSellPrice"), TotalPrice)
+            local InfoText = getText("IGUI_S4_Cart_SellInfo", S4_UI.getNumCommas(Price), InvStock, tostring(SellCommission)) .. " %"
+            local TotalText = getText("IGUI_S4_Cart_TotalSellPrice", TotalPrice)
             self.InfoLabel:setName(InfoText)
             self.TotalLabel:setName(TotalText)
         end

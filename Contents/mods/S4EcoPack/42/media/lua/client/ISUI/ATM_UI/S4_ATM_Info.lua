@@ -101,20 +101,23 @@ function S4_ATM_Info:onMouseMove(dx, dy)
 end
 
 function S4_ATM_Info:InsertCard(item)
+    S4_UI.normalizeCreditCardItem(item)
     local itemModData = item:getModData()
     local AtmModData = self.AtmUI.Obj:getModData()
     if itemModData and AtmModData then
         if AtmModData.S4CardNumber then -- If there is a card inserted, return the existing card
             self:ReturnCard(AtmModData.S4CardNumber)
         end
-        if itemModData.S4CardNumber then -- When inserting, when there is data on the card
-            local CardModData = ModData.get("S4_CardData")
-            if CardModData[itemModData.S4CardNumber] then
+        local itemCardNumber = itemModData.S4CardNumber or itemModData.BankCard
+        if itemCardNumber then -- When inserting, when there is data on the card
+            local cardData = S4_UI.getCardData(itemCardNumber)
+            if cardData then
                 -- Set card number and password in UI
-                self.AtmUI.CardNumber = itemModData.S4CardNumber
-                self.AtmUI.CardPassword = CardModData[itemModData.S4CardNumber].Password
+                self.AtmUI.CardNumber = itemCardNumber
+                self.AtmUI.CardMaster = cardData.Master
+                self.AtmUI.CardPassword = cardData.Password
                 -- Save card number in ATM Object
-                AtmModData.S4CardNumber = itemModData.S4CardNumber 
+                AtmModData.S4CardNumber = itemCardNumber
                 S4_Utils.SnycObject(self.AtmUI.Obj)
             end
         else -- When inserting, when there is no data on the card
@@ -146,10 +149,9 @@ function S4_ATM_Info:ReturnCard(CardNum)
         local CreateCard = instanceItem("Base.CreditCard")
         local OldCard = self.player:getInventory():AddItem(CreateCard)
         local UserName = self.player:getUsername()
-        local DisplayName = string.format(getText("IGUI_S4_Item_CreditCard"), UserName)
+        local DisplayName = "Credit Card: " .. tostring(UserName)
         if CardNum ~= "Null" then
-            local NewCardNumber = string.format(getText("IGUI_S4_Item_CardNumber"), CardNum)
-            DisplayName = DisplayName .. NewCardNumber
+            DisplayName = S4_UI.getCardDisplayName(UserName, CardNum)
             local OldCardModData = OldCard:getModData()
             OldCardModData.S4CardNumber = CardNum
             S4_Utils.SnycObject(OldCard)

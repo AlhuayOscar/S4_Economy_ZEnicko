@@ -167,42 +167,51 @@ function S4_Sys_CardReader:AddCardItems()
                 for i = 0, ContainerItems:size() - 1 do
                     local Containeritem = ContainerItems:get(i)
                     if Containeritem:getFullType() == "Base.CreditCard" and S4_Utils.ItemCheck(Containeritem) then
-                        local itemModData = Containeritem:getModData()
-                        if itemModData.S4CardNumber and CardModData[itemModData.S4CardNumber] then
+                        local cardNumber = S4_UI.getCardNumberFromItem(Containeritem)
+                        local cardData = S4_UI.getCardData(cardNumber)
+                        if cardNumber and cardData then
                             local Data = {}
                             Data.item = Containeritem
                             Data.Texture = Containeritem:getTex()
-                            Data.DisplayName = Containeritem:getDisplayName()
-                            Data.CardNumber = itemModData.S4CardNumber
-                            Data.CardMaster = CardModData[itemModData.S4CardNumber].Master
+                            Data.CardNumber = cardNumber
+                            Data.CardMaster = cardData.Master
+                            Data.DisplayName = S4_UI.getCardDisplayName(Data.CardMaster, Data.CardNumber)
+                            Containeritem:getModData().S4CardNumber = cardNumber
+                            Containeritem:setName(Data.DisplayName)
                             self.CardBox:addItem(Data.DisplayName, Data)
                         end
                     end
                 end
             else -- When the bag is empty, check whether the item is in the bag.
                 if item:getFullType() == "Base.CreditCard" and S4_Utils.ItemCheck(item) then
-                    local itemModData = item:getModData()
-                    if itemModData.S4CardNumber and CardModData[itemModData.S4CardNumber] then
+                    local cardNumber = S4_UI.getCardNumberFromItem(item)
+                    local cardData = S4_UI.getCardData(cardNumber)
+                    if cardNumber and cardData then
                         local Data = {}
                         Data.item = item
                         Data.Texture = item:getTex()
-                        Data.DisplayName = item:getDisplayName()
-                        Data.CardNumber = itemModData.S4CardNumber
-                        Data.CardMaster = CardModData[itemModData.S4CardNumber].Master
+                        Data.CardNumber = cardNumber
+                        Data.CardMaster = cardData.Master
+                        Data.DisplayName = S4_UI.getCardDisplayName(Data.CardMaster, Data.CardNumber)
+                        item:getModData().S4CardNumber = cardNumber
+                        item:setName(Data.DisplayName)
                         self.CardBox:addItem(Data.DisplayName, Data)
                     end
                 end
             end
         else
             if item:getFullType() == "Base.CreditCard" and S4_Utils.ItemCheck(item) then
-                local itemModData = item:getModData()
-                if itemModData.S4CardNumber and CardModData[itemModData.S4CardNumber] then
+                local cardNumber = S4_UI.getCardNumberFromItem(item)
+                local cardData = S4_UI.getCardData(cardNumber)
+                if cardNumber and cardData then
                     local Data = {}
                     Data.item = item
                     Data.Texture = item:getTex()
-                    Data.DisplayName = item:getDisplayName()
-                    Data.CardNumber = itemModData.S4CardNumber
-                    Data.CardMaster = CardModData[itemModData.S4CardNumber].Master
+                    Data.CardNumber = cardNumber
+                    Data.CardMaster = cardData.Master
+                    Data.DisplayName = S4_UI.getCardDisplayName(Data.CardMaster, Data.CardNumber)
+                    item:getModData().S4CardNumber = cardNumber
+                    item:setName(Data.DisplayName)
                     self.CardBox:addItem(Data.DisplayName, Data)
                 end
             end
@@ -257,7 +266,7 @@ function S4_Sys_CardReader:ReturnCard()
     if self.ComUI.CardNumber then
         local CardNumber = self.ComUI.CardNumber
         local CardMaster = self.ComUI.CardMaster
-        local CardName = string.format(getText("IGUI_S4_Item_CreditCard"), CardMaster) .. string.format(getText("IGUI_S4_Item_CardNumber"), CardNumber)
+        local CardName = S4_UI.getCardDisplayName(CardMaster, CardNumber)
 
         local CreateCard = instanceItem("Base.CreditCard")
         local ReturnCarditem = self.player:getInventory():AddItem(CreateCard)

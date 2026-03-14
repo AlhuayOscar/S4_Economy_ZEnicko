@@ -114,7 +114,7 @@ function S4_ATM_Withdraw:render()
     self:drawText(getText("IGUI_S4_ATM_Withdraw_Cash"), CashX, self.CashY + 1, 1, 1, 1, 1, UIFont.Small)
 
     local FixCash = S4_UI.getNumCommas(self.CardMoney)
-    local CashValue = string.format(getText("IGUI_S4_ATM_Money_Value"), FixCash)
+    local CashValue = getText("IGUI_S4_ATM_Money_Value", FixCash)
     local CashValueW = getTextManager():MeasureStringX(UIFont.Medium, CashValue)
     local CashValueX = (self:getWidth() / 2) - (CashValueW / 2)
     local r, g, b = 1, 1, 1

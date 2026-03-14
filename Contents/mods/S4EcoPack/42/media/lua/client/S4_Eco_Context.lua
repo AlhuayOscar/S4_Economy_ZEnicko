@@ -235,10 +235,10 @@ function S4_Eco_Context.InventoryMenu(playerNum, context, items)
         local NeedItemName = ItemCashe:getDisplayName()
         if IvnItemsTable and IvnItemsTable["Base.Crowbar"] then
             AirDropToolTip.description = AirDropToolTip.description .. " <LINE> " ..
-                                             string.format(getText("Tooltip_S4_NeedItems"), NeedItemName, 1, 1)
+                                             getText("Tooltip_S4_NeedItems", NeedItemName, 1, 1)
         else
             AirDropToolTip.description = AirDropToolTip.description .. " <LINE> " ..
-                                             string.format(getText("Tooltip_S4_NeedItems"), NeedItemName, 0, 1)
+                                             getText("Tooltip_S4_NeedItems", NeedItemName, 0, 1)
             AirDropMenu.onSelect = nil
             AirDropMenu.notAvailable = true
         end
@@ -315,11 +315,10 @@ function S4_Eco_Context.BoxOpen(player, item)
                     local CreateCard = instanceItem("Base.CreditCard")
                     local CardItem = player:getInventory():AddItem(CreateCard)
                     local CardItemModData = CardItem:getModData()
-                    local DisplayName = string.format(getText("IGUI_S4_Item_CreditCard"), player:getUsername())
-                    local NewCardNumber = string.format(getText("IGUI_S4_Item_CardNumber"), itemModData.BankCard)
+                    local DisplayName = S4_UI.getCardDisplayName(player:getUsername(), itemModData.BankCard)
                     CardItemModData.S4CardNumber = itemModData.BankCard
                     S4_Utils.SnycObject(CardItem)
-                    CardItem:setName(DisplayName .. NewCardNumber)
+                    CardItem:setName(DisplayName)
                 else
                     local Sqitem = sq:AddWorldInventoryItem(itemName, 0.3, 0.3, 0)
                     if instanceof(Sqitem, "Food") then
@@ -566,18 +565,18 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                             S4_Eco_Context.PowerBarAction, player, Data, IvnItemsTable)
                         local PowerBarToolTip = ISToolTip:new()
                         PowerBarOption.toolTip = PowerBarToolTip
-                        PowerBarToolTip.description = string.format(getText("Tooltip_S4_PowerBar_Install"), ItemName)
+                        PowerBarToolTip.description = getText("Tooltip_S4_PowerBar_Install", ItemName)
                         PowerBarToolTip:setName(getText("ContextMenu_S4_Com_PowerBar_Install"))
                         if IvnItemsTable["Base.PowerBar"] then
                             local Count = IvnItemsTable["Base.PowerBar"].Amount
                             local FixTooltip = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                    " <LINE><RGB:0,1,0> " ..
-                                                   string.format(getText("Tooltip_S4_NeedItems"), ItemName, Count, 1)
+                                                   getText("Tooltip_S4_NeedItems", ItemName, Count, 1)
                             PowerBarToolTip.description = PowerBarToolTip.description .. FixTooltip
                         else
                             local FixTooltip = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                    " <LINE><RGB:1,0,0> " ..
-                                                   string.format(getText("Tooltip_S4_NeedItems"), ItemName, 0, 1)
+                                                   getText("Tooltip_S4_NeedItems", ItemName, 0, 1)
                             PowerBarToolTip.description = PowerBarToolTip.description .. FixTooltip
                             PowerBarOption.onSelect = nil
                             PowerBarOption.notAvailable = true
@@ -593,20 +592,20 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                         local CardReaderToolTip = ISToolTip:new()
                         CardReaderOption.toolTip = CardReaderToolTip
                         CardReaderToolTip.description =
-                            string.format(getText("Tooltip_S4_CardReader_Install"), ItemName)
+                            getText("Tooltip_S4_CardReader_Install", ItemName)
                         CardReaderToolTip:setName(getText("ContextMenu_S4_Com_CardReader_Install"))
 
                         if IvnItemsTable["S4Item.CardReader"] then
                             local Count = IvnItemsTable["S4Item.CardReader"].Amount
                             local FixTooltip = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                    " <LINE><RGB:0,1,0> " ..
-                                                   string.format(getText("Tooltip_S4_NeedItems"), ItemName, Count, 1)
+                                                   getText("Tooltip_S4_NeedItems", ItemName, Count, 1)
                             CardReaderToolTip.description = CardReaderToolTip.description .. FixTooltip
 
                         else
                             local FixTooltip = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                    " <LINE><RGB:1,0,0> " ..
-                                                   string.format(getText("Tooltip_S4_NeedItems"), ItemName, 0, 1)
+                                                   getText("Tooltip_S4_NeedItems", ItemName, 0, 1)
                             CardReaderToolTip.description = CardReaderToolTip.description .. FixTooltip
                             CardReaderOption.onSelect = nil
                             CardReaderOption.notAvailable = true
@@ -622,7 +621,7 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                             S4_Eco_Context.SatelliteAction, player, Data, IvnItemsTable, SatelliteCheck, Dishxyz)
                         local SatelliteToolTip = ISToolTip:new()
                         SatelliteOption.toolTip = SatelliteToolTip
-                        SatelliteToolTip.description = string.format(getText("Tooltip_S4_Satellite_Install"), ItemName)
+                        SatelliteToolTip.description = getText("Tooltip_S4_Satellite_Install", ItemName)
                         SatelliteToolTip:setName(getText("ContextMenu_S4_Com_Satellite_Install"))
 
                         if SatelliteCheck < 1 then
@@ -640,13 +639,13 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                             if Count >= SatelliteCheck then
                                 local GoodText = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                      " <LINE><RGB:0,1,0> " ..
-                                                     string.format(getText("Tooltip_S4_NeedItems"), ItemName, Count,
+                                                     getText("Tooltip_S4_NeedItems", ItemName, Count,
                                         SatelliteCheck, Dishxyz)
                                 SatelliteToolTip.description = SatelliteToolTip.description .. GoodText
                             else
                                 local BadText = " <LINE><LINE> " .. getText("Tooltip_S4_Needitem") ..
                                                     " <LINE><RGB:1,0,0> " ..
-                                                    string.format(getText("Tooltip_S4_NeedItems"), ItemName, Count,
+                                                    getText("Tooltip_S4_NeedItems", ItemName, Count,
                                         SatelliteCheck, Dishxyz)
                                 SatelliteToolTip.description = SatelliteToolTip.description .. BadText
                                 SatelliteOption.onSelect = nil

@@ -58,12 +58,12 @@ function S4_Shop_SellBox:createChildren()
     NameY = NameY + S4_UI.FH_L
     local BtnY = NameY
 
-    local PriceText = string.format(getText("IGUI_S4_Shop_SellPrice"), S4_UI.getNumCommas(self.ItemData.SellPrice))
+    local PriceText = getText("IGUI_S4_Shop_SellPrice", S4_UI.getNumCommas(self.ItemData.SellPrice))
     self.PriceLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, PriceText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.PriceLabel)
     NameY = NameY + S4_UI.FH_M
 
-    local AuthorityText = string.format(getText("IGUI_S4_Shop_SellAuthority"), getText("IGUI_S4_Shop_Authority"..self.ItemData.SellAuthority))
+    local AuthorityText = getText("IGUI_S4_Shop_SellAuthority", getText("IGUI_S4_Shop_Authority"..self.ItemData.SellAuthority))
     self.AuthorityLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, AuthorityText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.AuthorityLabel)
     NameY = NameY + S4_UI.FH_M
@@ -73,16 +73,16 @@ function S4_Shop_SellBox:createChildren()
     --     SellCommission = SandboxVars.S4SandBox.SellCommission
     -- end
     local CommissionPrice = math.floor(self.ItemData.SellPrice * (SellCommission / 100))
-    local CommissionText = string.format(getText("IGUI_S4_Shop_Commission"), S4_UI.getNumCommas(SellCommission), "%", S4_UI.getNumCommas(CommissionPrice))
+    local CommissionText = getText("IGUI_S4_Shop_Commission", S4_UI.getNumCommas(SellCommission), "%", S4_UI.getNumCommas(CommissionPrice))
     self.CommissionLabel = ISLabel:new(NameX, NameY, S4_UI.FH_M, CommissionText, 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.CommissionLabel)
     NameY = NameY + S4_UI.FH_M
 
     local BtnW = ((self:getWidth() - NameX) / 2) - 5
     local BtnX = NameX + BtnW
-    local IvnAmountText = string.format(getText("IGUI_S4_Shop_InvStock"), "0")
+    local IvnAmountText = getText("IGUI_S4_Shop_InvStock", "0")
     if self.ItemData.InvStock then
-        IvnAmountText = string.format(getText("IGUI_S4_Shop_InvStock"), S4_UI.getNumCommas(self.ItemData.InvStock))
+        IvnAmountText = getText("IGUI_S4_Shop_InvStock", S4_UI.getNumCommas(self.ItemData.InvStock))
 
         self.AmountEntry = ISTextEntryBox:new("", BtnX, BtnY, BtnW, S4_UI.FH_M + 4)
         self.AmountEntry.font = UIFont.Medium

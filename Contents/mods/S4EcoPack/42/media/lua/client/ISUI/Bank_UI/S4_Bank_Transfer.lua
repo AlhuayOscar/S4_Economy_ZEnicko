@@ -28,12 +28,17 @@ function S4_Bank_Transfer:initialise()
 end
 
 function S4_Bank_Transfer:setData()
-    if self.ComUI.CardNumber then
-        local CardModData = ModData.get("S4_CardData")
-        if CardModData and CardModData[self.ComUI.CardNumber] then
+    if self.ComUI and self.ComUI.CheckModData then
+        self.ComUI:CheckModData()
+    end
+    if self.ComUI.CardNumber and self.ComUI.CardNumber ~= "Null" then
+        local cardData = S4_UI.getCardData(self.ComUI.CardNumber)
+        if cardData then
             self.CardNumber = self.ComUI.CardNumber
-            self.CardMaster = CardModData[self.ComUI.CardNumber].Master
-            self.CardMoney = CardModData[self.ComUI.CardNumber].Money
+            self.CardMaster = cardData.Master
+            self.CardMoney = cardData.Money or 0
+            self.ComUI.CardMaster = self.CardMaster
+            self.ComUI.CardMoney = self.CardMoney
             self:setLable()
         end
     end
@@ -50,6 +55,7 @@ end
 
 function S4_Bank_Transfer:createChildren()
     ISPanel.createChildren(self)
+    self:setData()
 
     local x, y = 10, 10
     self.TextLabel1 = ISLabel:new(x, y, S4_UI.FH_M, getText("IGUI_S4_ATM_Info_TransferCard"), 1, 1, 1, 1, UIFont.Medium, true)

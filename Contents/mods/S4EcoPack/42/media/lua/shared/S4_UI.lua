@@ -377,3 +377,97 @@ function S4_UI.getNumCommas(number)
     end
     return formatted
 end
+
+function S4_UI.getCardDisplayName(cardMaster, cardNumber)
+    local masterText = tostring(cardMaster or "Unknown")
+    local numberText = tostring(cardNumber or "Unknown")
+    return "Credit Card: " .. masterText .. " [Card Number: " .. numberText .. "]"
+end
+
+function S4_UI.getCardData(cardNumber)
+    if not cardNumber then
+        return nil
+    end
+
+    local allCardData = ModData and ModData.get and ModData.get("S4_CardData") or nil
+    if not allCardData then
+        return nil
+    end
+
+    if allCardData[cardNumber] then
+        return allCardData[cardNumber]
+    end
+
+    local numericCardNumber = tonumber(cardNumber)
+    if numericCardNumber and allCardData[numericCardNumber] then
+        return allCardData[numericCardNumber]
+    end
+
+    local stringCardNumber = tostring(cardNumber)
+    if allCardData[stringCardNumber] then
+        return allCardData[stringCardNumber]
+    end
+
+    return nil
+end
+
+function S4_UI.getCardNumberFromItem(item)
+    if not item or not item.getModData then
+        return nil
+    end
+
+    local itemModData = item:getModData()
+    if not itemModData then
+        return nil
+    end
+
+    return itemModData.S4CardNumber or itemModData.BankCard
+end
+
+function S4_UI.normalizeCreditCardItem(item)
+    if not item or not item.getFullType or item:getFullType() ~= "Base.CreditCard" then
+        return false
+    end
+
+    local cardNumber = S4_UI.getCardNumberFromItem(item)
+    if not cardNumber then
+        return false
+    end
+
+    local itemModData = item:getModData()
+    itemModData.S4CardNumber = cardNumber
+
+    local cardData = S4_UI.getCardData(cardNumber)
+    if cardData and cardData.Master then
+        item:setName(S4_UI.getCardDisplayName(cardData.Master, cardNumber))
+        return true
+    end
+
+    return false
+end
+
+function S4_UI.normalizePlayerCreditCards(player)
+    if not player or not player.getInventory then
+        return 0
+    end
+
+    local fixed = 0
+    local items = player:getInventory():getItems()
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if instanceof(item, "InventoryContainer") then
+            local containerItems = item:getInventory():getItems()
+            for j = 0, containerItems:size() - 1 do
+                if S4_UI.normalizeCreditCardItem(containerItems:get(j)) then
+                    fixed = fixed + 1
+                end
+            end
+        else
+            if S4_UI.normalizeCreditCardItem(item) then
+                fixed = fixed + 1
+            end
+        end
+    end
+
+    return fixed
+end

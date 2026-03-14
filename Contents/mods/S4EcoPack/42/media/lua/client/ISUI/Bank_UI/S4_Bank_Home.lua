@@ -21,7 +21,7 @@ function S4_Bank_Home:createChildren()
 
     local x, y = 10, 10
     local UserName = self.player:getUsername()
-    local Msg1 = string.format(getText("IGUI_S4_Bank_Msg_Home1"), UserName)
+    local Msg1 = getText("IGUI_S4_Bank_Msg_Home1", UserName)
     self.MsgLabel1 = ISLabel:new(x, y, S4_UI.FH_M, Msg1, 1, 1, 1, 1, UIFont.Medium, true)
     self:addChild(self.MsgLabel1)
     y = y + S4_UI.FH_M

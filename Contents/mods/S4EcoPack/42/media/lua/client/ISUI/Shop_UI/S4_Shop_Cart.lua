@@ -130,8 +130,8 @@ function S4_Shop_Cart:createChildren()
     self.QuickBox.onMouseUp = S4_Shop_Cart.QuickBoxOnMouseUp
     self.QuickBox.CartUI = self
     self.QuickBox:initialise()
-    self.QuickBox:addOption(string.format(getText("IGUI_S4_Cart_NormalDelivery"), S4_UI.getNumCommas(NormalDeliveryPrice)))
-    self.QuickBox:addOption(string.format(getText("IGUI_S4_Cart_QuickDelivery"), S4_UI.getNumCommas(QuickDeliveryPrice)))
+    self.QuickBox:addOption(getText("IGUI_S4_Cart_NormalDelivery", S4_UI.getNumCommas(NormalDeliveryPrice)))
+    self.QuickBox:addOption(getText("IGUI_S4_Cart_QuickDelivery", S4_UI.getNumCommas(QuickDeliveryPrice)))
     self.QuickBox:setVisible(false)
     self:addChild(self.QuickBox)
     self.QuickBox:setSelected(1, true)
@@ -193,7 +193,7 @@ function S4_Shop_Cart:setTotal()
     local SDText = ""
     local PriceText = ""
     local FixPriceText = ""
-    local AmountText = string.format(getText("IGUI_S4_Cart_TotalAmount"), S4_UI.getNumCommas(TotalAmount))
+    local AmountText = getText("IGUI_S4_Cart_TotalAmount", S4_UI.getNumCommas(TotalAmount))
     if self.CartType == "Buy" then
         local deliveryFee = 0
         local quickFee = 0
@@ -207,17 +207,17 @@ function S4_Shop_Cart:setTotal()
         elseif self.QuickBox:isSelected(2) then
             TotalFixPrice = TotalFixPrice + quickFee
         end
-        PriceText = string.format(getText("IGUI_S4_Cart_TotalBuy"), S4_UI.getNumCommas(TotalPrice))
-        SDText = string.format(getText("IGUI_S4_Shop_TotalDiscount"), S4_UI.getNumCommas(TotalCD))
-        FixPriceText = string.format(getText("IGUI_S4_Shop_TotalFixBuyPrice"), S4_UI.getNumCommas(TotalFixPrice))
+        PriceText = getText("IGUI_S4_Cart_TotalBuy", S4_UI.getNumCommas(TotalPrice))
+        SDText = getText("IGUI_S4_Shop_TotalDiscount", S4_UI.getNumCommas(TotalCD))
+        FixPriceText = getText("IGUI_S4_Shop_TotalFixBuyPrice", S4_UI.getNumCommas(TotalFixPrice))
         self.BuySellBtn:setTitle(getText("IGUI_S4_Cart_Buy"))
         self.DeliveryBox:setVisible(true)
         self.DeliveryLabel:setVisible(true)
         self.QuickBox:setVisible(true)
     elseif self.CartType == "Sell" then
-        PriceText = string.format(getText("IGUI_S4_Cart_TotalSell"), S4_UI.getNumCommas(TotalPrice))
-        SDText = string.format(getText("IGUI_S4_Shop_TotalCommission"), S4_UI.getNumCommas(TotalCD))
-        FixPriceText = string.format(getText("IGUI_S4_Shop_TotalFixSellPrice"), S4_UI.getNumCommas(TotalFixPrice))
+        PriceText = getText("IGUI_S4_Cart_TotalSell", S4_UI.getNumCommas(TotalPrice))
+        SDText = getText("IGUI_S4_Shop_TotalCommission", S4_UI.getNumCommas(TotalCD))
+        FixPriceText = getText("IGUI_S4_Shop_TotalFixSellPrice", S4_UI.getNumCommas(TotalFixPrice))
         self.BuySellBtn:setTitle(getText("IGUI_S4_Cart_Sell"))
         self.DeliveryBox:setVisible(false)
         self.DeliveryLabel:setVisible(false)

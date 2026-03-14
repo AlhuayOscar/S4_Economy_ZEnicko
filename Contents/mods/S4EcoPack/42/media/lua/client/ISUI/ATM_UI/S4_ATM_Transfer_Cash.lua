@@ -100,7 +100,7 @@ function S4_ATM_Transfer_Cash:createChildren()
         for Username, Data in pairs(PlayerModData) do
             if Data.MainCard then
                 if Username ~= "admin" then
-                    local fixName = string.format(getText("IGUI_S4_ATM_Receiver_Value"), Username, Data.MainCard)
+                    local fixName = getText("IGUI_S4_ATM_Receiver_Value", Username, Data.MainCard)
                     self.ReceiverBox:addOptionWithData(fixName, Data)
                 end
             end
@@ -121,7 +121,7 @@ function S4_ATM_Transfer_Cash:render()
     self:drawText(getText("IGUI_S4_ATM_Deposit_InsertCash"), CashX, self.CashY, 1, 1, 1, 1, UIFont.Small)
 
     local FixCash = S4_UI.getNumCommas(self.CashValue)
-    local CashValue = string.format(getText("IGUI_S4_ATM_Money_Value"), FixCash)
+    local CashValue = getText("IGUI_S4_ATM_Money_Value", FixCash)
     local CashValueW = getTextManager():MeasureStringX(UIFont.Medium, CashValue)
     local CashValueX = (self:getWidth() / 2) - (CashValueW / 2)
     self:drawText(CashValue, CashValueX, self.CashY + S4_UI.FH_S, 1, 1, 1, 1, UIFont.Medium)

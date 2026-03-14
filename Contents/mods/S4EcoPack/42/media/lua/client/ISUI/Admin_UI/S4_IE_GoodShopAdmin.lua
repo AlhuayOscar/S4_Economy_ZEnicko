@@ -130,7 +130,7 @@ function S4_IE_GoodShopAdmin:initialise()
             if not isFilterItem then
                 table.insert(self.AllItems, Data)
                 if not self.AllCategory[ListCategory] then
-                    self.AllCategory[ListCategory] = ListCategory
+                    table.insert(self.AllCategory, ListCategory)
                 end
             end
         end
@@ -278,6 +278,8 @@ function S4_IE_GoodShopAdmin:createChildren()
     self.ExportBtn:initialise()
     self:addChild(self.ExportBtn)
     BtnX = BtnX + BtnW + 10
+
+    self:AddItems()
 end
 
 function S4_IE_GoodShopAdmin:render()
@@ -293,9 +295,12 @@ function S4_IE_GoodShopAdmin:AddCategory()
     -- self.CategoryBox:addItem("PopularProducts", "PopularProducts")
     self.CategoryBox:addItem("Reg", "Reg")
     self.CategoryBox:addItem("All", "All")
-    for Category, CategoryName in pairs(self.AllCategory) do
+    for _, CategoryName in ipairs(self.AllCategory) do
         self.CategoryBox:addItem(CategoryName, CategoryName)
     end
+
+    self.CategoryBox.CategoryType = "All"
+    self.CategoryBox.selectedRow = 2
 end
 
 function S4_IE_GoodShopAdmin:AddItems()

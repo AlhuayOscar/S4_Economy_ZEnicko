@@ -110,7 +110,7 @@ function S4_ATM_Transfer_Card:createChildren()
         for Username, Data in pairs(PlayerModData) do
             if Data.MainCard then
                 if Username ~= "admin" and Data.MainCard ~= self.AtmUI.CardNumber then
-                    local fixName = string.format(getText("IGUI_S4_ATM_Receiver_Value"), Username, Data.MainCard)
+                    local fixName = getText("IGUI_S4_ATM_Receiver_Value", Username, Data.MainCard)
                     self.ReceiverBox:addOptionWithData(fixName, Data)
                 end
             end

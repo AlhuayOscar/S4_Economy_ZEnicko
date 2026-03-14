@@ -24,7 +24,7 @@ function S4_Shop_Home:createChildren()
     
     local LabelX = 30
     local LabelY = 20
-    self.Label1 = ISLabel:new(LabelX, LabelY, S4_UI.FH_M, string.format(getText("IGUI_S4_Shop_Home1"), self.player:getUsername()), 1, 1, 1, 0.8, UIFont.Medium, true)
+    self.Label1 = ISLabel:new(LabelX, LabelY, S4_UI.FH_M, getText("IGUI_S4_Shop_Home1", self.player:getUsername()), 1, 1, 1, 0.8, UIFont.Medium, true)
     self:addChild(self.Label1)
     LabelY = LabelY + S4_UI.FH_M
 

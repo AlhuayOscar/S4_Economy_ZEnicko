@@ -136,7 +136,7 @@ function S4_Sys_Settings:BtnClick(Button)
         self.ComUI:close()
     elseif internal == "RemoveCardReader" then
         if self.ComUI.CardNumber then
-            local CardName = string.format(getText("IGUI_S4_Item_CreditCard"), self.ComUI.CardMaster) .. string.format(getText("IGUI_S4_Item_CardNumber"), self.ComUI.CardNumber)
+            local CardName = S4_UI.getCardDisplayName(self.ComUI.CardMaster, self.ComUI.CardNumber)
             local CreateCard = instanceItem("Base.CreditCard")
             local ReturnCarditem = self.player:getInventory():AddItem(CreateCard)
             ReturnCarditem:setName(CardName)

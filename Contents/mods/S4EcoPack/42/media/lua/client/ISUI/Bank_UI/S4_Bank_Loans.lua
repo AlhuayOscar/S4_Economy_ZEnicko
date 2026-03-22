@@ -1,5 +1,13 @@
 S4_Bank_Loans = ISPanel:derive("S4_Bank_Loans")
 
+local function loanText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 local LENDERS = {
     { id = "Zombank", name = "ZomBank Official", baseRate = 0.20, deadline = 14 },
     { id = "Blacky", name = "Blacky's Quick Cash", baseRate = 0.025, deadline = 3 },
@@ -68,7 +76,7 @@ function S4_Bank_Loans:createChildren()
     local w = self:getWidth() - 20
     
     -- Title
-    self.titleLabel = ISLabel:new(x, y, S4_UI.FH_M, "Credit & Loan Management", 1, 1, 1, 1, UIFont.Medium, true)
+    self.titleLabel = ISLabel:new(x, y, S4_UI.FH_M, loanText("IGUI_S4_Loans_Title", "Credit & Loan Management"), 1, 1, 1, 1, UIFont.Medium, true)
     self:addChild(self.titleLabel)
     y = y + S4_UI.FH_M + 10
 
@@ -80,7 +88,7 @@ function S4_Bank_Loans:createChildren()
     self:addChild(self.requestPanel)
 
     local rx, ry = 10, 10
-    local label = ISLabel:new(rx, ry, S4_UI.FH_S, "1. Select Lender:", 0.8, 0.8, 0.8, 1, UIFont.Small, true)
+    local label = ISLabel:new(rx, ry, S4_UI.FH_S, loanText("IGUI_S4_Loans_SelectLender", "1. Select Lender:"), 0.8, 0.8, 0.8, 1, UIFont.Small, true)
     self.requestPanel:addChild(label)
     ry = ry + S4_UI.FH_S + 5
 
@@ -88,13 +96,14 @@ function S4_Bank_Loans:createChildren()
     self.lenderBox:initialise()
     for _, lender in ipairs(LENDERS) do
         local rate = self:getCurrentRate(lender.baseRate)
-        local display = string.format("%s (%.1f%%)", lender.name, rate * 100)
+        local displayName = loanText("IGUI_S4_Loans_Lender_" .. lender.id, lender.name)
+        local display = string.format("%s (%.1f%%)", displayName, rate * 100)
         self.lenderBox:addOptionWithData(display, lender)
     end
     self.requestPanel:addChild(self.lenderBox)
     ry = ry + S4_UI.FH_S + 15
 
-    label = ISLabel:new(rx, ry, S4_UI.FH_S, "2. Loan Amount ($):", 0.8, 0.8, 0.8, 1, UIFont.Small, true)
+    label = ISLabel:new(rx, ry, S4_UI.FH_S, loanText("IGUI_S4_Loans_Amount", "2. Loan Amount ($):"), 0.8, 0.8, 0.8, 1, UIFont.Small, true)
     self.requestPanel:addChild(label)
     ry = ry + S4_UI.FH_S + 5
 
@@ -117,7 +126,7 @@ function S4_Bank_Loans:createChildren()
     self.requestPanel:addChild(self.calcLabel)
     ry = ry + 110
 
-    self.acceptBtn = ISButton:new(rx, ry, leftW - 20, S4_UI.FH_M, "Request Loan", self, self.onAcceptLoan)
+    self.acceptBtn = ISButton:new(rx, ry, leftW - 20, S4_UI.FH_M, loanText("IGUI_S4_Loans_RequestLoan", "Request Loan"), self, self.onAcceptLoan)
     self.acceptBtn:initialise()
     self.acceptBtn.backgroundColor = {r=0.2, g=0.5, b=0.2, a=0.8}
     self.requestPanel:addChild(self.acceptBtn)
@@ -135,22 +144,22 @@ function S4_Bank_Loans:createChildren()
         local dbgW = (leftW - 30) / 3
         local dbgY = self.requestPanel:getHeight() - 30
         
-        self.debugDeadlineBtn = ISButton:new(10, dbgY, dbgW, 20, "Days+", self, self.onDebugDeadline)
+        self.debugDeadlineBtn = ISButton:new(10, dbgY, dbgW, 20, loanText("IGUI_S4_Loans_DebugDaysPlus", "Days+"), self, self.onDebugDeadline)
         self.debugDeadlineBtn:initialise()
         self.requestPanel:addChild(self.debugDeadlineBtn)
 
-        self.debugPayBtn = ISButton:new(15 + dbgW, dbgY, dbgW, 20, "Force Pay", self, self.onDebugRepay)
+        self.debugPayBtn = ISButton:new(15 + dbgW, dbgY, dbgW, 20, loanText("IGUI_S4_Loans_DebugForcePay", "Force Pay"), self, self.onDebugRepay)
         self.debugPayBtn:initialise()
         self.requestPanel:addChild(self.debugPayBtn)
 
-        self.debugEventBtn = ISButton:new(20 + (dbgW*2), dbgY, dbgW, 20, "Rand Event", self, self.onDebugEvent)
+        self.debugEventBtn = ISButton:new(20 + (dbgW*2), dbgY, dbgW, 20, loanText("IGUI_S4_Loans_DebugRandEvent", "Rand Event"), self, self.onDebugEvent)
         self.debugEventBtn:initialise()
         self.requestPanel:addChild(self.debugEventBtn)
     end
 
     -- Right Side: Active Loans List (Manual approach, no ScrollingListBox)
     local rightX = x + leftW + 20
-    self.activeLabel = ISLabel:new(rightX, y, S4_UI.FH_S, "Active Loans:", 0.9, 0.9, 0.9, 1, UIFont.Small, true)
+    self.activeLabel = ISLabel:new(rightX, y, S4_UI.FH_S, loanText("IGUI_S4_Loans_ActiveLoans", "Active Loans:"), 0.9, 0.9, 0.9, 1, UIFont.Small, true)
     self:addChild(self.activeLabel)
     
     self.listPanel = ISPanel:new(rightX, y + 25, leftW, self:getHeight() - y - 65)
@@ -163,7 +172,7 @@ function S4_Bank_Loans:createChildren()
     local pagW = 60
     local pagH = 20
     local pagY = self:getHeight() - 35
-    self.prevBtn = ISButton:new(rightX, pagY, pagW, pagH, "< Prev", self, function() 
+    self.prevBtn = ISButton:new(rightX, pagY, pagW, pagH, loanText("IGUI_S4_Loans_Prev", "< Prev"), self, function() 
         self.currentPage = math.max(1, self.currentPage - 1)
         self:updateLoanListUI()
     end)
@@ -173,7 +182,7 @@ function S4_Bank_Loans:createChildren()
     self.pageLabel = ISLabel:new(rightX + pagW + 10, pagY, 14, "1/1", 1, 1, 1, 1, UIFont.Small, true)
     self:addChild(self.pageLabel)
 
-    self.nextBtn = ISButton:new(rightX + leftW - pagW, pagY, pagW, pagH, "Next >", self, function() 
+    self.nextBtn = ISButton:new(rightX + leftW - pagW, pagY, pagW, pagH, loanText("IGUI_S4_Loans_Next", "Next >"), self, function() 
         self.currentPage = self.currentPage + 1
         self:updateLoanListUI()
     end)
@@ -240,26 +249,26 @@ function S4_Bank_Loans:updateLoanListUI()
         
         local lx = 5
         local ly = 3
-        local nameLabel = ISLabel:new(lx, ly, 14, loan.Lender, 1, 1, 0, 1, UIFont.Small, true)
+        local nameLabel = ISLabel:new(lx, ly, 14, loanText("IGUI_S4_Loans_Lender_" .. tostring(loan.LenderId or ""), loan.Lender), 1, 1, 0, 1, UIFont.Small, true)
         itemBody:addChild(nameLabel)
         
         -- Date & Deadline
-        local deadlineText = string.format("Date: %s (%d Days)", loan.Timestamp or "N/A", loan.Deadline or 0)
+        local deadlineText = loanText("IGUI_S4_Loans_Date", "Date") .. ": " .. tostring(loan.Timestamp or loanText("IGUI_S4_Loans_NA", "N/A")) .. " (" .. tostring(loan.Deadline or 0) .. " " .. loanText("IGUI_S4_Loans_Days", "Days") .. ")"
         local dateLabel = ISLabel:new(lx + 100, ly, 14, deadlineText, 0.5, 0.8, 1, 1, UIFont.Small, true)
         itemBody:addChild(dateLabel)
         ly = ly + 16
         
-        local status = string.format("Debt: $ %s / $ %s", S4_UI.getNumCommas(loan.Repaid or 0), S4_UI.getNumCommas(loan.TotalToPay))
+        local status = loanText("IGUI_S4_Loans_Debt", "Debt") .. ": $ " .. S4_UI.getNumCommas(loan.Repaid or 0) .. " / $ " .. S4_UI.getNumCommas(loan.TotalToPay)
         local statusLabel = ISLabel:new(lx, ly, 14, status, 0.8, 0.8, 0.8, 1, UIFont.Small, true)
         itemBody:addChild(statusLabel)
         ly = ly + 16
         
-        local cardLabel = ISLabel:new(lx, ly, 14, "Owner Card: " .. (loan.CardNum or "???"), 0.6, 0.6, 0.6, 1, UIFont.Small, true)
+        local cardLabel = ISLabel:new(lx, ly, 14, loanText("IGUI_S4_Loans_OwnerCard", "Owner Card") .. ": " .. tostring(loan.CardNum or "???"), 0.6, 0.6, 0.6, 1, UIFont.Small, true)
         itemBody:addChild(cardLabel)
         
         local btnW = 70
         local btnH = 20
-        local repayBtn = ISButton:new(itemBody:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, "Repay", self, function() self:onRepayLoan(entry.index, loan) end)
+        local repayBtn = ISButton:new(itemBody:getWidth() - btnW - 5, (itemH / 2) - (btnH / 2), btnW, btnH, loanText("IGUI_S4_Loans_Repay", "Repay"), self, function() self:onRepayLoan(entry.index, loan) end)
         repayBtn:initialise()
         repayBtn.backgroundColor = {r=0.2, g=0.4, b=0.2, a=0.8}
         itemBody:addChild(repayBtn)
@@ -268,7 +277,7 @@ function S4_Bank_Loans:updateLoanListUI()
     end
 
     if not found then
-        local emptyLabel = ISLabel:new(10, 10, 14, "No active loans found.", 0.5, 0.5, 0.5, 0.8, UIFont.Small, true)
+        local emptyLabel = ISLabel:new(10, 10, 14, loanText("IGUI_S4_Loans_NoActiveLoans", "No active loans found."), 0.5, 0.5, 0.5, 0.8, UIFont.Small, true)
         self.listPanel:addChild(emptyLabel)
     end
 end
@@ -277,7 +286,7 @@ function S4_Bank_Loans:updateCalculation()
     local lender = self.lenderBox:getOptionData(self.lenderBox.selected)
     local amount = tonumber(self.amountEntry:getText()) or 0
     if not lender or amount <= 0 then 
-        self.calcLabel.text = "Enter a valid amount."
+        self.calcLabel.text = loanText("IGUI_S4_Loans_EnterValidAmount", "Enter a valid amount.")
         self.calcLabel:paginate()
         return 
     end
@@ -286,8 +295,11 @@ function S4_Bank_Loans:updateCalculation()
     self.lastViewedRate = rate
     local total = math.floor(amount * (1 + rate))
     
-    self.calcLabel.text = string.format(" <RGB:0.8,0.8,0.8> Interest Rate: <RGB:1,1,0> %.1f%% <LINE> <RGB:0.8,0.8,0.8> Total to Repay: <RGB:1,0,0> $ %s <LINE> <RGB:0.8,0.8,0.8> Deadline: <RGB:0,1,1> %d Days", 
-        rate * 100, S4_UI.getNumCommas(total), lender.deadline)
+    self.calcLabel.text = " <RGB:0.8,0.8,0.8> " .. loanText("IGUI_S4_Loans_InterestRate", "Interest Rate") .. ": <RGB:1,1,0> " ..
+        string.format("%.1f%%", rate * 100) .. " <LINE> <RGB:0.8,0.8,0.8> " ..
+        loanText("IGUI_S4_Loans_TotalToRepay", "Total to Repay") .. ": <RGB:1,0,0> $ " .. S4_UI.getNumCommas(total) ..
+        " <LINE> <RGB:0.8,0.8,0.8> " .. loanText("IGUI_S4_Loans_Deadline", "Deadline") .. ": <RGB:0,1,1> " ..
+        tostring(lender.deadline) .. " " .. loanText("IGUI_S4_Loans_Days", "Days")
     self.calcLabel:paginate()
 end
 
@@ -303,13 +315,13 @@ function S4_Bank_Loans:onAcceptLoan()
     
     local cardNum = self.BankUI.IEUI.ComUI.CardNumber
     if not cardNum then
-        self.ComUI:AddMsgBox("No Card", nil, "Please insert a card to receive the funds.")
+        self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_NoCardTitle", "No Card"), nil, loanText("IGUI_S4_Loans_NoCardReceive", "Please insert a card to receive the funds."))
         return
     end
 
     local rate = self:getCurrentRate(lender.baseRate)
     if self.lastViewedRate ~= rate then
-        self.ComUI:AddMsgBox("Rate Changed", nil, "Disculpa las molestias, Los valores cambiaron.")
+        self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_RateChangedTitle", "Rate Changed"), nil, loanText("IGUI_S4_Loans_RateChangedBody", "Sorry for the inconvenience, the rates changed."))
         self:updateCalculation()
         return
     end
@@ -322,7 +334,8 @@ function S4_Bank_Loans:onAcceptLoan()
         cardNum, lender.name, amount, rate, total, lender.deadline, timestamp, displayTime
     })
 
-    self.ComUI:AddMsgBox("Loan Approved", nil, string.format("$ %s has been deposited into card %s.", S4_UI.getNumCommas(amount), cardNum))
+    self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_ApprovedTitle", "Loan Approved"), nil,
+        "$ " .. S4_UI.getNumCommas(amount) .. " " .. loanText("IGUI_S4_Loans_ApprovedBody", "has been deposited into card") .. " " .. tostring(cardNum) .. ".")
     
     -- Snappier refresh
     self.refreshTimer = 2
@@ -370,9 +383,9 @@ function S4_Bank_Loans:updateNextPaymentInfo()
     if closestDays then
         local color = "<RGB:1,0,0>" -- Red for urgent
         if closestDays > 7 then color = "<RGB:0.5,1,0.5>" end -- Green if far
-        self.nextPaymentLabel.text = string.format(" <RGB:0.8,0.8,0.8> Next loan payment in: %s %d Days", color, closestDays)
+        self.nextPaymentLabel.text = " <RGB:0.8,0.8,0.8> " .. loanText("IGUI_S4_Loans_NextPaymentIn", "Next loan payment in") .. ": " .. color .. " " .. tostring(closestDays) .. " " .. loanText("IGUI_S4_Loans_Days", "Days")
     else
-        self.nextPaymentLabel.text = " <RGB:0.5,0.5,0.5> No upcoming payments."
+        self.nextPaymentLabel.text = " <RGB:0.5,0.5,0.5> " .. loanText("IGUI_S4_Loans_NoUpcomingPayments", "No upcoming payments.")
     end
     self.nextPaymentLabel:paginate()
 end
@@ -380,7 +393,7 @@ end
 function S4_Bank_Loans:onRepayLoan(index, loan, isDebug)
     local cardNum = self.BankUI.IEUI.ComUI.CardNumber
     if not cardNum and not isDebug then 
-        self.ComUI:AddMsgBox("No Card", nil, "Please insert a card to repay the loan.")
+        self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_NoCardTitle", "No Card"), nil, loanText("IGUI_S4_Loans_NoCardRepay", "Please insert a card to repay the loan."))
         return 
     end
     
@@ -399,8 +412,9 @@ end
 function S4_Bank_Loans:onDebugDeadline()
     local gt = getGameTime()
     gt:setDay(gt:getDay() + 2)
-    self.player:setHaloNote("Debug: +2 Days", 200, 200, 200, 300) -- Show text above player
-    self.ComUI:AddMsgBox("Debug", nil, "Advanced time by 2 days. Current Day: " .. gt:getDay())
+    self.player:setHaloNote(loanText("IGUI_S4_Loans_DebugAdvanceDays", "Debug: +2 Days"), 200, 200, 200, 300) -- Show text above player
+    self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_DebugTitle", "Debug"), nil,
+        loanText("IGUI_S4_Loans_DebugCurrentDay", "Advanced time by 2 days. Current Day") .. ": " .. tostring(gt:getDay()))
     self:updateLoanListUI()
 end
 
@@ -415,7 +429,8 @@ function S4_Bank_Loans:onDebugRepay()
                 count = count + 1
             end
         end
-        self.ComUI:AddMsgBox("Debug", nil, "Force repaid " .. count .. " active loans.")
+        self.ComUI:AddMsgBox(loanText("IGUI_S4_Loans_DebugTitle", "Debug"), nil,
+            loanText("IGUI_S4_Loans_DebugForceRepaid", "Force repaid active loans") .. ": " .. tostring(count))
         self:refreshAndDraw() -- Update UI immediately
     end
 end

@@ -1,5 +1,13 @@
 S4_ItemListBox = ISPanel:derive("S4_ItemListBox")
 
+local function getTextOrFallback(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 local function formatTextCompat(key, ...)
     local template = getText(key)
     local args = {...}
@@ -107,7 +115,7 @@ function S4_ItemListBox:createChildren()
     self:addChild(self.SearchEntry)
     Sx = Sx + Sw + 10
 
-    self.SearchBtn = ISButton:new(Sx, Sy, 100, Sh, "Search", self, S4_ItemListBox.BtnClick)
+    self.SearchBtn = ISButton:new(Sx, Sy, 100, Sh, getTextOrFallback("IGUI_S4_UI_Search", "Search"), self, S4_ItemListBox.BtnClick)
     self.SearchBtn.font = UIFont.Medium
     self.SearchBtn.internal = "Search"
     self.SearchBtn.borderColor = {
@@ -121,7 +129,7 @@ function S4_ItemListBox:createChildren()
     self:addChild(self.SearchBtn)
     Sx = Sx + 110
 
-    self.RefreshBtn = ISButton:new(Sx, Sy, 90, Sh, "Refresh", self, S4_ItemListBox.BtnClick)
+    self.RefreshBtn = ISButton:new(Sx, Sy, 90, Sh, getTextOrFallback("IGUI_S4_UI_Refresh", "Refresh"), self, S4_ItemListBox.BtnClick)
     self.RefreshBtn.font = UIFont.Medium
     self.RefreshBtn.internal = "Refresh"
     self.RefreshBtn.borderColor = {
@@ -135,7 +143,7 @@ function S4_ItemListBox:createChildren()
     self:addChild(self.RefreshBtn)
     Sx = Sx + 98
 
-    self.RefreshStatusLabel = ISLabel:new(Sx, Sy + 4, S4_UI.FH_S, "Sync: never", 0.85, 0.85, 0.85, 0.8, UIFont.Small,
+    self.RefreshStatusLabel = ISLabel:new(Sx, Sy + 4, S4_UI.FH_S, getTextOrFallback("IGUI_S4_UI_SyncNever", "Sync: never"), 0.85, 0.85, 0.85, 0.8, UIFont.Small,
         true)
     self:addChild(self.RefreshStatusLabel)
     self:updateRefreshStatusLabel(getTimestampMs())
@@ -239,7 +247,7 @@ end
 function S4_ItemListBox:getElapsedRefreshText(nowMs)
     local lastMs = self.LastRefreshAppliedAt or 0
     if lastMs <= 0 then
-        return "never"
+        return getTextOrFallback("IGUI_S4_UI_Never", "never")
     end
     local sec = math.floor((nowMs - lastMs) / 1000)
     if sec < 0 then
@@ -273,9 +281,9 @@ function S4_ItemListBox:updateRefreshStatusLabel(nowMs)
     end
 
     if self.RefreshPending then
-        text = "Sync: updating... [" .. mode .. "]"
+        text = getTextOrFallback("IGUI_S4_UI_SyncUpdating", "Sync: updating...") .. " [" .. mode .. "]"
     else
-        text = "Sync: " .. self:getElapsedRefreshText(nowMs) .. " [" .. mode .. "] | " .. self:getRefreshClockText()
+        text = getTextOrFallback("IGUI_S4_UI_Sync", "Sync") .. ": " .. self:getElapsedRefreshText(nowMs) .. " [" .. mode .. "] | " .. self:getRefreshClockText()
     end
     self.RefreshStatusLabel:setName(text)
 end
@@ -435,7 +443,7 @@ function S4_ItemListBox:setItemBtn()
             end
             if not Check then
                 self["Btn" .. i].item = nil
-                self["Btn" .. i].ItemName = "No item"
+                self["Btn" .. i].ItemName = getTextOrFallback("IGUI_S4_UI_NoItem", "No item")
                 self["Btn" .. i].ItemImg = nil
                 self["Btn" .. i].tooltip = nil
                 self["Btn" .. i].Authority = false
@@ -529,7 +537,7 @@ end
 
 function S4_ItemListBox:EntryRender()
     if self:getText() == "" and not self.javaObject:isFocused() then
-        self:drawText("Search(Item Name/Code)", 4, 2, 1, 1, 1, 0.5, UIFont.Medium)
+        self:drawText(getTextOrFallback("IGUI_S4_UI_SearchItemNameCode", "Search(Item Name/Code)"), 4, 2, 1, 1, 1, 0.5, UIFont.Medium)
     end
 end
 

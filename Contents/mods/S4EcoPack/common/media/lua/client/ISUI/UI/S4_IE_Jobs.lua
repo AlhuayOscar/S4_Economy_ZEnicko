@@ -2,6 +2,14 @@ require "ISUI/ISPanel"
 
 S4_IE_Jobs = ISPanel:derive("S4_IE_Jobs")
 
+local function jobText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 function S4_IE_Jobs:new(S4_IE, x, y, width, height)
     local o = {}
     o = ISPanel:new(x, y, width, height)
@@ -43,201 +51,201 @@ function S4_IE_Jobs:createChildren()
     self.rows = 3
 
     self.Jobs = {{
-        name = "Call Center",
+        name = jobText("IGUI_S4_Jobs_Name_CallCenter", "Call Center"),
         id = "CallCenter",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.0,
         salary = 125,
         requirements = {{
             types = {"Radio.Microphone", "Base.Phone", "Base.CordlessPhone"},
-            name = "Microphone or Phone"
+            name = jobText("IGUI_S4_Jobs_Req_MicrophonePhone", "Microphone or Phone")
         }, {
             types = {"Base.Headphones", "Base.Headphones_Red"},
-            name = "Headphones"
+            name = jobText("IGUI_S4_Jobs_Req_Headphones", "Headphones")
         }}
     }, {
-        name = "Graphic Designer",
+        name = jobText("IGUI_S4_Jobs_Name_Designer", "Graphic Designer"),
         id = "Designer",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.1,
         salary = 140,
         requirements = {{
             types = {"Base.Pen", "Base.Pencil", "Base.RedPen", "Base.BluePen"},
-            name = "Pen/Pencil"
+            name = jobText("IGUI_S4_Jobs_Req_PenPencil", "Pen/Pencil")
         }, {
             types = {"Base.SheetPaper", "Base.Notebook"},
-            name = "Paper/Notebook"
+            name = jobText("IGUI_S4_Jobs_Req_PaperNotebook", "Paper/Notebook")
         }}
     }, {
-        name = "Insurance Seller",
+        name = jobText("IGUI_S4_Jobs_Name_Insurance", "Insurance Seller"),
         id = "Insurance",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.2,
         salary = 130,
         requirements = {{
             types = {"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer"},
-            name = "Suit Jacket"
+            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket")
         }, {
             types = {"Base.Trousers_Suit", "Base.Trousers_SuitWhite"},
-            name = "Suit Trousers"
+            name = jobText("IGUI_S4_Jobs_Req_SuitTrousers", "Suit Trousers")
         }, {
             types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short", "Base.Shirt_FormalTINT"},
-            name = "Formal Shirt"
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
         }, {
             types = {"Base.Tie_Full", "Base.Tie_Worn"},
-            name = "Tie"
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
         }, {
             types = {"Base.Pen", "Base.BluePen"},
-            name = "Pen"
+            name = jobText("IGUI_S4_Jobs_Req_Pen", "Pen")
         }, {
             types = {"Base.Notebook"},
-            name = "Notebook"
+            name = jobText("IGUI_S4_Jobs_Req_Notebook", "Notebook")
         }}
     }, {
-        name = "Programmer",
+        name = jobText("IGUI_S4_Jobs_Name_Programmer", "Programmer"),
         id = "Programmer",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.3,
         salary = 160,
         requirements = {{
             types = {"Base.BusinessCard", "Base.BusinessCard_Personal"},
-            name = "Business Card"
+            name = jobText("IGUI_S4_Jobs_Req_BusinessCard", "Business Card")
         }, {
             types = {"Base.DigitalWatch", "Base.AlarmClock2"},
-            name = "Digital Watch"
+            name = jobText("IGUI_S4_Jobs_Req_DigitalWatch", "Digital Watch")
         }, {
             types = {"Base.CDplayer"},
-            name = "CD Player"
+            name = jobText("IGUI_S4_Jobs_Req_CDPlayer", "CD Player")
         }, {
             types = {"Base.Hat_VisorBlack", "Base.Hat_VisorRed", "Base.Hat_VisorWhite"},
-            name = "Visor"
+            name = jobText("IGUI_S4_Jobs_Req_Visor", "Visor")
         }, {
             types = {"Base.CordlessPhone"},
-            name = "Cordless Phone"
+            name = jobText("IGUI_S4_Jobs_Req_CordlessPhone", "Cordless Phone")
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = "Pager"
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
         }}
     }, {
-        name = "Banker",
+        name = jobText("IGUI_S4_Jobs_Name_Banker", "Banker"),
         id = "Banker",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.4,
         salary = 150,
         requirements = {{
             types = {"Base.SuitJacket", "Base.SuitJacket_Tiny"},
-            name = "Suit Jacket"
+            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket")
         }, {
             types = {"Base.Tie_Full"},
-            name = "Tie"
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
         }, {
             types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short"},
-            name = "Formal Shirt"
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = "Pager"
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
         }, {
             types = {"Base.Calculator"},
-            name = "Calculator"
+            name = jobText("IGUI_S4_Jobs_Req_Calculator", "Calculator")
         }, {
             types = {"Base.IndexCard"},
-            name = "Index Card"
+            name = jobText("IGUI_S4_Jobs_Req_IndexCard", "Index Card")
         }, {
             types = {"Base.Paperwork"},
-            name = "Paperwork"
+            name = jobText("IGUI_S4_Jobs_Req_Paperwork", "Paperwork")
         }, {
             types = {"Base.StockCertificate"},
-            name = "Stock Certificate"
+            name = jobText("IGUI_S4_Jobs_Req_StockCertificate", "Stock Certificate")
         }}
     }, {
-        name = "Cleaner",
+        name = jobText("IGUI_S4_Jobs_Name_Cleaner", "Cleaner"),
         id = "Cleaner",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.5,
         salary = 171,
         requirements = {{
             types = {"Base.Bleach"},
-            name = "Bleach"
+            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach")
         }, {
             types = {"Base.BathTowel", "Base.DishCloth"},
-            name = "Towel"
+            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel")
         }, {
             types = {"Base.Garbagebag"},
-            name = "Garbage Bag"
+            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag")
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = "Pager"
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
         }, {
             types = {"Base.CameraDisposable"},
-            name = "Disposable Camera"
+            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera")
         }, {
             types = {"Base.Cigarettes"},
-            name = "Cigarettes"
+            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes")
         }, {
             types = {"Base.Passport"},
-            name = "Passport"
+            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport")
         }, {
             customCheck = "Firearm",
-            name = "Firearm & Ammo (7+)"
+            name = jobText("IGUI_S4_Jobs_Req_FirearmAmmo", "Firearm & Ammo (7+)")
         }}
     }, {
-        name = "Journalist",
+        name = jobText("IGUI_S4_Jobs_Name_Journalist", "Journalist"),
         id = "Journalist",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.1,
         salary = 196,
         requirements = {{
             types = {"Base.Camcorder"},
-            name = "Video Camera"
+            name = jobText("IGUI_S4_Jobs_Req_VideoCamera", "Video Camera")
         }, {
             types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalTINT"},
-            name = "Formal Shirt"
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
         }, {
             types = {"Base.Tie_Full"},
-            name = "Tie"
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
         }, {
             types = {"Radio.Microphone"},
-            name = "Microphone"
+            name = jobText("IGUI_S4_Jobs_Req_Microphone", "Microphone")
         }, {
             types = {"Base.PressID", "Base.Card_Press", "Base.CreditCard"},
-            name = "Press Badge"
+            name = jobText("IGUI_S4_Jobs_Req_PressBadge", "Press Badge")
         }}
     }, {
-        name = "Spy",
+        name = jobText("IGUI_S4_Jobs_Name_Spy", "Spy"),
         id = "Spy",
         icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
         difficulty = 1.4,
         salary = 405,
         requirements = {{
             types = {"Base.Bleach"},
-            name = "Bleach"
+            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach")
         }, {
             types = {"Base.BathTowel", "Base.DishCloth"},
-            name = "Towel"
+            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel")
         }, {
             types = {"Base.Garbagebag"},
-            name = "Garbage Bag"
+            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag")
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = "Pager"
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
         }, {
             types = {"Base.CameraDisposable"},
-            name = "Disposable Camera"
+            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera")
         }, {
             types = {"Base.Cigarettes"},
-            name = "Cigarettes"
+            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes")
         }, {
             types = {"Base.Passport"},
-            name = "Passport"
+            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport")
         }, {
             customCheck = "Firearm",
-            name = "Firearm & Ammo (7+)"
+            name = jobText("IGUI_S4_Jobs_Req_FirearmAmmo", "Firearm & Ammo (7+)")
         }, {
             types = {"Base.Letter"},
-            name = "Handwritten Letter"
+            name = jobText("IGUI_S4_Jobs_Req_HandwrittenLetter", "Handwritten Letter")
         }, {
             types = {"Base.Photograph"},
-            name = "Photograph"
+            name = jobText("IGUI_S4_Jobs_Req_Photograph", "Photograph")
         }}
     }}
 
@@ -288,8 +296,8 @@ function S4_IE_Jobs:render()
                     local tooltipH = 70
                     local tooltipY = self.height - tooltipH - 10
 
-                    self:drawText("Job: " .. job.name, 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
-                    self:drawText("Rank: " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
+                    self:drawText(jobText("IGUI_S4_Jobs_Job", "Job") .. ": " .. job.name, 20, tooltipY + 5, 0, 0, 0, 1, UIFont.Medium)
+                    self:drawText(jobText("IGUI_S4_Jobs_Rank", "Rank") .. ": " .. details.rank, 20, tooltipY + 25, 0, 0, 0.6, 1, UIFont.Small)
 
                     -- Progress Bar
                     local barW = 150
@@ -318,9 +326,9 @@ function S4_IE_Jobs:render()
 
                     if details.max then
                         local remaining = math.ceil(details.max - xp)
-                        self:drawText("Next Level: " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
+                        self:drawText(jobText("IGUI_S4_Jobs_NextLevel", "Next Level") .. ": " .. remaining .. " XP", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
                     else
-                        self:drawText("Max Level Reached", 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
+                        self:drawText(jobText("IGUI_S4_Jobs_MaxLevelReached", "Max Level Reached"), 20, barY + 12, 0, 0, 0.6, 1, UIFont.Small)
                     end
                 end
             end
@@ -342,8 +350,18 @@ function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
 
     local thresholds = {t(150), t(400), t(900), t(1600), t(2500), t(4000), t(6000), t(9000), t(13000)}
 
-    local ranks = {"Intern", "Junior", "Senior", "Supervisor", "Manager", "Team Leader", "Dept. Head", "Director", "VP",
-                   "CEO"}
+    local ranks = {
+        jobText("IGUI_S4_Jobs_Rank_1", "Intern"),
+        jobText("IGUI_S4_Jobs_Rank_2", "Junior"),
+        jobText("IGUI_S4_Jobs_Rank_3", "Senior"),
+        jobText("IGUI_S4_Jobs_Rank_4", "Supervisor"),
+        jobText("IGUI_S4_Jobs_Rank_5", "Manager"),
+        jobText("IGUI_S4_Jobs_Rank_6", "Team Leader"),
+        jobText("IGUI_S4_Jobs_Rank_7", "Dept. Head"),
+        jobText("IGUI_S4_Jobs_Rank_8", "Director"),
+        jobText("IGUI_S4_Jobs_Rank_9", "VP"),
+        jobText("IGUI_S4_Jobs_Rank_10", "CEO")
+    }
 
     if xp < thresholds[1] then
         return {
@@ -447,7 +465,9 @@ function S4_IE_Jobs:StartSelectedJob(job)
 
         if #missing > 0 then
             local msg = table.concat(missing, ", ")
-            self.S4_IE.ComUI:AddMsgBox("Job Error", nil, "Missing Equipment:", msg, "Required for " .. job.name)
+            self.S4_IE.ComUI:AddMsgBox(jobText("IGUI_S4_Jobs_ErrorTitle", "Job Error"), nil,
+                jobText("IGUI_S4_Jobs_MissingEquipment", "Missing Equipment:"), msg,
+                jobText("IGUI_S4_Jobs_RequiredFor", "Required for") .. " " .. job.name)
             return
         end
     end
@@ -455,7 +475,8 @@ function S4_IE_Jobs:StartSelectedJob(job)
     -- Check Fatigue
     local stats = player:getStats()
     if stats:getFatigue() > 0.5 then
-        self.S4_IE.ComUI:AddMsgBox("Job Error", nil, "Too Tired to Work", "You need rest.", "")
+        self.S4_IE.ComUI:AddMsgBox(jobText("IGUI_S4_Jobs_ErrorTitle", "Job Error"), nil,
+            jobText("IGUI_S4_Jobs_TooTired", "Too Tired to Work"), jobText("IGUI_S4_Jobs_NeedRest", "You need rest."), "")
         return
     end
 
@@ -478,13 +499,13 @@ function S4_IE_Jobs:StartSelectedJob(job)
         if remainingHours < 0 then
             remainingHours = 0
         end
-        context:addOption(string.format("Resume Shift (%.1fh left)", remainingHours), {
+        context:addOption(jobText("IGUI_S4_Jobs_ResumeShift", "Resume Shift") .. " (" .. string.format("%.1fh", remainingHours) .. " " .. jobText("IGUI_S4_Jobs_Left", "left") .. ")", {
             player = player,
             computer = computer,
             job = job,
             savedShift = savedShift
         }, S4_IE_Jobs.OnResumeShiftStatic)
-        context:addOption("Discard Saved Progress", {
+        context:addOption(jobText("IGUI_S4_Jobs_DiscardSavedProgress", "Discard Saved Progress"), {
             player = player,
             shiftKey = shiftKey
         }, S4_IE_Jobs.OnDiscardSavedShiftStatic)
@@ -500,11 +521,11 @@ function S4_IE_Jobs:StartSelectedJob(job)
         }
     end
 
-    context:addOption("Work 1 Hour ($" .. math.floor(job.salary / 2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 2 Hours ($" .. job.salary .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 3 Hours ($" .. math.floor(job.salary * 1.5) .. ")", makeData(3),
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 1 " .. jobText("IGUI_S4_Jobs_Hour", "Hour") .. " ($" .. math.floor(job.salary / 2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 2 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. job.salary .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 3 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. math.floor(job.salary * 1.5) .. ")", makeData(3),
         S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption("Work 4 Hours ($" .. job.salary * 2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 4 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. job.salary * 2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
 
 end
 
@@ -548,11 +569,11 @@ function S4_IE_Jobs.OnSelectTimeStatic(data)
             if addHours > 0 then
                 local msg = string.format("%s: +%.1fh added (%.1fh total)", job.name, addHours, newTotal)
                 if newTotal >= maxShiftHours then
-                    msg = msg .. " [MAX 4h]"
+                    msg = msg .. " [" .. jobText("IGUI_S4_Jobs_Max4h", "MAX 4h") .. "]"
                 end
                 player:setHaloNote(msg)
             else
-                player:setHaloNote(job.name .. ": already at max 4h.")
+                player:setHaloNote(job.name .. ": " .. jobText("IGUI_S4_Jobs_AlreadyMax4h", "already at max 4h."))
             end
         end
         return
@@ -579,6 +600,6 @@ function S4_IE_Jobs.OnDiscardSavedShiftStatic(data)
     local pData = player:getModData()
     pData[shiftKey] = nil
     if player.setHaloNote then
-        player:setHaloNote("Saved shift discarded.")
+        player:setHaloNote(jobText("IGUI_S4_Jobs_SavedShiftDiscarded", "Saved shift discarded."))
     end
 end

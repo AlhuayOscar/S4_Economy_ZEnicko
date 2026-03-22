@@ -1,5 +1,13 @@
 S4_IE_GoodShop = ISPanel:derive("S4_IE_GoodShop")
 
+local function s4Text(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 function S4_IE_GoodShop:new(IEUI, x, y)
     local width = IEUI.ComUI:getWidth() - 12
     local TaskH = IEUI.ComUI:getHeight() - IEUI.ComUI.TaskBarY
@@ -164,7 +172,7 @@ function S4_IE_GoodShop:createChildren()
     }
     self:addChild(self.CategoryPanel)
 
-    local CText = "Category"
+    local CText = s4Text("IGUI_S4_UI_Category", "Category")
     local CTextW = getTextManager():MeasureStringX(UIFont.Medium, CText)
     local CTextX = 10 + (CategoryW / 2) - (CTextW / 2)
     self.CategoryLabel = ISLabel:new(CTextX, CategoryY - 1, S4_UI.FH_M, CText, 1, 1, 1, 0.8, UIFont.Medium, true)
@@ -212,7 +220,7 @@ function S4_IE_GoodShop:createChildren()
 
     local BtnX = BoxX + 10
     local BtnW = (S4_UI.FH_L * 3) + 20
-    self.HomeBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Home", self, S4_IE_GoodShop.BtnClick)
+    self.HomeBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4Text("IGUI_S4_UI_Home", "Home"), self, S4_IE_GoodShop.BtnClick)
     self.HomeBtn.internal = "Home"
     self.HomeBtn.font = UIFont.Large
     self.HomeBtn.backgroundColor.a = 0
@@ -222,7 +230,7 @@ function S4_IE_GoodShop:createChildren()
     self:addChild(self.HomeBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.BuyBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Buy", self, S4_IE_GoodShop.BtnClick)
+    self.BuyBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4Text("IGUI_S4_UI_Buy", "Buy"), self, S4_IE_GoodShop.BtnClick)
     self.BuyBtn.internal = "Buy"
     self.BuyBtn.font = UIFont.Large
     self.BuyBtn.backgroundColor.a = 0
@@ -232,7 +240,7 @@ function S4_IE_GoodShop:createChildren()
     self:addChild(self.BuyBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.SellBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Sell", self, S4_IE_GoodShop.BtnClick)
+    self.SellBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4Text("IGUI_S4_UI_Sell", "Sell"), self, S4_IE_GoodShop.BtnClick)
     self.SellBtn.internal = "Sell"
     self.SellBtn.font = UIFont.Large
     self.SellBtn.backgroundColor.a = 0
@@ -242,7 +250,7 @@ function S4_IE_GoodShop:createChildren()
     self:addChild(self.SellBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.CartBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Cart", self, S4_IE_GoodShop.BtnClick)
+    self.CartBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4Text("IGUI_S4_UI_Cart", "Cart"), self, S4_IE_GoodShop.BtnClick)
     self.CartBtn.internal = "Cart"
     self.CartBtn.font = UIFont.Large
     self.CartBtn.backgroundColor.a = 0

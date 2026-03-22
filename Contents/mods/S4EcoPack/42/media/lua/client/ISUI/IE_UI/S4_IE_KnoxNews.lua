@@ -1,5 +1,13 @@
 S4_IE_KnoxNews = ISPanel:derive("S4_IE_KnoxNews")
 
+local function newsText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 local KNOX_NEWS_TIMELINE = {
     {
         year = 1993, day = 2, month = 6, -- July is 6 (0-indexed)
@@ -171,12 +179,12 @@ function S4_IE_KnoxNews:initialise()
     local btnH = S4_UI.FH_S + 10
     local btnY = h - btnH + 5
     
-    self.prevBtn = ISButton:new(x + 20, btnY, btnW, btnH, "Previous", self, S4_IE_KnoxNews.onPrevious)
+    self.prevBtn = ISButton:new(x + 20, btnY, btnW, btnH, newsText("IGUI_S4_KnoxNews_Previous", "Previous"), self, S4_IE_KnoxNews.onPrevious)
     self.prevBtn:initialise()
     self.prevBtn.borderColor = {r=1, g=1, b=1, a=0.2}
     self:addChild(self.prevBtn)
 
-    self.nextBtn = ISButton:new(w - btnW + x - 20, btnY, btnW, btnH, "Next", self, S4_IE_KnoxNews.onNext)
+    self.nextBtn = ISButton:new(w - btnW + x - 20, btnY, btnW, btnH, newsText("IGUI_S4_KnoxNews_Next", "Next"), self, S4_IE_KnoxNews.onNext)
     self.nextBtn:initialise()
     self.nextBtn.borderColor = {r=1, g=1, b=1, a=0.2}
     self:addChild(self.nextBtn)
@@ -187,7 +195,7 @@ function S4_IE_KnoxNews:initialise()
         local testBtnH = btnH
         local testBtnX = x + (w / 2) - (testBtnW / 2)
         local testBtnY = btnY
-        self.testBtn = ISButton:new(testBtnX, testBtnY, testBtnW, testBtnH, "DEBUG: Test", self, S4_IE_KnoxNews.onTestEvents)
+        self.testBtn = ISButton:new(testBtnX, testBtnY, testBtnW, testBtnH, newsText("IGUI_S4_KnoxNews_DebugTest", "DEBUG: Test"), self, S4_IE_KnoxNews.onTestEvents)
         self.testBtn:initialise()
         self.testBtn.backgroundColor = {r=0.5, g=0.2, b=0.2, a=0.8}
         self.testBtn.borderColor = {r=1, g=0, b=0, a=0.5}

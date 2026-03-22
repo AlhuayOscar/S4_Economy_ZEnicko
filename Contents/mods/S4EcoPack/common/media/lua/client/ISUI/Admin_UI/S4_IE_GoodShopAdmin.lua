@@ -1,5 +1,13 @@
 S4_IE_GoodShopAdmin = ISPanel:derive("S4_IE_GoodShopAdmin")
 
+local function s4AdminText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 local function safeScriptItemCall(item, fnName)
     if not item or not fnName or not item[fnName] then
         return nil
@@ -210,8 +218,8 @@ function S4_IE_GoodShopAdmin:initialise()
     local serverData = ModData.get("S4_ServerData") or {}
     local lastModified = serverData.ShopDataLastModified
     if lastModified and self.ComUI and self.ComUI.AddMsgBox then
-        local msgTitle = "Good Shop Admin"
-        local text1 = "Shop data last modified:"
+        local msgTitle = s4AdminText("IGUI_S4_COM_GoodShopAdmin", "Good Shop Admin")
+        local text1 = s4AdminText("IGUI_S4_ShopAdmin_LastModified", "Shop data last modified:")
         local text2 = tostring(lastModified)
         self.ComUI:AddMsgBox(msgTitle, nil, text1, text2)
     end
@@ -249,7 +257,7 @@ function S4_IE_GoodShopAdmin:createChildren()
     }
     self:addChild(self.CategoryPanel)
 
-    local CText = "Category"
+    local CText = s4AdminText("IGUI_S4_UI_Category", "Category")
     local CTextW = getTextManager():MeasureStringX(UIFont.Medium, CText)
     local CTextX = 10 + (CategoryW / 2) - (CTextW / 2)
     self.CategoryLabel = ISLabel:new(CTextX, CategoryY - 1, S4_UI.FH_M, CText, 1, 1, 1, 0.8, UIFont.Medium, true)
@@ -299,7 +307,7 @@ function S4_IE_GoodShopAdmin:createChildren()
 
     local BtnX = BoxX + 10
     local BtnW = 150
-    self.AllResetBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "All Reset", self, S4_IE_GoodShopAdmin.BtnClick)
+    self.AllResetBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4AdminText("IGUI_S4_ShopAdmin_AllResetBtn", "All Reset"), self, S4_IE_GoodShopAdmin.BtnClick)
     self.AllResetBtn.internal = "AllReset"
     self.AllResetBtn.font = UIFont.Large
     self.AllResetBtn.backgroundColor.a = 0
@@ -310,7 +318,7 @@ function S4_IE_GoodShopAdmin:createChildren()
     self:addChild(self.AllResetBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.UpdataBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Update Data", self, S4_IE_GoodShopAdmin.BtnClick)
+    self.UpdataBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4AdminText("IGUI_S4_ShopAdmin_UpdateDataBtn", "Update Data"), self, S4_IE_GoodShopAdmin.BtnClick)
     self.UpdataBtn.internal = "UpdateData"
     self.UpdataBtn.font = UIFont.Large
     self.UpdataBtn.backgroundColor.a = 0
@@ -321,7 +329,7 @@ function S4_IE_GoodShopAdmin:createChildren()
     self:addChild(self.UpdataBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.AddDataBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Add Data", self, S4_IE_GoodShopAdmin.BtnClick)
+    self.AddDataBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4AdminText("IGUI_S4_ShopAdmin_AddDataBtn", "Add Data"), self, S4_IE_GoodShopAdmin.BtnClick)
     self.AddDataBtn.internal = "AddData"
     self.AddDataBtn.font = UIFont.Large
     self.AddDataBtn.backgroundColor.a = 0
@@ -332,7 +340,7 @@ function S4_IE_GoodShopAdmin:createChildren()
     self:addChild(self.AddDataBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.ExportBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Export Data", self, S4_IE_GoodShopAdmin.BtnClick)
+    self.ExportBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, s4AdminText("IGUI_S4_ShopAdmin_ExportDataBtn", "Export Data"), self, S4_IE_GoodShopAdmin.BtnClick)
     self.ExportBtn.internal = "ExportShopData"
     self.ExportBtn.font = UIFont.Large
     self.ExportBtn.backgroundColor.a = 0
@@ -479,7 +487,13 @@ function S4_IE_GoodShopAdmin:doDrawItem_CategoryBox(y, item, alt)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
-    local CNameT = getText("IGUI_ItemCat_" .. item.item)
+    local CNameT = getText("IGUI_S4_ItemCat_" .. item.item)
+    if CNameT == "IGUI_S4_ItemCat_" .. item.item or CNameT == "[IGUI_S4_ItemCat_" .. item.item .. "]" then
+        CNameT = getText("IGUI_ItemCat_" .. item.item)
+    end
+    if string.find(CNameT, "^IGUI_") or (string.find(CNameT, "^%[IGUI_") and string.find(CNameT, "%]$")) then
+        CNameT = item.item
+    end
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)

@@ -1,5 +1,13 @@
 S4_ATM_Info = ISPanel:derive("S4_ATM_Info")
 
+local function s4AtmInfoText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 function S4_ATM_Info:new(AtmUI, x, y, width, height)
     local o = ISPanel:new(x, y, width, height)
     setmetatable(o, self)
@@ -21,9 +29,9 @@ function S4_ATM_Info:initialise()
     self.CardW = (self.ATM_Btn_W + 20) * 3
     self.CardH = self:getHeight() - 20
 
-    local ReturnString = getTextManager():MeasureStringX(UIFont.Small, "Return Card")
+    local ReturnString = getTextManager():MeasureStringX(UIFont.Small, s4AtmInfoText("IGUI_S4_ATM_ReturnCard", "Return Card"))
     self.ReturnX = self.CardX + self.CardW - ReturnString - 10
-    local CardInsertString = getTextManager():MeasureStringX(UIFont.Medium, "Card Reader Slot")
+    local CardInsertString = getTextManager():MeasureStringX(UIFont.Medium, s4AtmInfoText("IGUI_S4_ATM_CardReaderSlot", "Card Reader Slot"))
     self.CardInsertX = self.CardX + (self.CardW / 2) - (CardInsertString / 2)
 end
 
@@ -53,14 +61,14 @@ function S4_ATM_Info:render()
     self:drawRectBorder(self.CardX, self.CardY, self.CardW, self.CardH, 0.8, 1, 1, 1)
     -- Card Insert
     local InsertY = self.CardY + ((self.CardH / 5) * 3)
-    self:drawText("Card Reader Slot", self.CardInsertX, self.CardY, 1, 1, 1, 0.8, UIFont.Medium)
+    self:drawText(s4AtmInfoText("IGUI_S4_ATM_CardReaderSlot", "Card Reader Slot"), self.CardInsertX, self.CardY, 1, 1, 1, 0.8, UIFont.Medium)
     self:drawRectBorder(self.CardX + 10, InsertY, self.CardW - 20, self.CardH / 5, 0.8, 1, 1, 1)
     if self.AtmUI.CardNumber then
         local ReturnA = 0.5
         if self.ReturnBtn then
             ReturnA = 0.8
         end
-        self:drawText("Return Card", self.ReturnX, self.CardY, 1, 1, 1, ReturnA, UIFont.Small)
+        self:drawText(s4AtmInfoText("IGUI_S4_ATM_ReturnCard", "Return Card"), self.ReturnX, self.CardY, 1, 1, 1, ReturnA, UIFont.Small)
         self:drawRect(self.CardX + 15, InsertY + 5, self.CardW - 30, (self.CardH / 5) - 10, 0.8, 0, 1, 0)
     end
 end
@@ -91,12 +99,49 @@ end
 function S4_ATM_Info:onMouseMove(dx, dy)
     ISPanel.onMouseMove(dx, dy)
     local Mx, My = self:getMouseX(), self:getMouseY()
+    local InsertY = self.CardY + ((self.CardH / 5) * 3)
 
     self.ReturnBtn = false
     if Mx >= self.ReturnX and self.ReturnX <= (self.CardX + self.CardW) then
         if My >= self.CardY and My <= (self.CardY + S4_UI.FH_S) then
             self.ReturnBtn = true
         end
+    end
+
+    local overInsertSlot = Mx >= (self.CardX + 10) and Mx <= (self.CardX + self.CardW - 10) and My >= InsertY and My <= (InsertY + (self.CardH / 5))
+    if overInsertSlot then
+        self:showTooltip(s4AtmInfoText("IGUI_S4_ATM_CardReaderSlot_Tooltip", "You must drag the card to this ATM box."))
+    else
+        self:hideTooltip()
+    end
+end
+
+function S4_ATM_Info:onMouseMoveOutside(dx, dy)
+    ISPanel.onMouseMoveOutside(self, dx, dy)
+    self.ReturnBtn = false
+    self:hideTooltip()
+end
+
+function S4_ATM_Info:showTooltip(text)
+    if not self.tooltipUI then
+        self.tooltipUI = ISToolTip:new()
+        self.tooltipUI:setOwner(self)
+        self.tooltipUI:setVisible(false)
+        self.tooltipUI:setAlwaysOnTop(true)
+        self.tooltipUI.maxLineWidth = 300
+    end
+    if not self.tooltipUI:getIsVisible() then
+        self.tooltipUI:addToUIManager()
+        self.tooltipUI:setVisible(true)
+    end
+    self.tooltipUI.description = text
+    self.tooltipUI:setDesiredPosition(getMouseX() + 18, getMouseY() + 18)
+end
+
+function S4_ATM_Info:hideTooltip()
+    if self.tooltipUI and self.tooltipUI:getIsVisible() then
+        self.tooltipUI:setVisible(false)
+        self.tooltipUI:removeFromUIManager()
     end
 end
 
@@ -169,6 +214,7 @@ function S4_ATM_Info:ReturnCard(CardNum)
 end
 
 function S4_ATM_Info:close()
+    self:hideTooltip()
     self:setVisible(false)
     self:removeFromUIManager()
 end

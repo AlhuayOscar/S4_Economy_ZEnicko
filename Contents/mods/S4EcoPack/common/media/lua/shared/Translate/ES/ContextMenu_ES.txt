@@ -1,0 +1,16 @@
+﻿ContextMenu_ES = {
+    ContextMenu_S4_ATM_Use = "Usar cajero automatico",
+    ContextMenu_S4_Com_Use = "Usar computadora",
+    ContextMenu_S4_Com_On = "Encender computadora",
+    ContextMenu_S4_Com_PowerBar_Install = "Instalar regleta para la computadora",
+    ContextMenu_S4_Com_CardReader_Install = "Instalar lector de tarjetas",
+    ContextMenu_S4_Com_Satellite_Install = "Conectar antena satelital",
+    ContextMenu_S4_Cash_Check = "Revisar efectivo",
+    ContextMenu_S4_Cash_Check_All = "Revisar todo el efectivo",
+    ContextMenu_S4_Signal_Install = "Instalar dispositivo de senal",
+    ContextMenu_S4_VehiclesFlare_SetDropPoint = "Establecer aqui el punto de entrega del vehiculo",
+    ContextMenu_S4_VehiclesFlare_ClearDropPoint = "Borrar punto de entrega del vehiculo",
+    ContextMenu_S4_PostBox_Sell = "Poner objeto en la caja de venta",
+    ContextMenu_S4_BuyBox_Open = "Abrir caja de entrega",
+    ContextMenu_S4_AirDrop_Open = "Abrir caja de suministros"
+}

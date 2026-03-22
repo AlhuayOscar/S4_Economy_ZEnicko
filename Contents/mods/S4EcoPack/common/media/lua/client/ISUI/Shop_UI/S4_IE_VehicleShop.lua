@@ -1,6 +1,14 @@
 S4_IE_VehicleShop = ISPanel:derive("S4_IE_VehicleShop")
 require('Vehicles/ISUI/ISUI3DScene')
 
+local function vsText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 local function safeCall(obj, fnName)
     if not obj or not fnName or not obj[fnName] then
         return nil
@@ -134,7 +142,7 @@ local function getVectorComponent(v, axis)
 end
 
 local function toBoolText(v)
-    return v and "Yes" or "No"
+    return v and vsText("IGUI_S4_VehicleShop_Yes", "Yes") or vsText("IGUI_S4_VehicleShop_No", "No")
 end
 
 local function getVehicleScriptById(scriptId)
@@ -170,39 +178,39 @@ local function computeMaintenancePercentFromId(scriptId)
 end
 
 local VEHICLE_ORDER_STAGES = {
-    {key = "resources", label = "Resources", pct = 12},
-    {key = "adaptation", label = "Adaptation", pct = 10},
-    {key = "manufacturing", label = "Manufacturing", pct = 18},
-    {key = "assembly", label = "Assembly", pct = 15},
-    {key = "painting", label = "Painting", pct = 10},
-    {key = "to_container_port", label = "Transfer to Container Port", pct = 12},
-    {key = "arrive_port", label = "Arrival at Port", pct = 10},
-    {key = "delivery_meet_point", label = "Delivery to Meet Point", pct = 13}
+    {key = "resources", label = vsText("IGUI_S4_VehicleShop_Stage_Resources", "Resources"), pct = 12},
+    {key = "adaptation", label = vsText("IGUI_S4_VehicleShop_Stage_Adaptation", "Adaptation"), pct = 10},
+    {key = "manufacturing", label = vsText("IGUI_S4_VehicleShop_Stage_Manufacturing", "Manufacturing"), pct = 18},
+    {key = "assembly", label = vsText("IGUI_S4_VehicleShop_Stage_Assembly", "Assembly"), pct = 15},
+    {key = "painting", label = vsText("IGUI_S4_VehicleShop_Stage_Painting", "Painting"), pct = 10},
+    {key = "to_container_port", label = vsText("IGUI_S4_VehicleShop_Stage_ToPort", "Transfer to Container Port"), pct = 12},
+    {key = "arrive_port", label = vsText("IGUI_S4_VehicleShop_Stage_ArrivePort", "Arrival at Port"), pct = 10},
+    {key = "delivery_meet_point", label = vsText("IGUI_S4_VehicleShop_Stage_DeliveryPoint", "Delivery to Meet Point"), pct = 13}
 }
 
 local VEHICLE_ORDER_EVENTS = {
     {
         key = "bad_seats",
         stage = "manufacturing",
-        text = "Bad seat manufacturing: -40% seat durability",
+        text = vsText("IGUI_S4_VehicleShop_Event_BadSeats", "Bad seat manufacturing: -40% seat durability"),
         mods = {seatDurabilityPct = -40}
     },
     {
         key = "paint_error",
         stage = "painting",
-        text = "Paint error: doors/trunk/hood -10% durability",
+        text = vsText("IGUI_S4_VehicleShop_Event_PaintError", "Paint error: doors/trunk/hood -10% durability"),
         mods = {bodyPanelDurabilityPct = -10}
     },
     {
         key = "cheap_parts",
         stage = "assembly",
-        text = "Cheap parts and defective timing belt: -20 HP",
+        text = vsText("IGUI_S4_VehicleShop_Event_CheapParts", "Cheap parts and defective timing belt: -20 HP"),
         mods = {engineHP = -20}
     },
     {
         key = "perfect_assembly",
         stage = "assembly",
-        text = "Perfect assembly, immaculate model: +100 HP",
+        text = vsText("IGUI_S4_VehicleShop_Event_PerfectAssembly", "Perfect assembly, immaculate model: +100 HP"),
         mods = {engineHP = 100}
     }
 }
@@ -1095,18 +1103,18 @@ function S4_IE_VehicleShop:createChildren()
     }
     self:addChild(self.CenterEmptyPanel)
 
-    local headerText = "Installed vehicles (Vanilla + Mods)"
+    local headerText = vsText("IGUI_S4_VehicleShop_InstalledVehicles", "Installed vehicles (Vanilla + Mods)")
     self.CenterEmptyLabel = ISLabel:new(BoxX + 12, CategoryY + 8, S4_UI.FH_M, headerText, 0.9, 0.9, 0.9, 0.95,
         UIFont.Medium, true)
     self:addChild(self.CenterEmptyLabel)
 
-    self.VehicleRefreshBtn = ISButton:new(BoxX + BoxW - 130, CategoryY + 5, 118, 24, "Refresh List", self,
+    self.VehicleRefreshBtn = ISButton:new(BoxX + BoxW - 130, CategoryY + 5, 118, 24, vsText("IGUI_S4_VehicleShop_RefreshList", "Refresh List"), self,
         S4_IE_VehicleShop.onRefreshVehicleList)
     self.VehicleRefreshBtn.internal = "VehicleRefresh"
     self.VehicleRefreshBtn:initialise()
     self:addChild(self.VehicleRefreshBtn)
 
-    self.VehicleCountLabel = ISLabel:new(BoxX + 12, CategoryY + 34, S4_UI.FH_S, "Total: 0", 0.75, 0.9, 0.75, 0.9,
+    self.VehicleCountLabel = ISLabel:new(BoxX + 12, CategoryY + 34, S4_UI.FH_S, vsText("IGUI_S4_VehicleShop_Total", "Total") .. ": 0", 0.75, 0.9, 0.75, 0.9,
         UIFont.Small, true)
     self:addChild(self.VehicleCountLabel)
 
@@ -1136,13 +1144,13 @@ function S4_IE_VehicleShop:createChildren()
 
     local hy = 14
     local homeLines = {
-        "Vehicle Shop Service",
-        "Use Buy/Sell to browse all installed vehicles (Vanilla + Mods).",
-        "Select a model, then use your Vehicles Flare drop point for delivery.",
-        "Pricing rules:",
-        "- Base minimum price starts at $450,000.",
-        "- Markup can increase from +40% up to +430%.",
-        "- Random discounts are lower: only -10% to -25%."
+        vsText("IGUI_S4_VehicleShop_Home1", "Vehicle Shop Service"),
+        vsText("IGUI_S4_VehicleShop_Home2", "Use Buy/Sell to browse all installed vehicles (Vanilla + Mods)."),
+        vsText("IGUI_S4_VehicleShop_Home3", "Select a model, then use your Vehicles Flare drop point for delivery."),
+        vsText("IGUI_S4_VehicleShop_Home4", "Pricing rules:"),
+        vsText("IGUI_S4_VehicleShop_Home5", "- Base minimum price starts at $450,000."),
+        vsText("IGUI_S4_VehicleShop_Home6", "- Markup can increase from +40% up to +430%."),
+        vsText("IGUI_S4_VehicleShop_Home7", "- Random discounts are lower: only -10% to -25%.")
     }
     for i = 1, #homeLines do
         local font = (i == 1) and UIFont.Medium or UIFont.Small
@@ -1164,7 +1172,7 @@ function S4_IE_VehicleShop:createChildren()
 
     local BtnX = BoxX + 10
     local BtnW = (S4_UI.FH_L * 3) + 20
-    self.HomeBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Home", self, S4_IE_VehicleShop.BtnClick)
+    self.HomeBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, vsText("IGUI_S4_UI_Home", "Home"), self, S4_IE_VehicleShop.BtnClick)
     self.HomeBtn.internal = "Home"
     self.HomeBtn.font = UIFont.Large
     self.HomeBtn.backgroundColor.a = 0
@@ -1174,7 +1182,7 @@ function S4_IE_VehicleShop:createChildren()
     self:addChild(self.HomeBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.BuyBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Buy", self, S4_IE_VehicleShop.BtnClick)
+    self.BuyBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, vsText("IGUI_S4_UI_Buy", "Buy"), self, S4_IE_VehicleShop.BtnClick)
     self.BuyBtn.internal = "Buy"
     self.BuyBtn.font = UIFont.Large
     self.BuyBtn.backgroundColor.a = 0
@@ -1184,7 +1192,7 @@ function S4_IE_VehicleShop:createChildren()
     self:addChild(self.BuyBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.SellBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Sell", self, S4_IE_VehicleShop.BtnClick)
+    self.SellBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, vsText("IGUI_S4_UI_Sell", "Sell"), self, S4_IE_VehicleShop.BtnClick)
     self.SellBtn.internal = "Sell"
     self.SellBtn.font = UIFont.Large
     self.SellBtn.backgroundColor.a = 0
@@ -1194,7 +1202,7 @@ function S4_IE_VehicleShop:createChildren()
     self:addChild(self.SellBtn)
     BtnX = BtnX + BtnW + 10
 
-    self.CartBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, "Cart", self, S4_IE_VehicleShop.BtnClick)
+    self.CartBtn = ISButton:new(BtnX, InfoY, BtnW, InfoH, vsText("IGUI_S4_UI_Cart", "Cart"), self, S4_IE_VehicleShop.BtnClick)
     self.CartBtn.internal = "Cart"
     self.CartBtn.font = UIFont.Large
     self.CartBtn.backgroundColor.a = 0
@@ -1439,7 +1447,7 @@ function S4_IE_VehicleShop:reloadVehicleList()
         end
     end
     if self.VehicleCountLabel then
-        self.VehicleCountLabel:setName("Total: " .. tostring(shown) .. " / " .. tostring(#rows))
+        self.VehicleCountLabel:setName(vsText("IGUI_S4_VehicleShop_Total", "Total") .. ": " .. tostring(shown) .. " / " .. tostring(#rows))
     end
 end
 
@@ -1454,34 +1462,34 @@ function S4_IE_VehicleShop:setupVehicleOrderPanel()
     self.CartPanel:addChild(panel)
     self.VehicleOrderPanel = panel
 
-    local title = ISLabel:new(10, 8, S4_UI.FH_M, "Production Cart & Delivery Queue", 0.95, 0.95, 0.95, 1, UIFont.Medium,
+    local title = ISLabel:new(10, 8, S4_UI.FH_M, vsText("IGUI_S4_VehicleShop_CartQueueTitle", "Production Cart & Delivery Queue"), 0.95, 0.95, 0.95, 1, UIFont.Medium,
         true)
     panel:addChild(title)
 
-    local debugLabel = "Delivery Time: 1-30 days"
+    local debugLabel = vsText("IGUI_S4_VehicleShop_DeliveryTime", "Delivery Time: 1-30 days")
     if isDebugVehicleOrderMode() then
-        debugLabel = "Delivery Time: DEBUG MODE (always 1 day)"
+        debugLabel = vsText("IGUI_S4_VehicleShop_DeliveryTimeDebug", "Delivery Time: DEBUG MODE (always 1 day)")
     end
     local subtitle = ISLabel:new(10, 28, S4_UI.FH_S, debugLabel, 0.78, 0.9, 0.78, 0.95, UIFont.Small, true)
     panel:addChild(subtitle)
     self.VehicleOrderSubtitle = subtitle
 
-    self.VehicleDropPointLabel = ISLabel:new(10, 40, S4_UI.FH_S, "Drop Point: Not set", 0.9, 0.7, 0.7, 0.95, UIFont.Small,
+    self.VehicleDropPointLabel = ISLabel:new(10, 40, S4_UI.FH_S, vsText("IGUI_S4_VehicleShop_DropPoint", "Drop Point") .. ": " .. vsText("IGUI_S4_VehicleShop_NotSet", "Not set"), 0.9, 0.7, 0.7, 0.95, UIFont.Small,
         true)
     panel:addChild(self.VehicleDropPointLabel)
 
     local btnY = 60
-    self.VehicleQueueAddBtn = ISButton:new(10, btnY, 130, 24, "Add Selected", self, S4_IE_VehicleShop.onAddSelectedVehicleToCart)
+    self.VehicleQueueAddBtn = ISButton:new(10, btnY, 130, 24, vsText("IGUI_S4_VehicleShop_AddSelected", "Add Selected"), self, S4_IE_VehicleShop.onAddSelectedVehicleToCart)
     self.VehicleQueueAddBtn.internal = "add_selected"
     self.VehicleQueueAddBtn:initialise()
     panel:addChild(self.VehicleQueueAddBtn)
 
-    self.VehicleQueueOrderBtn = ISButton:new(146, btnY, 130, 24, "Place Order", self, S4_IE_VehicleShop.onPlaceSelectedCartOrder)
+    self.VehicleQueueOrderBtn = ISButton:new(146, btnY, 130, 24, vsText("IGUI_S4_VehicleShop_PlaceOrder", "Place Order"), self, S4_IE_VehicleShop.onPlaceSelectedCartOrder)
     self.VehicleQueueOrderBtn.internal = "place_order"
     self.VehicleQueueOrderBtn:initialise()
     panel:addChild(self.VehicleQueueOrderBtn)
 
-    self.VehicleQueueRemoveBtn = ISButton:new(282, btnY, 130, 24, "Remove", self, S4_IE_VehicleShop.onRemoveSelectedVehicleCart)
+    self.VehicleQueueRemoveBtn = ISButton:new(282, btnY, 130, 24, vsText("IGUI_S4_VehicleShop_Remove", "Remove"), self, S4_IE_VehicleShop.onRemoveSelectedVehicleCart)
     self.VehicleQueueRemoveBtn.internal = "remove_queue"
     self.VehicleQueueRemoveBtn:initialise()
     panel:addChild(self.VehicleQueueRemoveBtn)
@@ -1497,7 +1505,7 @@ function S4_IE_VehicleShop:setupVehicleOrderPanel()
     self.VehicleQueueList.doDrawItem = S4_IE_VehicleShop.doDrawItem_VehicleQueue
     panel:addChild(self.VehicleQueueList)
 
-    local ordersLabel = ISLabel:new(10, 210, S4_UI.FH_S, "Orders History (Active + Delivered)", 0.9, 0.9, 0.9, 0.95,
+    local ordersLabel = ISLabel:new(10, 210, S4_UI.FH_S, vsText("IGUI_S4_VehicleShop_OrdersHistory", "Orders History (Active + Delivered)"), 0.9, 0.9, 0.9, 0.95,
         UIFont.Small, true)
     panel:addChild(ordersLabel)
 
@@ -1512,17 +1520,17 @@ function S4_IE_VehicleShop:setupVehicleOrderPanel()
     self.VehicleOrdersList.doDrawItem = S4_IE_VehicleShop.doDrawItem_VehicleOrder
     panel:addChild(self.VehicleOrdersList)
 
-    self.VehicleOrderDetailsLabel = ISLabel:new(10, panel:getHeight() - 68, S4_UI.FH_S, "Select an order to inspect events.",
+    self.VehicleOrderDetailsLabel = ISLabel:new(10, panel:getHeight() - 68, S4_UI.FH_S, vsText("IGUI_S4_VehicleShop_SelectOrder", "Select an order to inspect events."),
         0.86, 0.86, 0.86, 0.95, UIFont.Small, true)
     panel:addChild(self.VehicleOrderDetailsLabel)
 
-    self.VehicleOrderRefreshBtn = ISButton:new(panel:getWidth() - 98, panel:getHeight() - 72, 88, 24, "Refresh", self,
+    self.VehicleOrderRefreshBtn = ISButton:new(panel:getWidth() - 98, panel:getHeight() - 72, 88, 24, vsText("IGUI_S4_UI_Refresh", "Refresh"), self,
         S4_IE_VehicleShop.refreshVehicleOrderPanel)
     self.VehicleOrderRefreshBtn.internal = "refresh_order"
     self.VehicleOrderRefreshBtn:initialise()
     panel:addChild(self.VehicleOrderRefreshBtn)
 
-    self.VehicleOrderClearBtn = ISButton:new(panel:getWidth() - 268, panel:getHeight() - 72, 164, 24, "DEBUG: Clear Orders",
+    self.VehicleOrderClearBtn = ISButton:new(panel:getWidth() - 268, panel:getHeight() - 72, 164, 24, vsText("IGUI_S4_VehicleShop_DebugClearOrders", "DEBUG: Clear Orders"),
         self, S4_IE_VehicleShop.onDebugClearAllVehicleOrders)
     self.VehicleOrderClearBtn.internal = "debug_clear_orders"
     self.VehicleOrderClearBtn:initialise()
@@ -1562,14 +1570,16 @@ function S4_IE_VehicleShop:doDrawItem_VehicleOrder(y, item, alt)
     if o.completed then
         stageColor = {r = 0.58, g = 0.95, b = 0.58}
     end
-    local status = "In Progress"
+    local status = vsText("IGUI_S4_VehicleShop_StatusInProgress", "In Progress")
     if o.delivered then
-        status = "Delivered"
+        status = vsText("IGUI_S4_VehicleShop_StatusDelivered", "Delivered")
     elseif o.completed then
-        status = "Ready for Delivery"
+        status = vsText("IGUI_S4_VehicleShop_StatusReady", "Ready for Delivery")
     end
-    local line2 = string.format("Status: %s  |  Stage: %s  |  Remaining: %.1f days", tostring(status), tostring(stageName),
-        math.max(0, daysLeft))
+    local line2 = vsText("IGUI_S4_VehicleShop_StatusLabel", "Status") .. ": " .. tostring(status) .. "  |  " ..
+        vsText("IGUI_S4_VehicleShop_StageLabel", "Stage") .. ": " .. tostring(stageName) .. "  |  " ..
+        vsText("IGUI_S4_VehicleShop_RemainingLabel", "Remaining") .. ": " .. string.format("%.1f", math.max(0, daysLeft)) ..
+        " " .. vsText("IGUI_S4_VehicleShop_DaysShort", "days")
     self:drawText(line2, 6, y + 16, stageColor.r, stageColor.g, stageColor.b, 1, UIFont.Small)
 
     local barX = 6
@@ -1595,8 +1605,9 @@ function S4_IE_VehicleShop:onDebugClearAllVehicleOrders()
     end
     if not isDebugVehicleOrderMode() then
         if self.ComUI and self.ComUI.AddMsgBox then
-            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Debug only option.",
-                "Enable debug mode to use 'DEBUG: Clear Orders'.")
+            self.ComUI:AddMsgBox(vsText("IGUI_S4_COM_VehicleShop", "Vehicle Shop"), nil,
+                vsText("IGUI_S4_VehicleShop_DebugOnly", "Debug only option."),
+                vsText("IGUI_S4_VehicleShop_EnableDebugClear", "Enable debug mode to use 'DEBUG: Clear Orders'."))
         end
         return
     end
@@ -1666,21 +1677,22 @@ function S4_IE_VehicleShop:refreshVehicleOrderPanel()
 
     if self.VehicleOrderSubtitle then
         if isDebugVehicleOrderMode() then
-            self.VehicleOrderSubtitle:setName("Delivery Time: DEBUG MODE (always 1 day)")
+            self.VehicleOrderSubtitle:setName(vsText("IGUI_S4_VehicleShop_DeliveryTimeDebug", "Delivery Time: DEBUG MODE (always 1 day)"))
         else
-            self.VehicleOrderSubtitle:setName("Delivery Time: 1-30 days")
+            self.VehicleOrderSubtitle:setName(vsText("IGUI_S4_VehicleShop_DeliveryTime", "Delivery Time: 1-30 days"))
         end
     end
     if self.VehicleDropPointLabel and self.player then
         local pmd = self.player:getModData()
         if pmd and pmd.S4VehicleDropX and pmd.S4VehicleDropY then
-            self.VehicleDropPointLabel:setName("Drop Point: " .. tostring(pmd.S4VehicleDropX) .. "x" ..
+            self.VehicleDropPointLabel:setName(vsText("IGUI_S4_VehicleShop_DropPoint", "Drop Point") .. ": " .. tostring(pmd.S4VehicleDropX) .. "x" ..
                                                    tostring(pmd.S4VehicleDropY))
             pcall(function()
                 self.VehicleDropPointLabel:setColor(0.72, 0.95, 0.72, 0.95)
             end)
         else
-            self.VehicleDropPointLabel:setName("Drop Point: Not set (required)")
+            self.VehicleDropPointLabel:setName(vsText("IGUI_S4_VehicleShop_DropPoint", "Drop Point") .. ": " ..
+                vsText("IGUI_S4_VehicleShop_NotSetRequired", "Not set (required)"))
             pcall(function()
                 self.VehicleDropPointLabel:setColor(0.95, 0.72, 0.72, 0.95)
             end)
@@ -1690,16 +1702,18 @@ function S4_IE_VehicleShop:refreshVehicleOrderPanel()
     local orderRow = self.VehicleOrdersList.items and self.VehicleOrdersList.items[self.VehicleOrdersList.selected]
     local selectedOrder = orderRow and orderRow.item or nil
     if selectedOrder then
-        local evText = "No random events yet."
+        local evText = vsText("IGUI_S4_VehicleShop_NoRandomEvents", "No random events yet.")
         if selectedOrder.events and #selectedOrder.events > 0 then
             evText = selectedOrder.events[#selectedOrder.events]
         end
         local mods = selectedOrder.mods or {}
-        local modText = string.format("Seat %d%% | Panels %d%% | Engine %+d HP", tonumber(mods.seatDurabilityPct) or 0,
-            tonumber(mods.bodyPanelDurabilityPct) or 0, tonumber(mods.engineHP) or 0)
+        local modText = vsText("IGUI_S4_VehicleShop_SeatLabel", "Seat") .. " " .. tostring(tonumber(mods.seatDurabilityPct) or 0) ..
+            "% | " .. vsText("IGUI_S4_VehicleShop_PanelsLabel", "Panels") .. " " ..
+            tostring(tonumber(mods.bodyPanelDurabilityPct) or 0) .. "% | " ..
+            vsText("IGUI_S4_VehicleShop_EngineLabel", "Engine") .. " " .. string.format("%+d HP", tonumber(mods.engineHP) or 0)
         self.VehicleOrderDetailsLabel:setName(evText .. "  ||  " .. modText)
     else
-        self.VehicleOrderDetailsLabel:setName("Select an order to inspect events.")
+        self.VehicleOrderDetailsLabel:setName(vsText("IGUI_S4_VehicleShop_SelectOrder", "Select an order to inspect events."))
     end
 end
 
@@ -1849,7 +1863,9 @@ function S4_IE_VehicleShop:onAddSelectedVehicleToCart()
     local item = self:getSelectedVehicleFromList()
     if not item then
         if self.ComUI and self.ComUI.AddMsgBox then
-            self.ComUI:AddMsgBox("Vehicle Shop", nil, "No vehicle selected.", "Select a vehicle first in Buy/Sell list.")
+            self.ComUI:AddMsgBox(vsText("IGUI_S4_COM_VehicleShop", "Vehicle Shop"), nil,
+                vsText("IGUI_S4_VehicleShop_NoVehicleSelected", "No vehicle selected."),
+                vsText("IGUI_S4_VehicleShop_SelectVehicleFirst", "Select a vehicle first in Buy/Sell list."))
         end
         return
     end
@@ -1896,7 +1912,9 @@ function S4_IE_VehicleShop:onPlaceSelectedCartOrder()
     local row = self.VehicleQueueList.items[self.VehicleQueueList.selected]
     if not row or not row.item then
         if self.ComUI and self.ComUI.AddMsgBox then
-            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Cart is empty.", "Add a vehicle to cart before placing an order.")
+            self.ComUI:AddMsgBox(vsText("IGUI_S4_COM_VehicleShop", "Vehicle Shop"), nil,
+                vsText("IGUI_S4_VehicleShop_CartEmpty", "Cart is empty."),
+                vsText("IGUI_S4_VehicleShop_AddBeforeOrder", "Add a vehicle to cart before placing an order."))
         end
         return
     end
@@ -1912,8 +1930,9 @@ function S4_IE_VehicleShop:onPlaceSelectedCartOrder()
     local dropZ = pmd and pmd.S4VehicleDropZ or 0
     if not dropX or not dropY then
         if self.ComUI and self.ComUI.AddMsgBox then
-            self.ComUI:AddMsgBox("Vehicle Shop", nil, "Delivery point is required.",
-                "Set a Vehicle Flare drop point first (right click Vehicles Flare item).")
+            self.ComUI:AddMsgBox(vsText("IGUI_S4_COM_VehicleShop", "Vehicle Shop"), nil,
+                vsText("IGUI_S4_VehicleShop_DeliveryPointRequired", "Delivery point is required."),
+                vsText("IGUI_S4_VehicleShop_SetFlarePoint", "Set a Vehicle Flare drop point first (right click Vehicles Flare item)."))
         end
         if self.player and self.player.setHaloNote then
             pcall(function()
@@ -2032,7 +2051,7 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
     overlay:addChild(panel)
     self.VehiclePreviewPanel = panel
 
-    local title = ISLabel:new(12, 8, S4_UI.FH_M, "Preview: " .. tostring(displayName or scriptName), 0.95, 0.95, 0.95,
+    local title = ISLabel:new(12, 8, S4_UI.FH_M, vsText("IGUI_S4_VehicleShop_Preview", "Preview") .. ": " .. tostring(displayName or scriptName), 0.95, 0.95, 0.95,
         1, UIFont.Medium, true)
     panel:addChild(title)
 
@@ -2076,15 +2095,19 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
     end
 
     local infoY = scene:getBottom() + 6
-    local infoLines = {"No specs available."}
+    local infoLines = {vsText("IGUI_S4_VehicleShop_NoSpecs", "No specs available.")}
     if specs then
         infoLines = {
-            string.format("Width: %.2f  Height: %.2f  Length: %.2f", specs.width or 0, specs.height or 0,
-                specs.length or 0),
-            string.format("Engine Power: %.0f hp  Trunk Capacity: %.0f", specs.engineHP or 0, specs.trunkCapacity or 0),
-            string.format("Radio: %s  Heating: %s  Trunk: %s", toBoolText(specs.hasRadio),
-                toBoolText(specs.hasHeater), toBoolText(specs.hasTrunk)),
-            string.format("Maintenance Price: %d%%", tonumber(specs.maintenancePct) or 20)
+            vsText("IGUI_S4_VehicleShop_Width", "Width") .. ": " .. string.format("%.2f", specs.width or 0) ..
+                "  " .. vsText("IGUI_S4_VehicleShop_Height", "Height") .. ": " .. string.format("%.2f", specs.height or 0) ..
+                "  " .. vsText("IGUI_S4_VehicleShop_Length", "Length") .. ": " .. string.format("%.2f", specs.length or 0),
+            vsText("IGUI_S4_VehicleShop_EnginePower", "Engine Power") .. ": " .. string.format("%.0f", specs.engineHP or 0) ..
+                " hp  " .. vsText("IGUI_S4_VehicleShop_TrunkCapacity", "Trunk Capacity") .. ": " ..
+                string.format("%.0f", specs.trunkCapacity or 0),
+            vsText("IGUI_S4_VehicleShop_Radio", "Radio") .. ": " .. toBoolText(specs.hasRadio) .. "  " ..
+                vsText("IGUI_S4_VehicleShop_Heating", "Heating") .. ": " .. toBoolText(specs.hasHeater) .. "  " ..
+                vsText("IGUI_S4_VehicleShop_Trunk", "Trunk") .. ": " .. toBoolText(specs.hasTrunk),
+            vsText("IGUI_S4_VehicleShop_MaintenancePrice", "Maintenance Price") .. ": " .. tostring(tonumber(specs.maintenancePct) or 20) .. "%"
         }
     end
     for i = 1, #infoLines do
@@ -2118,7 +2141,7 @@ function S4_IE_VehicleShop:openVehiclePreview(data)
     addControl("+", "zoom_in", 28)
     addControl("Reset", "reset", 50)
 
-    local addCartBtn = ISButton:new(pw - 180, ph - 34, 130, 24, "Add To Cart", self, S4_IE_VehicleShop.onPreviewAddToCart)
+    local addCartBtn = ISButton:new(pw - 180, ph - 34, 130, 24, vsText("IGUI_S4_VehicleShop_AddToCart", "Add To Cart"), self, S4_IE_VehicleShop.onPreviewAddToCart)
     addCartBtn.internal = "add_vehicle_cart"
     addCartBtn:initialise()
     panel:addChild(addCartBtn)

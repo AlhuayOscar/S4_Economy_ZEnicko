@@ -1,0 +1,18 @@
+{
+    "Tooltip_S4_Needitem":  "[Objeto requerido]",
+    "Tooltip_S4_NeedItems":  "%1: %2 / %3",
+    "Tooltip_S4_Computer_NotElectric":  "Se necesita electricidad para usar la computadora.\u003cbr\u003eProporciona energia con un generador.",
+    "Tooltip_S4_PowerBar_Install":  "Conecta la energia a la computadora.\u003cbr\u003eSe necesita %1 para conectar la energia.",
+    "Tooltip_S4_CardReader_Install":  "Instala el lector de tarjetas para usar tarjetas en la computadora.\u003cbr\u003eSe necesita %1 para la instalacion.",
+    "Tooltip_S4_Satellite_Install":  "Conecta la antena satelital para usar internet en la computadora.\u003cbr\u003eDebe haber una antena satelital instalada cerca y se consumira %1 adicional segun la distancia.",
+    "Tooltip_S4_Satellite_NotFound":  "No se encontro una antena satelital.",
+    "Tooltip_S4_Satellite_FoundTip":  "La antena satelital debe estar instalada a un maximo de 14 casillas y 3 niveles de altura desde la computadora.",
+    "Tooltip_S4_ComLockBox":  "Configura la verificacion de contrasena antes de usar la computadora.\u003cbr\u003eSi no se establece una contrasena, la opcion no se aplicara.",
+    "Tooltip_S4_ComTimeBox":  "Configura la hora de la computadora en formato de 24 horas.\u003cbr\u003eAun no esta implementado.",
+    "Tooltip_S4_Remove_PowerBar":  "Quita el cable de energia conectado a la computadora.\u003cbr\u003eAl quitar la energia, la computadora se apagara y tendras que reinstalarla para volver a usarla.",
+    "Tooltip_S4_Remove_CardReader":  "Quita el lector de tarjetas conectado a la computadora.",
+    "Tooltip_S4_Remove_Satellite":  "Quita el cable conectado a la antena satelital.\u003cbr\u003eSe devolvera un cable menos que el usado durante la instalacion.",
+    "Tooltip_S4_Hide_Password":  "Marca esta opcion para ocultar la contrasena.",
+    "Tooltip_S4_AirDrop":  "Suministros lanzados por HIND.\u003cbr\u003eNecesitaras una palanca para abrirlos.\u003cbr\u003e\u003cbr\u003e[Objeto requerido]",
+    "Tooltip_S4_AirDrop_Open":  "Abrir caja de suministros"
+}

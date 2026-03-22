@@ -20,6 +20,14 @@ local function S4_shouldRenderDesktopIcon(iconKey)
     return not S4_HIDDEN_DESKTOP_APPS[iconKey]
 end
 
+local function s4ComText(key, fallback)
+    local text = getText(key)
+    if text == key or text == ("[" .. key .. "]") then
+        return fallback or key
+    end
+    return text
+end
+
 function S4_Computer_Main:show(player, ComObj, x, y)
     local square = player:getSquare()
     posX = square:getX()
@@ -188,7 +196,7 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyCom.png")
     }
     S4_Category.ComputerIconData["MyDoc"] = {
-        Name = "My Documents",
+        Name = s4ComText("IGUI_S4_COM_MyDocuments", "My Documents"),
         Icon = getTexture("media/textures/S4_Icon/Icon_64_MyDoc.png")
     }
     S4_Category.ComputerIconData["IE"] = {
@@ -216,7 +224,7 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_UserSetting.png")
     }
     S4_Category.ComputerIconData["News"] = {
-        Name = "Knox News",
+        Name = s4ComText("IGUI_S4_COM_KnoxNews", "Knox News"),
         Icon = getTexture("media/textures/S4_Icon/Icon_64_News.png")
     }
     S4_Category.ComputerIconData["ZomBank"] = {
@@ -228,12 +236,12 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_GS.png")
     }
     S4_Category.ComputerIconData["VehicleShop"] = {
-        Name = "Vehicle Shop",
+        Name = s4ComText("IGUI_S4_COM_VehicleShop", "Vehicle Shop"),
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Vehicle.png")
     }
 
     S4_Category.ComputerIconData["Jobs"] = {
-        Name = "Jobs",
+        Name = s4ComText("IGUI_S4_COM_Jobs", "Jobs"),
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
     }
 
@@ -308,7 +316,7 @@ function S4_Computer_Main:createChildren()
         self.Btn_GoodshopAdmin.backgroundColorMouseOver = {
             r = 189 / 255, g = 190 / 255, b = 189 / 255, a = 0.3
         }
-        self.Btn_GoodshopAdmin.IconName = "Good Shop Admin"
+        self.Btn_GoodshopAdmin.IconName = s4ComText("IGUI_S4_COM_GoodShopAdmin", "Good Shop Admin")
         self.Btn_GoodshopAdmin:setImage(getTexture("media/textures/S4_Icon/Icon_64_IE.png"))
         self.Btn_GoodshopAdmin:forceImageSize(IconSize, IconSize)
         self.Btn_GoodshopAdmin.render = S4_Computer_Main.BtnRender
@@ -471,7 +479,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.MyDoc = S4_InternetExplorer:new(self)
             self.MyDoc:initialise()
-            self.MyDoc.TitleName = "My Documents - Internet Explorer"
+            self.MyDoc.TitleName = s4ComText("IGUI_S4_COM_MyDocuments_IE", "My Documents - Internet Explorer")
             self.MyDoc.AddressText = "file://C:/Users/" .. self.player:getUsername() .. "/Documents"
             self.MyDoc.PageType = internal
             self:addChild(self.MyDoc)
@@ -780,7 +788,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.News = S4_InternetExplorer:new(self)
             self.News:initialise()
-            self.News.TitleName = "Knox News - Internet Explorer"
+            self.News.TitleName = s4ComText("IGUI_S4_COM_KnoxNews_IE", "Knox News - Internet Explorer")
             self.News.AddressText = "http://hind.com/KnoxNews/home"
             self.News.PageType = internal
             self:addChild(self.News)
@@ -817,7 +825,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.GoodShop = S4_InternetExplorer:new(self)
             self.GoodShop:initialise()
-            self.GoodShop.TitleName = "Good Shop - Internet Explorer"
+            self.GoodShop.TitleName = s4ComText("IGUI_S4_COM_GoodShop_IE", "Good Shop - Internet Explorer")
             self.GoodShop.AddressText = "http://hind.com/GoodShop/home"
             self.GoodShop.PageType = internal
             self:addChild(self.GoodShop)
@@ -838,7 +846,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.VehicleShop = S4_InternetExplorer:new(self)
             self.VehicleShop:initialise()
-            self.VehicleShop.TitleName = "Vehicle Shop - Internet Explorer"
+            self.VehicleShop.TitleName = s4ComText("IGUI_S4_COM_VehicleShop_IE", "Vehicle Shop - Internet Explorer")
             self.VehicleShop.AddressText = "http://hind.com/VehicleShop/home"
             self.VehicleShop.PageType = internal
             self:addChild(self.VehicleShop)
@@ -858,7 +866,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.GoodShopAdmin = S4_InternetExplorer:new(self)
             self.GoodShopAdmin:initialise()
-            self.GoodShopAdmin.TitleName = "Good Shop Admin - Internet Explorer"
+            self.GoodShopAdmin.TitleName = s4ComText("IGUI_S4_COM_GoodShopAdmin_IE", "Good Shop Admin - Internet Explorer")
             self.GoodShopAdmin.AddressText = "http://hind.com/GoodShop/admin"
             self.GoodShopAdmin.PageType = internal
             self:addChild(self.GoodShopAdmin)
@@ -889,7 +897,7 @@ function S4_Computer_Main:BtnClick(Button)
         else
             self.Jobs = S4_InternetExplorer:new(self)
             self.Jobs:initialise()
-            self.Jobs.TitleName = "Knox Jobs - Internet Explorer"
+            self.Jobs.TitleName = s4ComText("IGUI_S4_COM_Jobs_IE", "Knox Jobs - Internet Explorer")
             self.Jobs.AddressText = "http://hind.com/Jobs/home"
             self.Jobs.PageType = internal
             self:addChild(self.Jobs)

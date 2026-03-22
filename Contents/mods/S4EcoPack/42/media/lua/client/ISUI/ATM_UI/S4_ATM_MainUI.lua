@@ -1,6 +1,33 @@
 S4_ATM_MainUI = ISPanel:derive("S4_ATM_MainUI")
 S4_ATM_MainUI.instance = nil
 
+local function S4_getAtmMenuTitleLayout(button, title)
+    local text = tostring(title or "")
+    local maxWidth = math.max((button.width or button:getWidth() or 0) - 12, 10)
+    local font = UIFont.Medium
+    if getTextManager():MeasureStringX(font, text) > maxWidth then
+        font = UIFont.Small
+    end
+    return S4_UI.TextLimitOne(text, maxWidth, font), font
+end
+
+local function S4_prepareAtmMenuButton(button)
+    if button.S4AutoFitTitle then
+        return
+    end
+
+    button.S4AutoFitTitle = true
+    button.S4RawSetTitle = button.setTitle
+    button.setTitle = function(btn, title)
+        local fittedTitle, fittedFont = S4_getAtmMenuTitleLayout(btn, title)
+        btn.font = fittedFont
+        btn.S4RawTitle = title
+        return btn.S4RawSetTitle(btn, fittedTitle)
+    end
+
+    button:setTitle(button.title or "")
+end
+
 function S4_ATM_MainUI:show(player, Obj)
     local square = player:getSquare()
     posX = square:getX()
@@ -110,6 +137,7 @@ function S4_ATM_MainUI:createChildren()
         }
         self["MenuBtn" .. i]:initialise()
         self["MenuBtn" .. i]:instantiate()
+        S4_prepareAtmMenuButton(self["MenuBtn" .. i])
 
         self:addChild(self["MenuBtn" .. i])
         if self.CardNumber and self.CardNumber ~= "Null" and self.isPassword then

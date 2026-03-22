@@ -1,5 +1,38 @@
 S4_ItemListBox = ISPanel:derive("S4_ItemListBox")
 
+local function formatTextCompat(key, ...)
+    local template = getText(key)
+    local args = {...}
+
+    if not template then
+        return tostring(key or "")
+    end
+
+    local formatted = tostring(template)
+    local positionalReplaced = 0
+    local simpleReplaced = 0
+
+    formatted, positionalReplaced = string.gsub(formatted, "%%(%d+)%$[%a]", function(indexText)
+        local value = args[tonumber(indexText)]
+        return tostring(value)
+    end)
+    formatted, simpleReplaced = string.gsub(formatted, "%%(%d+)", function(indexText)
+        local value = args[tonumber(indexText)]
+        return tostring(value)
+    end)
+
+    if positionalReplaced > 0 or simpleReplaced > 0 then
+        return formatted
+    end
+
+    local ok, formatted = pcall(string.format, template, unpack(args))
+    if ok and formatted then
+        return formatted
+    end
+
+    return tostring(template)
+end
+
 function S4_ItemListBox:new(ParentsUI, x, y, w, h)
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -326,12 +359,12 @@ function S4_ItemListBox:setItemBtn()
                             TooltipText = TooltipText .. " <LINE> " .. getText("IGUI_S4_ShopAdmin_ShopReg_Tooltip")
                             if Data.BuyPrice ~= 0 then -- Available for purchase
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_ShopAdmin_Buy_Available",
+                                                  formatTextCompat("IGUI_S4_ShopAdmin_Buy_Available",
                                         Data.BuyPrice)
                             end
                             if Data.SellPrice ~= 0 then -- Available for sale
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_ShopAdmin_Sell_Available",
+                                                  formatTextCompat("IGUI_S4_ShopAdmin_Sell_Available",
                                         Data.SellPrice)
                             end
                             if Data.HotItem ~= 0 then
@@ -340,7 +373,7 @@ function S4_ItemListBox:setItemBtn()
                             end
                             if Data.Discount then
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_ShopAdmin_Item_Info", Data.Stock,
+                                                  formatTextCompat("IGUI_S4_ShopAdmin_Item_Info", Data.Stock,
                                         Data.Restock, Data.Category, getText(
                                             "IGUI_S4_Shop_Authority" .. Data.BuyAuthority), getText(
                                             "IGUI_S4_Shop_Authority" .. Data.SellAuthority), Data.Discount) .. " %"
@@ -350,19 +383,19 @@ function S4_ItemListBox:setItemBtn()
                         end
                         self["Btn" .. i]:setTooltip(TooltipText)
                     else
-                        local TooltipText = getText("IGUI_S4_Shop_Info_DisplayName", Data.DisplayName)
+                        local TooltipText = formatTextCompat("IGUI_S4_Shop_Info_DisplayName", Data.DisplayName)
                         if self.ParentsUI.MenuType == "Buy" then
                             local MoneyText = S4_UI.getNumCommas(Data.BuyPrice)
                             TooltipText = TooltipText .. " <LINE> " ..
-                                              getText("IGUI_S4_Shop_Info_Buy", MoneyText, Data.Stock)
+                                              formatTextCompat("IGUI_S4_Shop_Info_Buy", MoneyText, Data.Stock)
                             if Data.BuyAuthority > 0 then -- Show purchase rating
                                 local Authority = getText("IGUI_S4_Shop_Authority" .. Data.BuyAuthority)
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_Shop_BuyAuthority", Authority)
+                                                  formatTextCompat("IGUI_S4_Shop_BuyAuthority", Authority)
                             end
                             if Data.Discount > 0 then
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_Shop_Discount", Data.Discount) .. " %"
+                                                  formatTextCompat("IGUI_S4_Shop_Discount", Data.Discount) .. " %"
                             end
                             if Data.BuyAccessFail then -- Lack of purchase rating
                                 TooltipText = TooltipText .. " <LINE> " .. getText("IGUI_S4_Shop_BuyAuthorityFail")
@@ -375,17 +408,16 @@ function S4_ItemListBox:setItemBtn()
                         elseif self.ParentsUI.MenuType == "Sell" then
                             local MoneyText = S4_UI.getNumCommas(Data.SellPrice)
                             TooltipText = TooltipText .. " <LINE> " ..
-                                              getText("IGUI_S4_Shop_SellPrice", MoneyText)
+                                              formatTextCompat("IGUI_S4_Shop_SellPrice", MoneyText)
                             if Data.SellAuthority > 0 then -- Show sales rating
                                 local Authority = getText("IGUI_S4_Shop_Authority" .. Data.BuyAuthority)
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_Shop_SellAuthority",
-                                        Data.SellAuthority)
+                                                  formatTextCompat("IGUI_S4_Shop_SellAuthority", Authority)
                             end
                             if Data.InvStock then
                                 local InvStock = S4_UI.getNumCommas(self.ParentsUI.InvItems[Data.FullType].Amount)
                                 TooltipText = TooltipText .. " <LINE> " ..
-                                                  getText("IGUI_S4_Shop_InvStock", InvStock)
+                                                  formatTextCompat("IGUI_S4_Shop_InvStock", InvStock)
                             else
                                 TooltipText = TooltipText .. " <LINE> " .. getText("IGUI_S4_Shop_SellAmountFail")
                                 self["Btn" .. i].Authority = true

@@ -756,9 +756,11 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
 
     local BorderW = Cw - (Cw / 4)
     local BorderX = ((Cw / 4) / 2) + 1
+    local isSelected = self.selectedRow == item.index
 
-    if self.selectedRow == item.index then
-        self:drawRect(1, y, Cw, Ch, 0.2, 1, 1, 1)
+    if isSelected then
+        self:drawRect(1, y, Cw, Ch, 0.28, 0.95, 0.95, 0.95)
+        self:drawRectBorder(1, y, Cw, Ch, 0.8, 1, 1, 1)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
@@ -776,7 +778,8 @@ function S4_IE_GoodShop:doDrawItem_CategoryBox(y, item, alt)
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)
-    self:drawText(CNameFT, CNamex, y + yOffset, 0.9, 0.9, 0.9, 1, UIFont.Medium)
+    local textColor = isSelected and 1 or 0.9
+    self:drawText(CNameFT, CNamex, y + yOffset, textColor, textColor, textColor, 1, UIFont.Medium)
     return y + Ch
 end
 

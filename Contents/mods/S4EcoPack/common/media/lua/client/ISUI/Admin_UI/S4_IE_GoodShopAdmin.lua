@@ -1,5 +1,149 @@
 S4_IE_GoodShopAdmin = ISPanel:derive("S4_IE_GoodShopAdmin")
 
+local function safeScriptItemCall(item, fnName)
+    if not item or not fnName or not item[fnName] then
+        return nil
+    end
+
+    local ok, value = pcall(function()
+        return item[fnName](item)
+    end)
+    if ok then
+        return value
+    end
+    return nil
+end
+
+local function getScriptItemCount(itemList)
+    if not itemList then
+        return 0
+    end
+    if itemList.size then
+        local ok, count = pcall(function()
+            return itemList:size()
+        end)
+        if ok and count then
+            return count
+        end
+    end
+    if type(itemList) == "table" then
+        return #itemList
+    end
+    return 0
+end
+
+local function isSupportedScriptItemList(itemList)
+    if not itemList then
+        return false
+    end
+    if itemList.size and itemList.get then
+        return true
+    end
+    return type(itemList) == "table"
+end
+
+local function getScriptItemAt(itemList, index)
+    if not itemList then
+        return nil
+    end
+    if itemList.get then
+        local ok, item = pcall(function()
+            return itemList:get(index)
+        end)
+        if ok then
+            return item
+        end
+    end
+    if type(itemList) == "table" then
+        return itemList[index + 1]
+    end
+    return nil
+end
+
+local function collectAllScriptItems()
+    if getAllItems then
+        local okItems, itemList = pcall(getAllItems)
+        if okItems and isSupportedScriptItemList(itemList) and getScriptItemCount(itemList) > 0 then
+            return itemList
+        end
+    end
+
+    if getScriptManager then
+        local okSm, scriptManager = pcall(getScriptManager)
+        if okSm and scriptManager then
+            local candidates = {"getAllItems", "getItems"}
+            for _, fnName in ipairs(candidates) do
+                if scriptManager[fnName] then
+                    local okList, itemList = pcall(function()
+                        return scriptManager[fnName](scriptManager)
+                    end)
+                    if okList and isSupportedScriptItemList(itemList) and getScriptItemCount(itemList) > 0 then
+                        return itemList
+                    end
+                end
+            end
+        end
+    end
+
+    return nil
+end
+
+local function getAdminItemTexture(item)
+    local iconTexture = safeScriptItemCall(item, "getNormalTexture")
+    if iconTexture then
+        return iconTexture
+    end
+
+    local iconName = safeScriptItemCall(item, "getIcon")
+    if iconName and iconName ~= "" then
+        return getTexture(iconName) or getTexture("Item_" .. iconName) or
+                   getTexture("media/textures/Item_" .. iconName .. ".png")
+    end
+
+    return false
+end
+
+local function buildAdminItemData(item, shopModData)
+    local fullType = safeScriptItemCall(item, "getFullName") or safeScriptItemCall(item, "getFullType")
+    if not fullType or fullType == "Base.Bandage_Abdomen" then
+        return nil
+    end
+
+    local typeString = safeScriptItemCall(item, "getTypeString")
+    local listCategory = safeScriptItemCall(item, "getDisplayCategory")
+    if not listCategory or listCategory == "" then
+        listCategory = typeString
+    end
+    if not listCategory or listCategory == "" then
+        listCategory = "Etc"
+    end
+
+    local data = {
+        ListCategory = listCategory,
+        FullType = fullType,
+        DisplayName = safeScriptItemCall(item, "getDisplayName") or safeScriptItemCall(item, "getName") or fullType,
+        Texture = getAdminItemTexture(item),
+        itemData = false,
+        DataCheck = false
+    }
+
+    local shopData = shopModData and shopModData[data.FullType] or nil
+    if shopData then
+        data.DataCheck = true
+        data.BuyPrice = shopData.BuyPrice
+        data.SellPrice = shopData.SellPrice
+        data.Stock = shopData.Stock
+        data.Restock = shopData.Restock
+        data.Category = shopData.Category
+        data.BuyAuthority = shopData.BuyAuthority
+        data.SellAuthority = shopData.SellAuthority
+        data.Discount = shopData.Discount
+        data.HotItem = shopData.HotItem
+    end
+
+    return data
+end
+
 function S4_IE_GoodShopAdmin:new(IEUI, x, y)
     local width = IEUI.ComUI:getWidth() - 12
     local TaskH = IEUI.ComUI:getHeight() - IEUI.ComUI.TaskBarY
@@ -39,99 +183,19 @@ function S4_IE_GoodShopAdmin:initialise()
     self.AllItems = {}
     self.AllCategory = {}
     local ShopModData = ModData.get("S4_ShopData") or {}
-    local AllItemList = getAllItems()
-    for i = 0, AllItemList:size() - 1 do
-        local item = AllItemList:get(i)
-        local fullType = nil
-        local typeString = nil
-        local displayCategory = nil
-        local displayName = nil
-
-        if item and item.getFullName then
-            local okFullName, value = pcall(function()
-                return item:getFullName()
-            end)
-            if okFullName then
-                fullType = value
-            end
-        end
-        if item and item.getTypeString then
-            local okTypeString, value = pcall(function()
-                return item:getTypeString()
-            end)
-            if okTypeString then
-                typeString = value
-            end
-        end
-        if item and item.getDisplayCategory then
-            local okDisplayCategory, value = pcall(function()
-                return item:getDisplayCategory()
-            end)
-            if okDisplayCategory then
-                displayCategory = value
-            end
-        end
-        if item and item.getDisplayName then
-            local okDisplayName, value = pcall(function()
-                return item:getDisplayName()
-            end)
-            if okDisplayName then
-                displayName = value
-            end
-        end
-
-        if item and fullType and typeString then
-            local Data = {}
-            local ListCategory = displayCategory
-            if not ListCategory or ListCategory == "" then
-                ListCategory = typeString or "Etc"
-            end
-
-            Data.ListCategory = ListCategory
-            Data.FullType = fullType
-            Data.DisplayName = displayName or Data.FullType
-
-            local iconTexture = nil
-            if item.getNormalTexture then
-                local okTexture, normalTexture = pcall(function()
-                    return item:getNormalTexture()
-                end)
-                if okTexture and normalTexture then
-                    iconTexture = normalTexture
-                end
-            end
-            if not iconTexture and item.getIcon then
-                local okIcon, iconName = pcall(function()
-                    return item:getIcon()
-                end)
-                if okIcon and iconName and iconName ~= "" then
-                    iconTexture = getTexture(iconName) or getTexture("Item_" .. iconName)
-                end
-            end
-            Data.Texture = iconTexture or false
-            Data.itemData = false
-
-            if ShopModData[Data.FullType] then
-                Data.DataCheck = true
-                Data.BuyPrice = ShopModData[Data.FullType].BuyPrice
-                Data.SellPrice = ShopModData[Data.FullType].SellPrice
-                Data.Stock = ShopModData[Data.FullType].Stock
-                Data.Restock = ShopModData[Data.FullType].Restock
-                Data.Category = ShopModData[Data.FullType].Category
-                Data.BuyAuthority = ShopModData[Data.FullType].BuyAuthority
-                Data.SellAuthority = ShopModData[Data.FullType].SellAuthority
-                Data.Discount = ShopModData[Data.FullType].Discount
-                Data.HotItem = ShopModData[Data.FullType].HotItem
-            else
-                Data.DataCheck = false
-            end
-
-            local isFilterItem = (Data.FullType == "Base.Bandage_Abdomen")
-            if not isFilterItem then
-                table.insert(self.AllItems, Data)
-                if not self.AllCategory[ListCategory] then
-                    self.AllCategory[ListCategory] = ListCategory
-                end
+    local categorySeen = {}
+    local itemSeen = {}
+    local allItemList = collectAllScriptItems()
+    local itemCount = getScriptItemCount(allItemList)
+    for i = 0, itemCount - 1 do
+        local item = getScriptItemAt(allItemList, i)
+        local data = buildAdminItemData(item, ShopModData)
+        if data and not itemSeen[data.FullType] then
+            itemSeen[data.FullType] = true
+            table.insert(self.AllItems, data)
+            if not categorySeen[data.ListCategory] then
+                categorySeen[data.ListCategory] = true
+                table.insert(self.AllCategory, data.ListCategory)
             end
         end
     end
@@ -278,6 +342,8 @@ function S4_IE_GoodShopAdmin:createChildren()
     self.ExportBtn:initialise()
     self:addChild(self.ExportBtn)
     BtnX = BtnX + BtnW + 10
+
+    self:AddItems()
 end
 
 function S4_IE_GoodShopAdmin:render()
@@ -293,14 +359,17 @@ function S4_IE_GoodShopAdmin:AddCategory()
     -- self.CategoryBox:addItem("PopularProducts", "PopularProducts")
     self.CategoryBox:addItem("Reg", "Reg")
     self.CategoryBox:addItem("All", "All")
-    for Category, CategoryName in pairs(self.AllCategory) do
+    for _, CategoryName in ipairs(self.AllCategory) do
         self.CategoryBox:addItem(CategoryName, CategoryName)
     end
+
+    self.CategoryBox.CategoryType = "Reg"
+    self.CategoryBox.selectedRow = 1
 end
 
 function S4_IE_GoodShopAdmin:AddItems()
     self.ListBox:clear()
-    for _, Data in pairs(self.AllItems) do
+    for _, Data in ipairs(self.AllItems) do
         local Category = Data.ListCategory
         -- if self.FilterItem:getTex() ~= Data.Texture then
         if self.CategoryBox.CategoryType == Category then
@@ -333,7 +402,7 @@ end
 
 function S4_IE_GoodShopAdmin:ReloadData()
     local ShopModData = ModData.get("S4_ShopData") or {}
-    for _, Data in pairs(self.AllItems) do
+    for _, Data in ipairs(self.AllItems) do
         local ShopData = ShopModData[Data.FullType]
         if ShopData then
             Data.DataCheck = true
@@ -402,9 +471,11 @@ function S4_IE_GoodShopAdmin:doDrawItem_CategoryBox(y, item, alt)
 
     local BorderW = Cw - (Cw / 4)
     local BorderX = ((Cw / 4) / 2) + 1
+    local isSelected = self.selectedRow == item.index
 
-    if self.selectedRow == item.index then
-        self:drawRect(1, y, Cw, Ch, 0.2, 1, 1, 1)
+    if isSelected then
+        self:drawRect(1, y, Cw, Ch, 0.28, 0.95, 0.95, 0.95)
+        self:drawRectBorder(1, y, Cw, Ch, 0.8, 1, 1, 1)
     end
     self:drawRectBorder(BorderX, y + Ch, BorderW, 1, 0.4, 1, 1, 1)
 
@@ -412,7 +483,8 @@ function S4_IE_GoodShopAdmin:doDrawItem_CategoryBox(y, item, alt)
     local CNameFT = S4_UI.TextLimitOne(CNameT, Cw - 8, UIFont.Medium)
     local CNameW = getTextManager():MeasureStringX(UIFont.Medium, CNameFT)
     local CNamex = (Cw / 2) - (CNameW / 2)
-    self:drawText(CNameFT, CNamex, y + yOffset, 0.9, 0.9, 0.9, 1, UIFont.Medium)
+    local textColor = isSelected and 1 or 0.9
+    self:drawText(CNameFT, CNamex, y + yOffset, textColor, textColor, textColor, 1, UIFont.Medium)
     return y + Ch
 end
 

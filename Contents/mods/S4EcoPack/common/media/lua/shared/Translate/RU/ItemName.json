@@ -1,13 +1,12 @@
-﻿{
-    "ItemName_S4Item.Money1": "1$ ÐšÑƒÐ¿ÑŽÑ€Ð°",
-    "ItemName_S4Item.Money100": "100$ ÐšÑƒÐ¿ÑŽÑ€Ð°",
-    "ItemName_S4Item.Money10000": "10,000$ ÐšÑƒÐ¿ÑŽÑ€Ð°",
-    "ItemName_S4Item.Money1x100": "1$ ÐšÑƒÐ¿ÑŽÑ€Ð° [100x]",
-    "ItemName_S4Item.Money100x100": "100$ ÐšÑƒÐ¿ÑŽÑ€Ð° [100x]",
-    "ItemName_S4Item.Money10000x100": "10,000$ ÐšÑƒÐ¿ÑŽÑ€Ð° [100x]",
-    "ItemName_S4Item.CardReader": "ÐšÐ°Ñ€Ð´Ñ€Ð¸Ð´ÐµÑ€",
-    "ItemName_S4Item.Signal": "Ð¡Ð¸Ð³Ð½Ð°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¼Ð°ÑÐº",
-    "ItemName_S4Item.SellPackingBox": "ÐšÐ¾Ñ€Ð¾Ð±ÐºÐ° Ð¿Ñ€Ð¾Ð´Ð°Ð¶Ð¸",
-    "ItemName_S4Item.BuyPackingBox": "ÐšÐ¾Ñ€Ð¾Ð±ÐºÐ° Ð´Ð¾ÑÑ‚Ð°Ð²ÐºÐ¸",
+{
+    "ItemName_S4Item.Money1":  "1$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ°",
+    "ItemName_S4Item.Money100":  "100$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ°",
+    "ItemName_S4Item.Money10000":  "10,000$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ°",
+    "ItemName_S4Item.Money1x100":  "1$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ° [100x]",
+    "ItemName_S4Item.Money100x100":  "100$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ° [100x]",
+    "ItemName_S4Item.Money10000x100":  "10,000$ ÃÅ¡Ã‘Æ’ÃÂ¿Ã‘Å½Ã‘â‚¬ÃÂ° [100x]",
+    "ItemName_S4Item.CardReader":  "ÃÅ¡ÃÂ°Ã‘â‚¬ÃÂ´Ã‘â‚¬ÃÂ¸ÃÂ´ÃÂµÃ‘â‚¬",
+    "ItemName_S4Item.Signal":  "ÃÂ¡ÃÂ¸ÃÂ³ÃÂ½ÃÂ°ÃÂ»Ã‘Å’ÃÂ½Ã‘â€¹ÃÂ¹ ÃÂ¼ÃÂ°Ã‘ÂÃÂº",
+    "ItemName_S4Item.SellPackingBox":  "ÃÅ¡ÃÂ¾Ã‘â‚¬ÃÂ¾ÃÂ±ÃÂºÃÂ° ÃÂ¿Ã‘â‚¬ÃÂ¾ÃÂ´ÃÂ°ÃÂ¶ÃÂ¸",
+    "ItemName_S4Item.BuyPackingBox":  "ÃÅ¡ÃÂ¾Ã‘â‚¬ÃÂ¾ÃÂ±ÃÂºÃÂ° ÃÂ´ÃÂ¾Ã‘ÂÃ‘â€šÃÂ°ÃÂ²ÃÂºÃÂ¸"
 }
-

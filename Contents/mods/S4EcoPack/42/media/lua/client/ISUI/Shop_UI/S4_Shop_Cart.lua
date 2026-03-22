@@ -10,6 +10,147 @@ local function getCardCreditLimit()
     return -maxNegative
 end
 
+local function getCartText(key, defaultText, ...)
+    local translated = getText(key)
+    if translated == key then
+        if select("#", ...) > 0 then
+            return string.format(defaultText, ...)
+        end
+        return defaultText
+    end
+
+    if select("#", ...) > 0 then
+        local ok, formatted = pcall(getText, key, ...)
+        if ok and type(formatted) == "string" then
+            return formatted
+        end
+    end
+    return translated
+end
+
+local function isLeapYear(year)
+    return (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0)
+end
+
+local function getDaysBeforeMonth(year, month)
+    local daysInMonth = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
+    if isLeapYear(year) then
+        daysInMonth[2] = 29
+    end
+
+    local days = 0
+    for i = 1, math.max(0, month - 1) do
+        days = days + daysInMonth[i]
+    end
+    return days
+end
+
+local function getAbsoluteMinutes(year, month, day, hour, minute)
+    local days = 0
+    for y = 0, year - 1 do
+        days = days + (isLeapYear(y) and 366 or 365)
+    end
+    days = days + getDaysBeforeMonth(year, month) + day
+    return (((days * 24) + hour) * 60) + minute
+end
+
+local function parseDateTimeParts(value)
+    if type(value) ~= "string" then
+        return nil
+    end
+
+    local year, month, day, hour, minute = value:match("(%d+)-(%d+)-(%d+) (%d+):(%d+)")
+    if not year then
+        return nil
+    end
+
+    return {
+        year = tonumber(year),
+        month = tonumber(month),
+        day = tonumber(day),
+        hour = tonumber(hour),
+        minute = tonumber(minute)
+    }
+end
+
+local function getMinutesUntil(arrivalTime)
+    local arrival = parseDateTimeParts(arrivalTime)
+    if not arrival then
+        return nil
+    end
+
+    local gameTime = GameTime.getInstance()
+    local currentMinutes = getAbsoluteMinutes(gameTime:getYear(), gameTime:getMonth() + 1, gameTime:getDay(),
+        gameTime:getHour(), gameTime:getMinutes())
+    local arrivalMinutes = getAbsoluteMinutes(arrival.year, arrival.month, arrival.day, arrival.hour, arrival.minute)
+    return arrivalMinutes - currentMinutes
+end
+
+local function formatRemainingTime(arrivalTime)
+    local remainingMinutes = getMinutesUntil(arrivalTime)
+    if not remainingMinutes then
+        return "--"
+    end
+    if remainingMinutes <= 0 then
+        return getCartText("IGUI_S4_Cart_SellDelivery_Arriving", "arriving")
+    end
+
+    local days = math.floor(remainingMinutes / 1440)
+    local hours = math.floor((remainingMinutes % 1440) / 60)
+    local minutes = remainingMinutes % 60
+
+    if days > 0 then
+        return string.format("%dd %02dh %02dm", days, hours, minutes)
+    end
+    if hours > 0 then
+        return string.format("%dh %02dm", hours, minutes)
+    end
+    return string.format("%dm", minutes)
+end
+
+local function countDeliveryItems(deliveryData)
+    local total = 0
+    local itemList = deliveryData and deliveryData.List
+    if type(itemList) ~= "table" then
+        return 0
+    end
+
+    for _, amount in pairs(itemList) do
+        total = total + (tonumber(amount) or 0)
+    end
+    return total
+end
+
+local function getPendingDeliveries(player)
+    local playerShopModData = ModData.get("S4_PlayerShopData")
+    if not playerShopModData or not player then
+        return {}
+    end
+
+    local shopData = playerShopModData[player:getUsername()]
+    local deliveryTable = shopData and shopData.Delivery
+    if type(deliveryTable) ~= "table" then
+        return {}
+    end
+
+    local entries = {}
+    for arrivalTime, deliveryData in pairs(deliveryTable) do
+        local remainingMinutes = arrivalTime and getMinutesUntil(arrivalTime) or nil
+        if arrivalTime and remainingMinutes and remainingMinutes > 0 then
+            table.insert(entries, {
+                arrivalTime = arrivalTime,
+                itemCount = countDeliveryItems(deliveryData)
+            })
+        end
+    end
+
+    table.sort(entries, function(a, b)
+        return a.arrivalTime > b.arrivalTime
+    end)
+
+    return entries
+end
+
 function S4_Shop_Cart:new(ParentsUI, x, y, w, h)
     local o = ISPanel:new(x, y, w, h)
     setmetatable(o, self)
@@ -136,6 +277,35 @@ function S4_Shop_Cart:createChildren()
     self:addChild(self.QuickBox)
     self.QuickBox:setSelected(1, true)
 
+    local DeliveryInfoPanelY = Sy + 10
+    local DeliveryInfoPanelH = math.max(80, TickY - DeliveryInfoPanelY - 10)
+    self.SellDeliveryPanel = ISPanel:new(Sx + 10, DeliveryInfoPanelY, setW - 20, DeliveryInfoPanelH)
+    self.SellDeliveryPanel.backgroundColor = {r=0, g=0, b=0, a=0.12}
+    self.SellDeliveryPanel.borderColor = {r=0.4, g=0.4, b=0.4, a=1}
+    self.SellDeliveryPanel:setVisible(false)
+    self:addChild(self.SellDeliveryPanel)
+
+    local lineY = 8
+    self.SellDeliveryTitleLabel = ISLabel:new(8, lineY, S4_UI.FH_M,
+        getCartText("IGUI_S4_Cart_BuyDelivery_Title", "Incoming Packages"), 1, 1, 1, 0.9, UIFont.Medium, true)
+    self.SellDeliveryPanel:addChild(self.SellDeliveryTitleLabel)
+    lineY = lineY + S4_UI.FH_M + 2
+
+    self.SellDeliveryLastLabel = ISLabel:new(8, lineY, S4_UI.FH_S, "", 0.9, 1, 0.9, 0.9, UIFont.Small, true)
+    self.SellDeliveryPanel:addChild(self.SellDeliveryLastLabel)
+    lineY = lineY + S4_UI.FH_S + 2
+
+    self.SellDeliveryCountLabel = ISLabel:new(8, lineY, S4_UI.FH_S, "", 1, 1, 1, 0.8, UIFont.Small, true)
+    self.SellDeliveryPanel:addChild(self.SellDeliveryCountLabel)
+    lineY = lineY + S4_UI.FH_S + 4
+
+    self.SellDeliveryEntryLabels = {}
+    for i = 1, 3 do
+        self.SellDeliveryEntryLabels[i] = ISLabel:new(8, lineY, S4_UI.FH_S, "", 1, 1, 1, 0.8, UIFont.Small, true)
+        self.SellDeliveryPanel:addChild(self.SellDeliveryEntryLabels[i])
+        lineY = lineY + S4_UI.FH_S + 2
+    end
+
     local By = S4_UI.FH_L + 40
     local Bh = (S4_UI.FH_L * 3) + 20
     for i = 1, 10 do
@@ -227,6 +397,51 @@ function S4_Shop_Cart:setTotal()
     self.TotalPriceLabel:setName(PriceText)
     self.TotalSDLabel:setName(SDText)
     self.TotalFixPriceLabel:setName(FixPriceText)
+    self:updateDeliveryInfo()
+end
+
+function S4_Shop_Cart:updateDeliveryInfo()
+    if not self.SellDeliveryPanel then
+        return
+    end
+
+    local showDeliveryInfo = self.CartType == "Buy"
+    self.SellDeliveryPanel:setVisible(showDeliveryInfo)
+    if not showDeliveryInfo then
+        return
+    end
+
+    local deliveries = getPendingDeliveries(self.player)
+    local totalDeliveries = #deliveries
+
+    if totalDeliveries == 0 then
+        self.SellDeliveryLastLabel:setName(
+            getCartText("IGUI_S4_Cart_BuyDelivery_Last", "Last Package Delivery Time: %s", "--"))
+        self.SellDeliveryCountLabel:setName(
+            getCartText("IGUI_S4_Cart_BuyDelivery_Count", "Pending Deliveries: %s (max 3)", "0"))
+        self.SellDeliveryEntryLabels[1]:setName(
+            getCartText("IGUI_S4_Cart_BuyDelivery_None", "No pending deliveries"))
+        self.SellDeliveryEntryLabels[2]:setName("")
+        self.SellDeliveryEntryLabels[3]:setName("")
+        return
+    end
+
+    self.SellDeliveryLastLabel:setName(
+        getCartText("IGUI_S4_Cart_BuyDelivery_Last", "Last Package Delivery Time: %s",
+            formatRemainingTime(deliveries[1].arrivalTime)))
+    self.SellDeliveryCountLabel:setName(
+        getCartText("IGUI_S4_Cart_BuyDelivery_Count", "Pending Deliveries: %s (max 3)",
+            tostring(totalDeliveries)))
+
+    for i = 1, 3 do
+        local delivery = deliveries[i]
+        if delivery then
+            self.SellDeliveryEntryLabels[i]:setName(string.format("#%d | %s | %s items", i,
+                formatRemainingTime(delivery.arrivalTime), tostring(delivery.itemCount)))
+        else
+            self.SellDeliveryEntryLabels[i]:setName("")
+        end
+    end
 end
 
 function S4_Shop_Cart:clear()

@@ -1,9 +1,9 @@
 version=1
 id=3667850050
-title=Economy by ZEnicko
-description=!!! WARNING: UNSTABLE BUILD 42.15.2 !!!
+title=Economy by ZEnicko [TEST] [ UNSTABLE ] 42.15.X
+description=!!! WARNING: UNSTABLE BUILD 42.15.X !!!
 description=This version is currently in active migration from the previous S4 Economy release to the new Build 42 line.
-description=Current target version: Project Zomboid Build 42.15.2
+description=Current target version: Project Zomboid Build 42.15.X
 description=This workshop build is unstable, partially functional, and not all systems are working correctly yet.
 description=Some menus, data flows, translations, and item integrations may break, appear incomplete, or behave unexpectedly.
 description=Use this version only if you understand it is still being adapted and may not be suitable for a stable playthrough.

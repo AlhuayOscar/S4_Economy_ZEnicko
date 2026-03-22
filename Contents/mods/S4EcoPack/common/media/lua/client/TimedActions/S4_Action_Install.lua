@@ -1,17 +1,36 @@
 require "TimedActions/ISBaseTimedAction"
 S4_Action_Install = ISBaseTimedAction:derive("S4_Action_Install")
 
+function S4_Action_Install:safeFaceObject()
+    if not self.character or not self.Obj then
+        return false
+    end
+
+    local playerSq = self.character:getSquare()
+    local objSq = self.Obj:getSquare()
+    if not playerSq or not objSq then
+        return false
+    end
+
+    if playerSq == objSq or
+        (playerSq:getX() == objSq:getX() and playerSq:getY() == objSq:getY() and playerSq:getZ() == objSq:getZ()) then
+        return false
+    end
+
+    self.character:faceThisObject(self.Obj)
+    return self.character:shouldBeTurning()
+end
+
 function S4_Action_Install:isValid()
     return true
 end
 
 function S4_Action_Install:waitToStart()
-    self.character:faceThisObject(self.Obj)
-	return self.character:shouldBeTurning()
+    return self:safeFaceObject()
 end
 
 function S4_Action_Install:update()
-    self.character:faceThisObject(self.Obj)
+    self:safeFaceObject()
 end
 
 function S4_Action_Install:start()

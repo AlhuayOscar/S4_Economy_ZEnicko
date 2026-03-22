@@ -1,14 +1,14 @@
-﻿{
-    "ContextMenu_S4_ATM_Use": "ATM 사용하기",
-    "ContextMenu_S4_Com_Use": "컴퓨터 사용하기",
-    "ContextMenu_S4_Com_On": "컴퓨터 켜기",
-    "ContextMenu_S4_Com_PowerBar_Install": "컴퓨터 전원 연결",
-    "ContextMenu_S4_Com_CardReader_Install": "카드 리더기 설치",
-    "ContextMenu_S4_Com_Satellite_Install": "위성 안테나 연결",
-    "ContextMenu_S4_Cash_Check": "현금 확인하기",
-    "ContextMenu_S4_Cash_Check_All": "현금 모두 확인하기",
-    "ContextMenu_S4_Signal_Install": "신호기 설치하기",
-    "ContextMenu_S4_PostBox_Sell": "판매 상품 넣기",
-    "ContextMenu_S4_BuyBox_Open": "배송 상자 열기",
-    "ContextMenu_S4_AirDrop_Open": "보급 상자 열기",
+{
+    "ContextMenu_S4_ATM_Use":  "ATM ì‚¬ìš©í•˜ê¸°",
+    "ContextMenu_S4_Com_Use":  "ì»´í“¨í„° ì‚¬ìš©í•˜ê¸°",
+    "ContextMenu_S4_Com_On":  "ì»´í“¨í„° ì¼œê¸°",
+    "ContextMenu_S4_Com_PowerBar_Install":  "ì»´í“¨í„° ì „ì› ì—°ê²°",
+    "ContextMenu_S4_Com_CardReader_Install":  "ì¹´ë“œ ë¦¬ë”ê¸° ì„¤ì¹˜",
+    "ContextMenu_S4_Com_Satellite_Install":  "ìœ„ì„± ì•ˆí…Œë‚˜ ì—°ê²°",
+    "ContextMenu_S4_Cash_Check":  "í˜„ê¸ˆ í™•ì¸í•˜ê¸°",
+    "ContextMenu_S4_Cash_Check_All":  "í˜„ê¸ˆ ëª¨ë‘ í™•ì¸í•˜ê¸°",
+    "ContextMenu_S4_Signal_Install":  "ì‹ í˜¸ê¸° ì„¤ì¹˜í•˜ê¸°",
+    "ContextMenu_S4_PostBox_Sell":  "íŒë§¤ ìƒí’ˆ ë„£ê¸°",
+    "ContextMenu_S4_BuyBox_Open":  "ë°°ì†¡ ìƒìž ì—´ê¸°",
+    "ContextMenu_S4_AirDrop_Open":  "ë³´ê¸‰ ìƒìž ì—´ê¸°"
 }

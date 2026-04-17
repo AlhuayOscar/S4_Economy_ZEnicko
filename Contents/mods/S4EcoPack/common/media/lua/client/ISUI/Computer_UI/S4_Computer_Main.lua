@@ -245,6 +245,11 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
     }
 
+    S4_Category.ComputerIconData["Teaching"] = {
+        Name = s4ComText("IGUI_S4_COM_Teaching", "Teaching"),
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
+    }
+
     if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.Blackjack then
         S4_Category.ComputerIconData["BlackJack"] = {
             Name = "Black Jack",
@@ -261,7 +266,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "Teaching", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -904,6 +909,22 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.Jobs)
         end
         self.TopApp = self.Jobs
+    elseif internal == "Teaching" then
+        if self.Teaching then
+            if not self.Teaching:isVisible() then
+                self.Teaching:setVisible(true)
+            end
+            self.Teaching:bringToTop()
+        else
+            self.Teaching = S4_InternetExplorer:new(self)
+            self.Teaching:initialise()
+            self.Teaching.TitleName = s4ComText("IGUI_S4_COM_Teaching_IE", "Teaching - Internet Explorer")
+            self.Teaching.AddressText = "http://hind.com/Teaching/home"
+            self.Teaching.PageType = internal
+            self:addChild(self.Teaching)
+            self:AddTaskBar(self.Teaching)
+        end
+        self.TopApp = self.Teaching
     end
 end
 

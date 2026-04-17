@@ -36,6 +36,75 @@ function S4_Action_Job_CallCenter:isValid()
     return true
 end
 
+local function safeGetStat(stats, methodName, defaultValue)
+    if stats and stats[methodName] then
+        local value = stats[methodName](stats)
+        if value ~= nil then
+            return value
+        end
+    end
+    return defaultValue
+end
+
+local function safeSetStat(stats, methodName, value)
+    if stats and stats[methodName] then
+        stats[methodName](stats, value)
+        return true
+    end
+    return false
+end
+
+local function safeGetBodyDamageUnhappiness(bodyDamage)
+    if not bodyDamage then
+        return 0
+    end
+    if bodyDamage.getUnhappynessLevel then
+        return bodyDamage:getUnhappynessLevel() or 0
+    end
+    if bodyDamage.getUnhappinessLevel then
+        return bodyDamage:getUnhappinessLevel() or 0
+    end
+    return 0
+end
+
+local function safeSetBodyDamageUnhappiness(bodyDamage, value)
+    if not bodyDamage then
+        return false
+    end
+    if bodyDamage.setUnhappynessLevel then
+        bodyDamage:setUnhappynessLevel(value)
+        return true
+    end
+    if bodyDamage.setUnhappinessLevel then
+        bodyDamage:setUnhappinessLevel(value)
+        return true
+    end
+    return false
+end
+
+local function getJobPayForLevel(jobSalary2h, level)
+    local salaryMultiplier = 1.0
+    if (level or 1) >= 9 then
+        salaryMultiplier = 3.5
+    elseif (level or 1) >= 6 then
+        salaryMultiplier = 2.5
+    elseif (level or 1) >= 3 then
+        salaryMultiplier = 2.0
+    end
+    return math.floor((jobSalary2h or 125) * salaryMultiplier), salaryMultiplier
+end
+
+local function getDailyBonusPercent(level)
+    if (level or 1) >= 9 then
+        return 0.60
+    elseif (level or 1) >= 6 then
+        return 0.50
+    elseif (level or 1) >= 3 then
+        return 0.40
+    end
+    return 0
+end
+
 function S4_Action_Job_CallCenter:update()
     self.character:faceThisObject(self.computer)
     self.character:SetVariable("LootPosition", "Mid")
@@ -177,34 +246,34 @@ function S4_Action_Job_CallCenter:perform()
 
     -- Hunger: Reduced by 25% (was 0.125) -> ~0.09 per hour * mult
     local hungerDelta = (0.09 * hours * mult)
-    local hungerNow = stats:getHunger()
+    local hungerNow = safeGetStat(stats, "getHunger", 0)
     local hungerAfter = hungerNow + hungerDelta
     if hungerAfter > maxJobHunger then
         hungerAfter = maxJobHunger
     end
-    stats:setHunger(hungerAfter)
+    safeSetStat(stats, "setHunger", hungerAfter)
 
     -- Thirst: 25% for 4 hours -> 0.0625 per hour * mult
     local thirstDelta = (0.0625 * hours * mult)
-    local thirstNow = stats:getThirst()
+    local thirstNow = safeGetStat(stats, "getThirst", 0)
     local thirstAfter = thirstNow + thirstDelta
     if thirstAfter > maxJobThirst then
         thirstAfter = maxJobThirst
     end
-    stats:setThirst(thirstAfter)
+    safeSetStat(stats, "setThirst", thirstAfter)
 
     -- Fatigue: 50% for 4 hours -> 0.125 per hour * mult
-    stats:setFatigue(stats:getFatigue() + (0.125 * hours * mult))
+    safeSetStat(stats, "setFatigue", safeGetStat(stats, "getFatigue", 0) + (0.125 * hours * mult))
 
     -- Stress: 45% for 4 hours -> 0.1125 per hour * mult
-    stats:setStress(stats:getStress() + (0.1125 * hours * mult))
+    safeSetStat(stats, "setStress", safeGetStat(stats, "getStress", 0) + (0.1125 * hours * mult))
 
     -- Boredom: +10 per hour (0-100 scale) * mult
-    stats:setBoredom(stats:getBoredom() + (10 * hours * mult))
+    safeSetStat(stats, "setBoredom", safeGetStat(stats, "getBoredom", 0) + (10 * hours * mult))
 
     -- Unhappiness: +5 per hour (0-100 scale) * mult
     local bodyDamage = char:getBodyDamage()
-    bodyDamage:setUnhappynessLevel(bodyDamage:getUnhappynessLevel() + (5 * hours * mult))
+    safeSetBodyDamageUnhappiness(bodyDamage, safeGetBodyDamageUnhappiness(bodyDamage) + (5 * hours * mult))
 
     -- Job Leveling (Store on Player ModData)
     local xpGained = hours * 6 -- Equates to 6, 12, 18, 24 XP (Target: 5-25 range)
@@ -216,26 +285,52 @@ function S4_Action_Job_CallCenter:perform()
     local currentDay = gameTime:getDay()
     local lastDayKey = "S4_Job_" .. jobId .. "_LastDay"
     local dailyHoursKey = "S4_Job_" .. jobId .. "_DailyHours"
+    local workedLastDayKey = "S4_Job_Worked_LastDay"
+    local workedHoursKey = "S4_Job_Worked_DailyHours"
+    local workedBonusKey = "S4_Job_Worked_8hBonusPaid"
 
     local lastDay = pData[lastDayKey] or -1
     local dailyHours = pData[dailyHoursKey] or 0
+    local workedLastDay = pData[workedLastDayKey] or -1
+    local workedHours = pData[workedHoursKey] or 0
+    local workedBonusPaid = pData[workedBonusKey] or false
 
     if currentDay ~= lastDay then
         dailyHours = 0
         pData[lastDayKey] = currentDay
     end
 
+    if currentDay ~= workedLastDay then
+        workedHours = 0
+        workedBonusPaid = false
+        pData[workedLastDayKey] = currentDay
+    end
+
     dailyHours = dailyHours + hours
+    workedHours = workedHours + hours
     local paymentAmount = 0
+    local dailyBonusAmount = 0
+
+    local effectiveJobSalary2h, salaryMultiplier = getJobPayForLevel(jobSalary2h, level)
+    local dailyBonusPercent = getDailyBonusPercent(level)
 
     if dailyHours >= 2 then
         local payments = math.floor(dailyHours / 2)
         if payments > 0 then
-            paymentAmount = payments * jobSalary2h
+            paymentAmount = payments * effectiveJobSalary2h
             dailyHours = dailyHours % 2 -- Remainder
         end
     end
+
+    if (not workedBonusPaid) and workedHours >= 8 and dailyBonusPercent > 0 then
+        dailyBonusAmount = math.floor((effectiveJobSalary2h * 4) * dailyBonusPercent)
+        paymentAmount = paymentAmount + dailyBonusAmount
+        workedBonusPaid = true
+    end
+
     pData[dailyHoursKey] = dailyHours
+    pData[workedHoursKey] = workedHours
+    pData[workedBonusKey] = workedBonusPaid
 
     if paymentAmount > 0 then
         local globalPlayerData = ModData.get("S4_PlayerData")
@@ -257,16 +352,19 @@ function S4_Action_Job_CallCenter:perform()
     end
 
     -- Payment (Placeholder $10/hr removed, using daily wage)
-    local msg = jobName .. ": " .. hours .. "h (XP: " .. xpGained .. ")"
+    local msg = jobName .. ": " .. hours .. "h (XP: " .. xpGained .. ", salary x" .. tostring(salaryMultiplier) .. ")"
     if paymentAmount > 0 then
         msg = msg .. " Paid: $" .. paymentAmount
+        if dailyBonusAmount > 0 then
+            msg = msg .. " [8h bonus +$" .. dailyBonusAmount .. "]"
+        end
     else
         -- Calculate remaining hours needed for next payment
         local needed = 2 - dailyHours
         if needed < 0 then
             needed = 0
         end -- Should not happen due to modulo, but safe check
-        msg = msg .. " (Accumulated: " .. dailyHours .. "h / Next Pay in " .. needed .. "h)"
+        msg = msg .. " (Accumulated: " .. dailyHours .. "h / Next Pay in " .. needed .. "h / Day " .. workedHours .. "h)"
     end
 
     -- Display message safely

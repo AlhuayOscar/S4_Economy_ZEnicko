@@ -4,6 +4,51 @@
 -- Module initialization
 S4Player = {}
 
+local function resolveTraitEntry(traitId)
+    if not traitId then
+        return nil
+    end
+
+    if TraitFactory and TraitFactory.getTrait then
+        local ok, trait = pcall(function()
+            return TraitFactory.getTrait(traitId)
+        end)
+        if ok and trait then
+            return trait
+        end
+    end
+
+    return traitId
+end
+
+local function serverPlayerHasTrait(player, traitId)
+    if not player or not traitId then
+        return false
+    end
+
+    if player.HasTrait then
+        local ok, result = pcall(function()
+            return player:HasTrait(traitId)
+        end)
+        if ok and result ~= nil then
+            return result
+        end
+    end
+
+    local traits = player.getTraits and player:getTraits() or nil
+    local traitEntry = resolveTraitEntry(traitId)
+    if traits and traits.contains and traitEntry ~= nil then
+        local ok, result = pcall(function()
+            return traits:contains(traitEntry)
+        end)
+        if ok and result ~= nil then
+            return result
+        end
+    end
+
+    return false
+end
+
 -- Create player profile data
 function S4Player.CreatePlayerData(player, args)
     local UserName = player:getUsername()
@@ -119,4 +164,32 @@ function S4Player.SetAuthority(player, args)
         Account.SellAuthority = args[2]
     end
     ModData.transmit("S4_PlayerShopData")
+end
+
+function S4Player.AddTeachingTrait(player, args)
+    local traitId = args and args[1]
+    if not player or not traitId or serverPlayerHasTrait(player, traitId) then
+        return
+    end
+
+    local traits = player.getTraits and player:getTraits() or nil
+    if not traits or not traits.add then
+        return
+    end
+
+    local traitEntry = resolveTraitEntry(traitId)
+    local attempts = {traitEntry, traitId}
+    for _, entry in ipairs(attempts) do
+        if entry ~= nil then
+            local ok = pcall(function()
+                traits:add(entry)
+            end)
+            if ok and serverPlayerHasTrait(player, traitId) then
+                if player.transmitModData then
+                    player:transmitModData()
+                end
+                return
+            end
+        end
+    end
 end

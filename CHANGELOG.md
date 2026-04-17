@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## [1.6.0] - 2026-04-17
+
+## Feature: Teaching App, UI Cleanup & Multilingual Refresh
+
+- **Knox Careers / Teaching App:**
+  - Added `S4_IE_Teaching.lua` in both `common` and `42` client UI trees.
+  - Added `S4_Action_Teaching.lua` timed action flow for the new teaching interaction.
+  - Wired the new Teaching app into Internet Explorer module routing and job-related UI updates.
+- **Economy UI and interaction cleanup:**
+  - Reworked multiple ATM, Bank, Shop, Admin, Computer, Booting, and System UI screens for layout consistency and safer rendering behavior.
+  - Updated cart and list rendering flows (`S4_Shop_Cart.lua`, `S4_ItemListBox.lua`) and related shop/browser entry points.
+  - Applied synchronized updates to both build paths (`common` and `42`) to keep behavior parity.
+- **Server and shared gameplay logic updates:**
+  - Updated player/shop/server logic in `S4Player.lua`, `S4Shop.lua`, `S4Quest.lua`, `S4AirDropRadio.lua`, and shared UI/economy scripts.
+  - Added new shared economy dataset file `S4_Shop_Data.lua` under the `42` tree.
+- **Localization expansion and refresh:**
+  - Added a full Spanish locale set under `Translate/ES` (`ContextMenu`, `DynamicRadio`, `IG_UI`, `ItemName`, `Recipes`, `Sandbox`, `Tooltip` in both `.json` and `.txt` forms).
+  - Refreshed EN/KO/RU localization packs across UI text, item names, recipes, sandbox strings, and tooltips.
+
 ## [1.5.0] - 2026-02-21
 
 ## Feature: Knox OS Desktop Expansion & Retro BBS

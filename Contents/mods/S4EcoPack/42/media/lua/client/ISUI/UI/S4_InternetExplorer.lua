@@ -11,6 +11,7 @@ local S4_IE_Class = {
     BlackJack = "S4_IE_BlackJack",
     ZomBank = "S4_IE_ZomBank",
     Jobs = "S4_IE_Jobs",
+    Teaching = "S4_IE_Teaching",
     Twitboid = "S4_IE_Twitboid",
     MyDoc = "S4_IE_MyDoc",
     Crimeboid = "S4_IE_Crimeboid",

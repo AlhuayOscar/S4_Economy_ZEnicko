@@ -603,3 +603,15 @@ function S4_IE_Jobs.OnDiscardSavedShiftStatic(data)
         player:setHaloNote(jobText("IGUI_S4_Jobs_SavedShiftDiscarded", "Saved shift discarded."))
     end
 end
+
+local function getJobPayForLevel(jobSalary2h, level)
+    local salaryMultiplier = 1.0
+    if (level or 1) >= 9 then
+        salaryMultiplier = 3.5
+    elseif (level or 1) >= 6 then
+        salaryMultiplier = 2.5
+    elseif (level or 1) >= 3 then
+        salaryMultiplier = 2.0
+    end
+    return math.floor((jobSalary2h or 125) * salaryMultiplier), salaryMultiplier
+end

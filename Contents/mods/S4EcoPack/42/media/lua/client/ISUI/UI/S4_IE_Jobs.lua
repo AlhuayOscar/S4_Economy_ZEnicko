@@ -10,6 +10,34 @@ local function jobText(key, fallback)
     return text
 end
 
+local function safeGetPlayerFatigue(player)
+    if not player or not player.getStats then
+        return 0
+    end
+
+    local stats = player:getStats()
+    if stats and stats.getFatigue then
+        local fatigue = stats:getFatigue()
+        if fatigue then
+            return fatigue
+        end
+    end
+
+    return 0
+end
+
+local function getJobPayForLevel(jobSalary2h, level)
+    local salaryMultiplier = 1.0
+    if (level or 1) >= 9 then
+        salaryMultiplier = 3.5
+    elseif (level or 1) >= 6 then
+        salaryMultiplier = 2.5
+    elseif (level or 1) >= 3 then
+        salaryMultiplier = 2.0
+    end
+    return math.floor((jobSalary2h or 125) * salaryMultiplier), salaryMultiplier
+end
+
 function S4_IE_Jobs:new(S4_IE, x, y, width, height)
     local o = {}
     o = ISPanel:new(x, y, width, height)
@@ -473,8 +501,7 @@ function S4_IE_Jobs:StartSelectedJob(job)
     end
 
     -- Check Fatigue
-    local stats = player:getStats()
-    if stats:getFatigue() > 0.5 then
+    if safeGetPlayerFatigue(player) > 0.5 then
         self.S4_IE.ComUI:AddMsgBox(jobText("IGUI_S4_Jobs_ErrorTitle", "Job Error"), nil,
             jobText("IGUI_S4_Jobs_TooTired", "Too Tired to Work"), jobText("IGUI_S4_Jobs_NeedRest", "You need rest."), "")
         return
@@ -521,11 +548,16 @@ function S4_IE_Jobs:StartSelectedJob(job)
         }
     end
 
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 1 " .. jobText("IGUI_S4_Jobs_Hour", "Hour") .. " ($" .. math.floor(job.salary / 2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 2 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. job.salary .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 3 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. math.floor(job.salary * 1.5) .. ")", makeData(3),
+    local pData = player:getModData()
+    local xp = pData["S4_Job_" .. job.id .. "_Hours"] or 0
+    local details = self:GetJobLevelDetails(xp, job.difficulty)
+    local effectiveJobSalary2h = getJobPayForLevel(job.salary, details.level)
+
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 1 " .. jobText("IGUI_S4_Jobs_Hour", "Hour") .. " ($" .. math.floor(effectiveJobSalary2h / 2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 2 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 3 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. math.floor(effectiveJobSalary2h * 1.5) .. ")", makeData(3),
         S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 4 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. job.salary * 2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 4 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h * 2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
 
 end
 

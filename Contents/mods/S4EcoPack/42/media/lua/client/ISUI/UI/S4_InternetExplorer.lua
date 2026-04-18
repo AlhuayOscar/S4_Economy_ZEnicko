@@ -22,6 +22,7 @@ local S4_IE_Class = {
     Community = "S4_IE_Community",
     FarmWatch = "S4_IE_FarmWatch",
     Recon = "S4_IE_Recon",
+    Safety = "S4_IE_Safety",
     Recover = "S4_IE_Recover",
     Repair = "S4_IE_Repair",
     Weather = "S4_IE_Weather",
@@ -60,6 +61,10 @@ function S4_InternetExplorer:createChildren()
                 self.MainPage:initialise()
                 self:addChild(self.MainPage)
             elseif self.PageType == "GoodShopAdmin" then
+                self.MainPage = PageClass:new(self, Px, Py, Pw, Ph)
+                self.MainPage:initialise()
+                self:addChild(self.MainPage)
+            elseif self.PageType == "Safety" then
                 self.MainPage = PageClass:new(self, Px, Py, Pw, Ph)
                 self.MainPage:initialise()
                 self:addChild(self.MainPage)

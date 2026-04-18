@@ -1,5 +1,7 @@
 S4_Pager_Context = {}
 require "ISUI/Pager_UI/S4_Pager_UI"
+require "ISUI/Safety_UI/S4_Safety_Monitor"
+require "ISUI/Safety_UI/S4_Safety_Scan"
 
 S4_Pager_Context.TOGGLE_KEY = Keyboard.KEY_6
 S4_Pager_Context.HOTBAR_CLOSE_WINDOW_MS = 500
@@ -12,6 +14,11 @@ end
 
 local function isPagerUiOpen()
     return S4_Pager_UI and S4_Pager_UI.instance and S4_Pager_UI.instance.isVisible and S4_Pager_UI.instance:isVisible()
+end
+
+local function isSafetyMonitorOpen()
+    return S4_Safety_Monitor and S4_Safety_Monitor.instance and S4_Safety_Monitor.instance.isVisible and
+               S4_Safety_Monitor.instance:isVisible()
 end
 
 local function playPagerGrabSound()
@@ -49,22 +56,15 @@ local function isPagerInHands(player)
 end
 
 local function playerHasPager(player)
-    if not player then
-        return false
-    end
-    local inv = player:getInventory()
-    if inv and inv:containsTypeRecurse("Pager") then
-        return true
-    end
-    local p = player.getPrimaryHandItem and player:getPrimaryHandItem() or nil
-    if p and p.getFullType and p:getFullType() == "Base.Pager" then
-        return true
-    end
-    local s = player.getSecondaryHandItem and player:getSecondaryHandItem() or nil
-    if s and s.getFullType and s:getFullType() == "Base.Pager" then
-        return true
-    end
-    return false
+    return S4_Safety_Scan.playerHasPager(player)
+end
+
+local function isWalkieTalkieItem(item)
+    return S4_Safety_Scan.isWalkieTalkieItem(item)
+end
+
+local function playerHasSafetyMonitorKit(player)
+    return S4_Safety_Scan.playerHasSafetyMonitorKit(player)
 end
 
 function S4_Pager_Context.InventoryMenu(playerNum, context, items)
@@ -91,8 +91,24 @@ function S4_Pager_Context.InventoryMenu(playerNum, context, items)
     end
 
     local item = list[1]
+    local hasPagerSelection = false
+    local hasWalkieSelection = false
+    for i = 1, #list do
+        local current = list[i]
+        if S4_Safety_Scan.isPagerItem(current) then
+            hasPagerSelection = true
+        end
+        if isWalkieTalkieItem(current) then
+            hasWalkieSelection = true
+        end
+    end
     if item and item.getFullType and item:getFullType() == "Base.Pager" then
         context:addOption("Use Pager", player, S4_Pager_Context.OpenPagerMissionUI)
+    end
+
+    if (hasPagerSelection or hasWalkieSelection) and playerHasSafetyMonitorKit(player) then
+        local label = isSafetyMonitorOpen() and "Close Safety Monitor" or "Open Safety Monitor"
+        context:addOption(label, player, S4_Pager_Context.ToggleSafetyMonitor)
     end
 
     local function isCameraItem(it)
@@ -161,6 +177,13 @@ function S4_Pager_Context.OpenPagerMissionUI(player)
         return
     end
     S4_Pager_UI:showForPlayer(player)
+end
+
+function S4_Pager_Context.ToggleSafetyMonitor(player)
+    if not player then
+        return
+    end
+    S4_Safety_Monitor:toggleForPlayer(player)
 end
 
 function S4_Pager_Context.OnKeyTogglePager(key)

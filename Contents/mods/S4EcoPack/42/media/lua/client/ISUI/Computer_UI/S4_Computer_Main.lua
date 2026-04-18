@@ -87,10 +87,6 @@ function S4_Computer_Main:initialise()
 end
 
 function S4_Computer_Main:CheckModData()
-    if self.player then
-        S4_UI.normalizePlayerCreditCards(self.player)
-    end
-
     -- Reset flags to avoid stale data from other computers
     self.CardReaderInstall = false
     self.CardNumber = nil
@@ -110,11 +106,10 @@ function S4_Computer_Main:CheckModData()
         if ComModData.S4CardNumber then
             self.CardNumber = ComModData.S4CardNumber
             self.CardMaster = ComModData.S4CardMaster
-            local cardData = S4_UI.getCardData(ComModData.S4CardNumber)
-            if cardData then
-                self.CardMaster = cardData.Master or self.CardMaster
-                self.CardMoney = cardData.Money
-                self.CardPassword = cardData.Password
+            local CardModData = ModData.get("S4_CardData")
+            if CardModData[ComModData.S4CardNumber] then
+                self.CardMoney = CardModData[ComModData.S4CardNumber].Money
+                self.CardPassword = CardModData[ComModData.S4CardNumber].Password
             end
         end
     end
@@ -255,6 +250,11 @@ function S4_Computer_Main:createChildren()
         Icon = getTexture("media/textures/S4_Icon/Icon_64_Jobs.png")
     }
 
+    S4_Category.ComputerIconData["Safety"] = {
+        Name = "Safety",
+        Icon = getTexture("media/textures/S4_Icon/Icon_64_Recon.png")
+    }
+
     if SandboxVars and SandboxVars.S4SandBox and SandboxVars.S4SandBox.Blackjack then
         S4_Category.ComputerIconData["BlackJack"] = {
             Name = "Black Jack",
@@ -271,7 +271,7 @@ function S4_Computer_Main:createChildren()
     local TaskBarH = getTextManager():getFontFromEnum(TaskFont):getLineHeight() + 7
 
     local orderedIcons = {
-        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "Teaching", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
+        "MyCom", "MyDoc", "Twitboid", "Zeddit", "Crimeboid", "News", "Logistics", "Taxes", "Community", "FarmWatch", "Recon", "Safety", "Recover", "Repair", "Weather", "BBS", "ZomBank", "GoodShop", "VehicleShop", "Jobs", "Teaching", "BlackJack", "IE", "Network", "Settings", "CardReader", "UserSetting", "Trash"
     }
     local renderedIcons = {}
     for _, k in ipairs(orderedIcons) do
@@ -332,7 +332,6 @@ function S4_Computer_Main:createChildren()
         self.Btn_GoodshopAdmin.render = S4_Computer_Main.BtnRender
         self.Btn_GoodshopAdmin:initialise()
         self:addChild(self.Btn_GoodshopAdmin)
-        
     end
 end
 
@@ -690,6 +689,25 @@ function S4_Computer_Main:BtnClick(Button)
             self:AddTaskBar(self.KarmaAdmin)
         end
         self.TopApp = self.KarmaAdmin
+    elseif internal == "Safety" then
+        if self.Safety then
+            if not self.Safety:isVisible() then
+                self.Safety:setVisible(true)
+            end
+            if self.Safety.MainPage and self.Safety.MainPage.refreshData then
+                self.Safety.MainPage:refreshData()
+            end
+            self.Safety:bringToTop()
+        else
+            self.Safety = S4_InternetExplorer:new(self)
+            self.Safety:initialise()
+            self.Safety.TitleName = "Safety - Zombie Chunk Map"
+            self.Safety.AddressText = "local://root/admin/safety.exe"
+            self.Safety.PageType = internal
+            self:addChild(self.Safety)
+            self:AddTaskBar(self.Safety)
+        end
+        self.TopApp = self.Safety
     elseif internal == "IE" then
         if self.IE then
             if not self.IE:isVisible() then

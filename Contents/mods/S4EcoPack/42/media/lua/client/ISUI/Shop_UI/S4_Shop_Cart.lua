@@ -28,6 +28,41 @@ local function getCartText(key, defaultText, ...)
     return translated
 end
 
+local function addDeliveryOptionsInSignalOrder(combo, playerShopModData)
+    local added = false
+    if not combo or not playerShopModData or not playerShopModData.DeliveryList then
+        return false
+    end
+
+    local seen = {}
+    local order = playerShopModData.DeliveryOrder or {}
+    for i = 1, #order do
+        local code = order[i]
+        local name = playerShopModData.DeliveryList[code]
+        if code and name and not seen[code] then
+            combo:addOptionWithData(name, code)
+            seen[code] = true
+            added = true
+        end
+    end
+
+    local missing = {}
+    for code, name in pairs(playerShopModData.DeliveryList) do
+        if not seen[code] then
+            missing[#missing + 1] = {code = code, name = name}
+        end
+    end
+    table.sort(missing, function(a, b)
+        return tostring(a.name) < tostring(b.name)
+    end)
+    for i = 1, #missing do
+        combo:addOptionWithData(missing[i].name, missing[i].code)
+        added = true
+    end
+
+    return added
+end
+
 local function isLeapYear(year)
     return (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0)
 end
@@ -244,11 +279,8 @@ function S4_Shop_Cart:createChildren()
     -- self.DeliveryBox:addOptionWithData(""..i, i)
     local PlayerShopModData = ModData.get("S4_PlayerShopData")[self.player:getUsername()]
     local DeliveryCheck = true
-    if PlayerShopModData and PlayerShopModData.DeliveryList then
-        for Code, Name in pairs(PlayerShopModData.DeliveryList) do
-            self.DeliveryBox:addOptionWithData(Name, Code)
-            DeliveryCheck = false
-        end
+    if addDeliveryOptionsInSignalOrder(self.DeliveryBox, PlayerShopModData) then
+        DeliveryCheck = false
     end
     if DeliveryCheck then
         self.DeliveryBox:addOptionWithData(getText("IGUI_S4_Signal_NotInput"), "None")

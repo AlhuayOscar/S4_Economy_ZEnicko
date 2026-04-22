@@ -521,6 +521,15 @@ local S4_Eco_Tiles_List = { -- ATM/Computer tile data
     }
 }
 
+local function canUsePostBoxForSell(Obj)
+    local square = Obj and Obj:getSquare()
+    if not square then
+        return false
+    end
+
+    return square:isOutside() or square:getZ() <= -1
+end
+
 function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
     local player = getSpecificPlayer(playerNum)
     local UserName = player:getUsername()
@@ -658,7 +667,7 @@ function S4_Eco_Context.ObjectsMenu(playerNum, context, worldobjects)
                 elseif Data.Type == "ATM" then
                     local ATM_Option = context:addOption(getText("ContextMenu_S4_ATM_Use"), Obj,
                         S4_Eco_Context.ATM_Action, player, Data)
-                elseif Data.Type == "PostBox" and IvnItemsTable["S4Item.SellPackingBox"] and Obj:getSquare():isOutside() then
+                elseif Data.Type == "PostBox" and IvnItemsTable["S4Item.SellPackingBox"] and canUsePostBoxForSell(Obj) then
                     local PostBox_Option = context:addOption(getText("ContextMenu_S4_PostBox_Sell"), Obj,
                         S4_Eco_Context.PostBox_Action, player, Data, IvnItemsTable)
                 elseif Data.Type == "Phone" then

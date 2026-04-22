@@ -182,6 +182,7 @@ function S4Player.CreatePlayerShopData(player, args)
     ModData.get("S4_PlayerShopData")[UserName] = {
         DeliveryAdrres = false,
         DeliveryList = {},
+        DeliveryOrder = {},
         Delivery = {},
         FavoriteList = {},
         BuyAuthority = 0,
@@ -193,13 +194,81 @@ function S4Player.CreatePlayerShopData(player, args)
     ModData.transmit("S4_PlayerShopData")
 end
 
+local function ensureDeliveryOrder(Account)
+    if not Account then return {} end
+    Account.DeliveryList = Account.DeliveryList or {}
+    Account.DeliveryOrder = Account.DeliveryOrder or {}
+
+    local ordered = {}
+    local seen = {}
+    for i = 1, #Account.DeliveryOrder do
+        local code = Account.DeliveryOrder[i]
+        if code and Account.DeliveryList[code] and not seen[code] then
+            ordered[#ordered + 1] = code
+            seen[code] = true
+        end
+    end
+    for code, _ in pairs(Account.DeliveryList) do
+        if not seen[code] then
+            ordered[#ordered + 1] = code
+            seen[code] = true
+        end
+    end
+    Account.DeliveryOrder = ordered
+    return ordered
+end
+
 function S4Player.AddDeliveryList(player, args)
     local UserName = player:getUsername()
     local PlayerShopModData = ModData.get("S4_PlayerShopData")
     local Account = PlayerShopModData[UserName]
     if not Account then return end
     if Account.DeliveryList[args[1]] then return end
+    local order = ensureDeliveryOrder(Account)
     Account.DeliveryList[args[1]] = args[2]
+    order[#order + 1] = args[1]
+    ModData.transmit("S4_PlayerShopData")
+end
+
+function S4Player.RemoveDeliveryList(player, args)
+    local UserName = player:getUsername()
+    local PlayerShopModData = ModData.get("S4_PlayerShopData")
+    local Account = PlayerShopModData[UserName]
+    local code = args and args[1] or nil
+    if not Account or not code or not Account.DeliveryList then return end
+    Account.DeliveryList[code] = nil
+    local order = ensureDeliveryOrder(Account)
+    for i = #order, 1, -1 do
+        if order[i] == code then
+            table.remove(order, i)
+        end
+    end
+    ModData.transmit("S4_PlayerShopData")
+end
+
+function S4Player.SetDeliveryOrder(player, args)
+    local UserName = player:getUsername()
+    local PlayerShopModData = ModData.get("S4_PlayerShopData")
+    local Account = PlayerShopModData[UserName]
+    if not Account then return end
+    Account.DeliveryList = Account.DeliveryList or {}
+
+    local order = {}
+    local seen = {}
+    for i = 1, #(args or {}) do
+        local code = args[i]
+        if code and Account.DeliveryList[code] and not seen[code] then
+            order[#order + 1] = code
+            seen[code] = true
+        end
+    end
+    for code, _ in pairs(Account.DeliveryList) do
+        if not seen[code] then
+            order[#order + 1] = code
+            seen[code] = true
+        end
+    end
+    Account.DeliveryOrder = order
     ModData.transmit("S4_PlayerShopData")
 end
 

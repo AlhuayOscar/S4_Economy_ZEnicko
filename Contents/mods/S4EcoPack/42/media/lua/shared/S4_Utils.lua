@@ -336,8 +336,8 @@ end
 
 -- Satellite antenna distance check
 function S4_Utils.DistanceSatelliteDish(ComObj)
-    local Range = 14
-    local RangeZ = 3
+    local Range = 40
+    local RangeZ = 12
 
     for x = ComObj:getX() - Range, ComObj:getX() + Range do
         for y = ComObj:getY() - Range, ComObj:getY() + Range do

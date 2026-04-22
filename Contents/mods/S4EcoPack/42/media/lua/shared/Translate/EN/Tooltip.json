@@ -6,7 +6,7 @@
     "Tooltip_S4_CardReader_Install":  "Install the card reader to use cards on the computer.\u003cbr\u003e%1 is required for installation.",
     "Tooltip_S4_Satellite_Install":  "Connect the satellite antenna to use the internet on the computer.\u003cbr\u003eA satellite antenna must be installed nearby, and an additional %1 will be consumed depending on the distance.",
     "Tooltip_S4_Satellite_NotFound":  "Satellite antenna not found.",
-    "Tooltip_S4_Satellite_FoundTip":  "The satellite antenna must be installed within 14 tiles and 3 tiles in height from the computer.",
+    "Tooltip_S4_Satellite_FoundTip":  "The satellite antenna must be installed within 40 tiles and 12 tiles in height from the computer.",
     "Tooltip_S4_ComLockBox":  "Set the password check before using the computer.\u003cbr\u003eIf the password is not set, the setting will not be applied.",
     "Tooltip_S4_ComTimeBox":  "Set the computer time to a 24-hour format.\u003cbr\u003eNot implemented yet.",
     "Tooltip_S4_Remove_PowerBar":  "Remove the power cable connected to the computer.\u003cbr\u003eRemoving the power will turn off the computer, and reinstalling is required to use the computer again.",

@@ -255,7 +255,7 @@ function S4_Eco_Client.DeliveryCheck()
         for DeilveryTime, Data in pairs(PlayerShopData.Delivery) do
             if not S4_Utils.getTimeOver(DeilveryTime) then
                 if Data.XYZCode then
-                    local CodeX, CodeY, CodeZ = string.match(Data.XYZCode, "X(%d+)Y(%d+)Z(%d+)")
+                    local CodeX, CodeY, CodeZ = string.match(Data.XYZCode, "X(-?%d+)Y(-?%d+)Z(-?%d+)")
                     local x, y, z = tonumber(CodeX), tonumber(CodeY), tonumber(CodeZ)
                     local square = getCell():getGridSquare(x, y, z)
                     if square then

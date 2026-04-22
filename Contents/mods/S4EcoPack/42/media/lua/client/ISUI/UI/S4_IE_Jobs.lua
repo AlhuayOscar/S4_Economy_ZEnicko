@@ -38,6 +38,179 @@ local function getJobPayForLevel(jobSalary2h, level)
     return math.floor((jobSalary2h or 125) * salaryMultiplier), salaryMultiplier
 end
 
+local function getJobLevelDetailsForXp(xp, difficulty)
+    local function t(val)
+        return math.ceil(val * (difficulty or 1.0))
+    end
+
+    local thresholds = {t(150), t(400), t(900), t(1600), t(2500), t(4000), t(6000), t(9000), t(13000)}
+    local ranks = {
+        jobText("IGUI_S4_Jobs_Rank_1", "Intern"),
+        jobText("IGUI_S4_Jobs_Rank_2", "Junior"),
+        jobText("IGUI_S4_Jobs_Rank_3", "Senior"),
+        jobText("IGUI_S4_Jobs_Rank_4", "Supervisor"),
+        jobText("IGUI_S4_Jobs_Rank_5", "Manager"),
+        jobText("IGUI_S4_Jobs_Rank_6", "Team Leader"),
+        jobText("IGUI_S4_Jobs_Rank_7", "Dept. Head"),
+        jobText("IGUI_S4_Jobs_Rank_8", "Director"),
+        jobText("IGUI_S4_Jobs_Rank_9", "VP"),
+        jobText("IGUI_S4_Jobs_Rank_10", "CEO")
+    }
+
+    xp = xp or 0
+    if xp < thresholds[1] then
+        return {
+            level = 1,
+            min = 0,
+            max = thresholds[1],
+            rank = ranks[1]
+        }
+    end
+    for i = 1, 8 do
+        if thresholds[i + 1] and xp < thresholds[i + 1] then
+            return {
+                level = i + 1,
+                min = thresholds[i],
+                max = thresholds[i + 1],
+                rank = ranks[i + 1]
+            }
+        end
+    end
+    return {
+        level = 10,
+        min = thresholds[9] or 13000,
+        max = nil,
+        rank = ranks[10]
+    }
+end
+
+local function getBrokerBonusRange(player)
+    if not player or not player.getModData then
+        return nil
+    end
+
+    local pData = player:getModData()
+    local brokerXP = pData["S4_Job_Broker_Hours"] or 0
+    if brokerXP <= 0 then
+        return nil
+    end
+
+    local details = getJobLevelDetailsForXp(brokerXP, 1.6)
+    if details.level >= 6 then
+        return 60, 140, details.level
+    end
+    return 20, 60, details.level
+end
+
+local function normalizeRequirementText(value)
+    if value == nil then
+        return ""
+    end
+
+    local text = tostring(value)
+    text = text:gsub("([a-z])([A-Z])", "%1 %2")
+    text = text:lower()
+    text = text:gsub("[^%w]+", " ")
+    text = text:gsub("%s+", " ")
+    return " " .. text .. " "
+end
+
+local function itemTextForRequirement(item)
+    if not item then
+        return ""
+    end
+
+    local parts = {}
+    if item.getFullType then
+        parts[#parts + 1] = item:getFullType() or ""
+    end
+    if item.getType then
+        parts[#parts + 1] = item:getType() or ""
+    end
+    if item.getDisplayName then
+        parts[#parts + 1] = item:getDisplayName() or ""
+    end
+    if item.getName then
+        parts[#parts + 1] = item:getName() or ""
+    end
+
+    return normalizeRequirementText(table.concat(parts, " "))
+end
+
+local function textHasKeywordGroup(text, group)
+    for _, keyword in ipairs(group) do
+        local normalized = normalizeRequirementText(keyword):gsub("^%s+", ""):gsub("%s+$", "")
+        if normalized ~= "" then
+            local exactMatch = string.find(text, " " .. normalized .. " ", 1, true)
+            local prefixMatch = string.find(text, " " .. normalized, 1, true)
+            if not exactMatch and not prefixMatch then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+local function itemMatchesRequirement(item, req)
+    if not item or not req then
+        return false
+    end
+
+    local fullType = item.getFullType and item:getFullType() or nil
+    if fullType and req.types then
+        for _, typeName in ipairs(req.types) do
+            if fullType == typeName then
+                return true
+            end
+        end
+    end
+
+    if req.keywords then
+        local itemText = itemTextForRequirement(item)
+        for _, group in ipairs(req.keywords) do
+            if textHasKeywordGroup(itemText, group) then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function inventoryHasRequirement(container, req)
+    if not container or not req then
+        return false
+    end
+
+    if req.types and container.containsTypeRecurse then
+        for _, typeName in ipairs(req.types) do
+            if container:containsTypeRecurse(typeName) then
+                return true
+            end
+        end
+    end
+
+    local items = container.getItems and container:getItems() or nil
+    if not items then
+        return false
+    end
+
+    for i = 0, items:size() - 1 do
+        local item = items:get(i)
+        if itemMatchesRequirement(item, req) then
+            return true
+        end
+        if item and item.getInventory then
+            local nested = item:getInventory()
+            if nested and inventoryHasRequirement(nested, req) then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
 function S4_IE_Jobs:new(S4_IE, x, y, width, height)
     local o = {}
     o = ISPanel:new(x, y, width, height)
@@ -86,10 +259,12 @@ function S4_IE_Jobs:createChildren()
         salary = 125,
         requirements = {{
             types = {"Radio.Microphone", "Base.Phone", "Base.CordlessPhone"},
-            name = jobText("IGUI_S4_Jobs_Req_MicrophonePhone", "Microphone or Phone")
+            name = jobText("IGUI_S4_Jobs_Req_MicrophonePhone", "Microphone or Phone"),
+            keywords = {{"microphone"}, {"phone"}}
         }, {
             types = {"Base.Headphones", "Base.Headphones_Red"},
-            name = jobText("IGUI_S4_Jobs_Req_Headphones", "Headphones")
+            name = jobText("IGUI_S4_Jobs_Req_Headphones", "Headphones"),
+            keywords = {{"headphones"}, {"headset"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Designer", "Graphic Designer"),
@@ -98,11 +273,13 @@ function S4_IE_Jobs:createChildren()
         difficulty = 1.1,
         salary = 140,
         requirements = {{
-            types = {"Base.Pen", "Base.Pencil", "Base.RedPen", "Base.BluePen"},
-            name = jobText("IGUI_S4_Jobs_Req_PenPencil", "Pen/Pencil")
+            types = {"Base.Pen", "Base.Pencil", "Base.RedPen", "Base.BluePen", "Base.PenMultiColor"},
+            name = jobText("IGUI_S4_Jobs_Req_PenPencil", "Pen/Pencil"),
+            keywords = {{"pen"}, {"pencil"}}
         }, {
-            types = {"Base.SheetPaper", "Base.Notebook"},
-            name = jobText("IGUI_S4_Jobs_Req_PaperNotebook", "Paper/Notebook")
+            types = {"Base.SheetPaper", "Base.SheetPaper2", "Base.Notebook"},
+            name = jobText("IGUI_S4_Jobs_Req_PaperNotebook", "Paper/Notebook"),
+            keywords = {{"paper"}, {"notebook"}, {"notepad"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Insurance", "Insurance Seller"),
@@ -111,23 +288,29 @@ function S4_IE_Jobs:createChildren()
         difficulty = 1.2,
         salary = 130,
         requirements = {{
-            types = {"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer"},
-            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket")
+            types = {"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer", "Base.Suit_Jacket", "Base.Suit_JacketTINT"},
+            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket"),
+            keywords = {{"suit", "jacket"}, {"suit", "jack"}, {"blazer"}}
         }, {
             types = {"Base.Trousers_Suit", "Base.Trousers_SuitWhite"},
-            name = jobText("IGUI_S4_Jobs_Req_SuitTrousers", "Suit Trousers")
+            name = jobText("IGUI_S4_Jobs_Req_SuitTrousers", "Suit Trousers"),
+            keywords = {{"suit", "trousers"}, {"suit", "pants"}, {"dress", "pants"}}
         }, {
             types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short", "Base.Shirt_FormalTINT"},
-            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt"),
+            keywords = {{"formal", "shirt"}, {"dress", "shirt"}}
         }, {
             types = {"Base.Tie_Full", "Base.Tie_Worn"},
-            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie"),
+            keywords = {{"tie"}}
         }, {
-            types = {"Base.Pen", "Base.BluePen"},
-            name = jobText("IGUI_S4_Jobs_Req_Pen", "Pen")
+            types = {"Base.Pen", "Base.BluePen", "Base.RedPen", "Base.PenMultiColor"},
+            name = jobText("IGUI_S4_Jobs_Req_Pen", "Pen"),
+            keywords = {{"pen"}}
         }, {
             types = {"Base.Notebook"},
-            name = jobText("IGUI_S4_Jobs_Req_Notebook", "Notebook")
+            name = jobText("IGUI_S4_Jobs_Req_Notebook", "Notebook"),
+            keywords = {{"notebook"}, {"notepad"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Programmer", "Programmer"),
@@ -136,23 +319,29 @@ function S4_IE_Jobs:createChildren()
         difficulty = 1.3,
         salary = 160,
         requirements = {{
-            types = {"Base.BusinessCard", "Base.BusinessCard_Personal"},
-            name = jobText("IGUI_S4_Jobs_Req_BusinessCard", "Business Card")
+            types = {"Base.BusinessCard", "Base.BusinessCard_Personal", "Base.BusinessCard_Nolans"},
+            name = jobText("IGUI_S4_Jobs_Req_BusinessCard", "Business Card"),
+            keywords = {{"business", "card"}}
         }, {
             types = {"Base.DigitalWatch", "Base.AlarmClock2"},
-            name = jobText("IGUI_S4_Jobs_Req_DigitalWatch", "Digital Watch")
+            name = jobText("IGUI_S4_Jobs_Req_DigitalWatch", "Digital Watch"),
+            keywords = {{"digital", "watch"}, {"alarm", "clock"}}
         }, {
             types = {"Base.CDplayer"},
-            name = jobText("IGUI_S4_Jobs_Req_CDPlayer", "CD Player")
+            name = jobText("IGUI_S4_Jobs_Req_CDPlayer", "CD Player"),
+            keywords = {{"cd", "player"}}
         }, {
             types = {"Base.Hat_VisorBlack", "Base.Hat_VisorRed", "Base.Hat_VisorWhite"},
-            name = jobText("IGUI_S4_Jobs_Req_Visor", "Visor")
+            name = jobText("IGUI_S4_Jobs_Req_Visor", "Visor"),
+            keywords = {{"visor"}}
         }, {
             types = {"Base.CordlessPhone"},
-            name = jobText("IGUI_S4_Jobs_Req_CordlessPhone", "Cordless Phone")
+            name = jobText("IGUI_S4_Jobs_Req_CordlessPhone", "Cordless Phone"),
+            keywords = {{"cordless", "phone"}, {"phone"}}
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager"),
+            keywords = {{"pager"}, {"remote"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Banker", "Banker"),
@@ -161,29 +350,64 @@ function S4_IE_Jobs:createChildren()
         difficulty = 1.4,
         salary = 150,
         requirements = {{
-            types = {"Base.SuitJacket", "Base.SuitJacket_Tiny"},
-            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket")
+            types = {"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer", "Base.Suit_Jacket", "Base.Suit_JacketTINT"},
+            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket"),
+            keywords = {{"suit", "jacket"}, {"suit", "jack"}, {"blazer"}}
         }, {
             types = {"Base.Tie_Full"},
-            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie"),
+            keywords = {{"tie"}}
         }, {
-            types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short"},
-            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
+            types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalWhite_Short", "Base.Shirt_FormalTINT"},
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt"),
+            keywords = {{"formal", "shirt"}, {"dress", "shirt"}}
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager"),
+            keywords = {{"pager"}, {"remote"}}
         }, {
             types = {"Base.Calculator"},
-            name = jobText("IGUI_S4_Jobs_Req_Calculator", "Calculator")
+            name = jobText("IGUI_S4_Jobs_Req_Calculator", "Calculator"),
+            keywords = {{"calculator"}}
         }, {
             types = {"Base.IndexCard"},
-            name = jobText("IGUI_S4_Jobs_Req_IndexCard", "Index Card")
+            name = jobText("IGUI_S4_Jobs_Req_IndexCard", "Index Card"),
+            keywords = {{"index", "card"}}
         }, {
             types = {"Base.Paperwork"},
-            name = jobText("IGUI_S4_Jobs_Req_Paperwork", "Paperwork")
+            name = jobText("IGUI_S4_Jobs_Req_Paperwork", "Paperwork"),
+            keywords = {{"paperwork"}, {"paper"}}
         }, {
             types = {"Base.StockCertificate"},
-            name = jobText("IGUI_S4_Jobs_Req_StockCertificate", "Stock Certificate")
+            name = jobText("IGUI_S4_Jobs_Req_StockCertificate", "Stock Certificate"),
+            keywords = {{"stock", "certificate"}, {"certificate"}}
+        }}
+    }, {
+        name = jobText("IGUI_S4_Jobs_Name_Broker", "Broker"),
+        id = "Broker",
+        icon = "media/textures/S4_Icon/Icon_64_CallCenter.png",
+        difficulty = 1.6,
+        salary = 220,
+        requirements = {{
+            types = {"Base.SuitJacket", "Base.SuitJacket_Tiny", "Base.Blazer", "Base.Suit_Jacket", "Base.Suit_JacketTINT"},
+            name = jobText("IGUI_S4_Jobs_Req_SuitJacket", "Suit Jacket"),
+            keywords = {{"suit", "jacket"}, {"suit", "jack"}, {"blazer"}}
+        }, {
+            types = {"Base.Tie_Full", "Base.Tie_Worn"},
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie"),
+            keywords = {{"tie"}}
+        }, {
+            types = {"Base.Calculator"},
+            name = jobText("IGUI_S4_Jobs_Req_Calculator", "Calculator"),
+            keywords = {{"calculator"}}
+        }, {
+            types = {"Base.Paperwork", "Base.StockCertificate", "Base.IndexCard", "Base.Clipboard"},
+            name = jobText("IGUI_S4_Jobs_Req_BrokerDocs", "Paperwork / Certificates"),
+            keywords = {{"paperwork"}, {"stock", "certificate"}, {"index", "card"}, {"clipboard"}, {"contract"}}
+        }, {
+            types = {"Base.BusinessCard", "Base.BusinessCard_Personal", "Base.BusinessCard_Nolans", "Base.CreditCard"},
+            name = jobText("IGUI_S4_Jobs_Req_BrokerCard", "Business or Credit Card"),
+            keywords = {{"business", "card"}, {"credit", "card"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Cleaner", "Cleaner"),
@@ -193,25 +417,32 @@ function S4_IE_Jobs:createChildren()
         salary = 171,
         requirements = {{
             types = {"Base.Bleach"},
-            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach")
+            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach"),
+            keywords = {{"bleach"}}
         }, {
             types = {"Base.BathTowel", "Base.DishCloth"},
-            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel")
+            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel"),
+            keywords = {{"towel"}, {"dish", "cloth"}}
         }, {
             types = {"Base.Garbagebag"},
-            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag")
+            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag"),
+            keywords = {{"garbage", "bag"}, {"trash", "bag"}}
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager"),
+            keywords = {{"pager"}, {"remote"}}
         }, {
             types = {"Base.CameraDisposable"},
-            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera")
+            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera"),
+            keywords = {{"disposable", "camera"}, {"camera"}}
         }, {
             types = {"Base.Cigarettes"},
-            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes")
+            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes"),
+            keywords = {{"cigarette"}, {"cigarettes"}}
         }, {
             types = {"Base.Passport"},
-            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport")
+            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport"),
+            keywords = {{"passport"}}
         }, {
             customCheck = "Firearm",
             name = jobText("IGUI_S4_Jobs_Req_FirearmAmmo", "Firearm & Ammo (7+)")
@@ -224,19 +455,24 @@ function S4_IE_Jobs:createChildren()
         salary = 196,
         requirements = {{
             types = {"Base.Camcorder"},
-            name = jobText("IGUI_S4_Jobs_Req_VideoCamera", "Video Camera")
+            name = jobText("IGUI_S4_Jobs_Req_VideoCamera", "Video Camera"),
+            keywords = {{"camcorder"}, {"video", "camera"}}
         }, {
             types = {"Base.Shirt_FormalWhite", "Base.Shirt_FormalTINT"},
-            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt")
+            name = jobText("IGUI_S4_Jobs_Req_FormalShirt", "Formal Shirt"),
+            keywords = {{"formal", "shirt"}, {"dress", "shirt"}}
         }, {
             types = {"Base.Tie_Full"},
-            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie")
+            name = jobText("IGUI_S4_Jobs_Req_Tie", "Tie"),
+            keywords = {{"tie"}}
         }, {
             types = {"Radio.Microphone"},
-            name = jobText("IGUI_S4_Jobs_Req_Microphone", "Microphone")
+            name = jobText("IGUI_S4_Jobs_Req_Microphone", "Microphone"),
+            keywords = {{"microphone"}}
         }, {
             types = {"Base.PressID", "Base.Card_Press", "Base.CreditCard"},
-            name = jobText("IGUI_S4_Jobs_Req_PressBadge", "Press Badge")
+            name = jobText("IGUI_S4_Jobs_Req_PressBadge", "Press Badge"),
+            keywords = {{"press", "badge"}, {"press", "id"}, {"credit", "card"}}
         }}
     }, {
         name = jobText("IGUI_S4_Jobs_Name_Spy", "Spy"),
@@ -246,34 +482,43 @@ function S4_IE_Jobs:createChildren()
         salary = 405,
         requirements = {{
             types = {"Base.Bleach"},
-            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach")
+            name = jobText("IGUI_S4_Jobs_Req_Bleach", "Bleach"),
+            keywords = {{"bleach"}}
         }, {
             types = {"Base.BathTowel", "Base.DishCloth"},
-            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel")
+            name = jobText("IGUI_S4_Jobs_Req_Towel", "Towel"),
+            keywords = {{"towel"}, {"dish", "cloth"}}
         }, {
             types = {"Base.Garbagebag"},
-            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag")
+            name = jobText("IGUI_S4_Jobs_Req_GarbageBag", "Garbage Bag"),
+            keywords = {{"garbage", "bag"}, {"trash", "bag"}}
         }, {
             types = {"Base.Pager", "Base.Remote"},
-            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager")
+            name = jobText("IGUI_S4_Jobs_Req_Pager", "Pager"),
+            keywords = {{"pager"}, {"remote"}}
         }, {
             types = {"Base.CameraDisposable"},
-            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera")
+            name = jobText("IGUI_S4_Jobs_Req_DisposableCamera", "Disposable Camera"),
+            keywords = {{"disposable", "camera"}, {"camera"}}
         }, {
             types = {"Base.Cigarettes"},
-            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes")
+            name = jobText("IGUI_S4_Jobs_Req_Cigarettes", "Cigarettes"),
+            keywords = {{"cigarette"}, {"cigarettes"}}
         }, {
             types = {"Base.Passport"},
-            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport")
+            name = jobText("IGUI_S4_Jobs_Req_Passport", "Passport"),
+            keywords = {{"passport"}}
         }, {
             customCheck = "Firearm",
             name = jobText("IGUI_S4_Jobs_Req_FirearmAmmo", "Firearm & Ammo (7+)")
         }, {
             types = {"Base.Letter"},
-            name = jobText("IGUI_S4_Jobs_Req_HandwrittenLetter", "Handwritten Letter")
+            name = jobText("IGUI_S4_Jobs_Req_HandwrittenLetter", "Handwritten Letter"),
+            keywords = {{"letter"}, {"handwritten"}}
         }, {
             types = {"Base.Photograph"},
-            name = jobText("IGUI_S4_Jobs_Req_Photograph", "Photograph")
+            name = jobText("IGUI_S4_Jobs_Req_Photograph", "Photograph"),
+            keywords = {{"photograph"}, {"photo"}}
         }}
     }}
 
@@ -371,51 +616,7 @@ function S4_IE_Jobs:render()
 end
 
 function S4_IE_Jobs:GetJobLevelDetails(xp, difficulty)
-    -- Base thresholds extended by Difficulty
-    local function t(val)
-        return math.ceil(val * difficulty)
-    end
-
-    local thresholds = {t(150), t(400), t(900), t(1600), t(2500), t(4000), t(6000), t(9000), t(13000)}
-
-    local ranks = {
-        jobText("IGUI_S4_Jobs_Rank_1", "Intern"),
-        jobText("IGUI_S4_Jobs_Rank_2", "Junior"),
-        jobText("IGUI_S4_Jobs_Rank_3", "Senior"),
-        jobText("IGUI_S4_Jobs_Rank_4", "Supervisor"),
-        jobText("IGUI_S4_Jobs_Rank_5", "Manager"),
-        jobText("IGUI_S4_Jobs_Rank_6", "Team Leader"),
-        jobText("IGUI_S4_Jobs_Rank_7", "Dept. Head"),
-        jobText("IGUI_S4_Jobs_Rank_8", "Director"),
-        jobText("IGUI_S4_Jobs_Rank_9", "VP"),
-        jobText("IGUI_S4_Jobs_Rank_10", "CEO")
-    }
-
-    if xp < thresholds[1] then
-        return {
-            level = 1,
-            min = 0,
-            max = thresholds[1],
-            rank = ranks[1]
-        }
-    end
-    for i = 1, 8 do
-        -- Check if it exists in table
-        if thresholds[i + 1] and xp < thresholds[i + 1] then
-            return {
-                level = i + 1,
-                min = thresholds[i],
-                max = thresholds[i + 1],
-                rank = ranks[i + 1]
-            }
-        end
-    end
-    return {
-        level = 10,
-        min = thresholds[9] or 13000,
-        max = nil,
-        rank = ranks[10]
-    }
+    return getJobLevelDetailsForXp(xp, difficulty)
 end
 
 function S4_IE_Jobs:isMouseOverBox(x, y, w, h)
@@ -477,13 +678,8 @@ function S4_IE_Jobs:StartSelectedJob(job)
 
             if req.customCheck == "Firearm" then
                 hasItem = self:CheckFirearm(inv)
-            elseif req.types then
-                for _, typeName in ipairs(req.types) do
-                    if inv:containsTypeRecurse(typeName) then
-                        hasItem = true
-                        break
-                    end
-                end
+            else
+                hasItem = inventoryHasRequirement(inv, req)
             end
 
             if not hasItem then
@@ -552,12 +748,17 @@ function S4_IE_Jobs:StartSelectedJob(job)
     local xp = pData["S4_Job_" .. job.id .. "_Hours"] or 0
     local details = self:GetJobLevelDetails(xp, job.difficulty)
     local effectiveJobSalary2h = getJobPayForLevel(job.salary, details.level)
+    local brokerMin, brokerMax, brokerLevel = getBrokerBonusRange(player)
+    local brokerText = ""
+    if brokerMin and brokerMax and brokerLevel then
+        brokerText = " + Broker Lv " .. brokerLevel .. " (" .. brokerMin .. "-" .. brokerMax .. "%)"
+    end
 
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 1 " .. jobText("IGUI_S4_Jobs_Hour", "Hour") .. " ($" .. math.floor(effectiveJobSalary2h / 2) .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 2 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 3 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. math.floor(effectiveJobSalary2h * 1.5) .. ")", makeData(3),
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 1 " .. jobText("IGUI_S4_Jobs_Hour", "Hour") .. " ($" .. math.floor(effectiveJobSalary2h / 2) .. brokerText .. ")", makeData(1), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 2 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h .. brokerText .. ")", makeData(2), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 3 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. math.floor(effectiveJobSalary2h * 1.5) .. brokerText .. ")", makeData(3),
         S4_IE_Jobs.OnSelectTimeStatic)
-    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 4 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h * 2 .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
+    context:addOption(jobText("IGUI_S4_Jobs_Work", "Work") .. " 4 " .. jobText("IGUI_S4_Jobs_Hours", "Hours") .. " ($" .. effectiveJobSalary2h * 2 .. brokerText .. ")", makeData(4), S4_IE_Jobs.OnSelectTimeStatic)
 
 end
 

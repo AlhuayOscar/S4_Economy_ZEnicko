@@ -108,14 +108,37 @@ function S4_Sys_BankMsgBox:BtnClick(Button)
             local PlayerShopModData = ModData.get("S4_PlayerShopData")
             local DeliveryAdrress = false
             if PlayerShopModData[self.player:getUsername()] and PlayerShopModData[self.player:getUsername()].DeliveryList then
-                for XYZCode, Dname in pairs(PlayerShopModData[self.player:getUsername()].DeliveryList) do
-                    local CodeX, CodeY, CodeZ = string.match(XYZCode, "X(%d+)Y(%d+)Z(%d+)")
+                local playerShop = PlayerShopModData[self.player:getUsername()]
+                local seenDelivery = {}
+                local orderedDelivery = playerShop.DeliveryOrder or {}
+                local function tryDeliveryAddress(XYZCode)
+                    if not XYZCode or seenDelivery[XYZCode] or not playerShop.DeliveryList[XYZCode] then
+                        return false
+                    end
+                    seenDelivery[XYZCode] = true
+                    local CodeX, CodeY, CodeZ = string.match(XYZCode, "X(-?%d+)Y(-?%d+)Z(-?%d+)")
                     local x, y, z = tonumber(CodeX), tonumber(CodeY), tonumber(CodeZ)
+                    if not x or not y or not z then
+                        return false
+                    end
                     -- local cell = getCell()
                     local square = getCell():getGridSquare(x, y, z)
                     if square then
                         DeliveryAdrress = XYZCode
+                        return true
+                    end
+                    return false
+                end
+                for i = 1, #orderedDelivery do
+                    if tryDeliveryAddress(orderedDelivery[i]) then
                         break
+                    end
+                end
+                if not DeliveryAdrress then
+                    for XYZCode, _ in pairs(playerShop.DeliveryList) do
+                        if tryDeliveryAddress(XYZCode) then
+                            break
+                        end
                     end
                 end
             end

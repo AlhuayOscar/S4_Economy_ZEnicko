@@ -3,6 +3,7 @@ S4_System = ISUIElement:derive("S4_System")
 
 local S4_Computer = {
     MyCom = S4_Sys_Mycom,
+    SignalList = S4_Sys_SignalList,
     Network = S4_Sys_Network,
     CardReader = S4_Sys_CardReader,
     Trash = S4_Sys_CardPassword, -- For testing
@@ -14,6 +15,13 @@ local S4_Computer = {
     BankMsgBox = S4_Sys_BankMsgBox,
 }
 
+local function getSystemPageClass(pageType)
+    if pageType == "SignalList" then
+        return S4_Sys_SignalList
+    end
+    return S4_Computer[pageType]
+end
+
 function S4_System:initialise()
 	ISUIElement.initialise(self)
     -- self.TaskY = self.ComUI.TaskBarY
@@ -23,7 +31,7 @@ end
 
 
 function S4_System:createChildren()
-    local PageClass = S4_Computer[self.PageType]
+    local PageClass = getSystemPageClass(self.PageType)
     if PageClass then
         local Px = 5
         local Py = S4_UI.FH_S + 12
@@ -116,7 +124,7 @@ end
 -- reload function
 function S4_System:ReloadUI()
     self.MainPage:close()
-    local PageClass = S4_Computer[self.PageType]
+    local PageClass = getSystemPageClass(self.PageType)
     if PageClass then
         local Px = 5
         local Py = S4_UI.FH_S + 12

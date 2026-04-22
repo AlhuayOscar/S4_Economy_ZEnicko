@@ -101,6 +101,64 @@ local function getDailyBonusPercent(level)
     return 0
 end
 
+local function getJobLevelFromXp(xp, difficulty)
+    local function t(v)
+        return math.ceil(v * (difficulty or 1.0))
+    end
+
+    xp = xp or 0
+    if xp >= t(13000) then
+        return 10
+    elseif xp >= t(9000) then
+        return 9
+    elseif xp >= t(6000) then
+        return 8
+    elseif xp >= t(4000) then
+        return 7
+    elseif xp >= t(2500) then
+        return 6
+    elseif xp >= t(1600) then
+        return 5
+    elseif xp >= t(900) then
+        return 4
+    elseif xp >= t(400) then
+        return 3
+    elseif xp >= t(150) then
+        return 2
+    end
+    return 1
+end
+
+local function randomIntInclusive(minValue, maxValue)
+    if ZombRand then
+        return ZombRand(minValue, maxValue + 1)
+    end
+    return math.random(minValue, maxValue)
+end
+
+local function getBrokerPaymentBonus(pData, basePayment)
+    if not pData or (basePayment or 0) <= 0 then
+        return 0, 0, 0
+    end
+
+    local brokerXP = pData["S4_Job_Broker_Hours"] or 0
+    if brokerXP <= 0 then
+        return 0, 0, 0
+    end
+
+    local brokerLevel = getJobLevelFromXp(brokerXP, 1.6)
+    local minPercent = 20
+    local maxPercent = 60
+    if brokerLevel >= 6 then
+        minPercent = 60
+        maxPercent = 140
+    end
+
+    local bonusPercent = randomIntInclusive(minPercent, maxPercent)
+    local bonusAmount = math.floor(basePayment * (bonusPercent / 100))
+    return bonusAmount, bonusPercent, brokerLevel
+end
+
 function S4_Action_Job_CallCenter:isValid()
     return true
 end
@@ -192,31 +250,7 @@ function S4_Action_Job_CallCenter:perform()
     local hoursKey = "S4_Job_" .. jobId .. "_Hours"
     local currentXP = pData[hoursKey] or 0
 
-    -- Calculate Level (Generic function ideally, but local here)
-    -- Scaling thresholds by difficulty
-    local function t(v)
-        return math.ceil(v * difficulty)
-    end
-    local level = 1
-    if currentXP >= t(13000) then
-        level = 10
-    elseif currentXP >= t(9000) then
-        level = 9
-    elseif currentXP >= t(6000) then
-        level = 8
-    elseif currentXP >= t(4000) then
-        level = 7
-    elseif currentXP >= t(2500) then
-        level = 6
-    elseif currentXP >= t(1600) then
-        level = 5
-    elseif currentXP >= t(900) then
-        level = 4
-    elseif currentXP >= t(400) then
-        level = 3
-    elseif currentXP >= t(150) then
-        level = 2
-    end
+    local level = getJobLevelFromXp(currentXP, difficulty)
 
     local mult = 1.0
     if level == 2 then
@@ -310,6 +344,9 @@ function S4_Action_Job_CallCenter:perform()
     workedHours = workedHours + hours
     local paymentAmount = 0
     local dailyBonusAmount = 0
+    local brokerBonusAmount = 0
+    local brokerBonusPercent = 0
+    local brokerLevel = 0
 
     local effectiveJobSalary2h, salaryMultiplier = getJobPayForLevel(jobSalary2h, level)
     local dailyBonusPercent = getDailyBonusPercent(level)
@@ -326,6 +363,13 @@ function S4_Action_Job_CallCenter:perform()
         dailyBonusAmount = math.floor((effectiveJobSalary2h * 4) * dailyBonusPercent)
         paymentAmount = paymentAmount + dailyBonusAmount
         workedBonusPaid = true
+    end
+
+    if paymentAmount > 0 then
+        brokerBonusAmount, brokerBonusPercent, brokerLevel = getBrokerPaymentBonus(pData, paymentAmount)
+        if brokerBonusAmount > 0 then
+            paymentAmount = paymentAmount + brokerBonusAmount
+        end
     end
 
     pData[dailyHoursKey] = dailyHours
@@ -357,6 +401,9 @@ function S4_Action_Job_CallCenter:perform()
         msg = msg .. " Paid: $" .. paymentAmount
         if dailyBonusAmount > 0 then
             msg = msg .. " [8h bonus +$" .. dailyBonusAmount .. "]"
+        end
+        if brokerBonusAmount > 0 then
+            msg = msg .. " [Broker Lv " .. brokerLevel .. " +" .. brokerBonusPercent .. "% +$" .. brokerBonusAmount .. "]"
         end
     else
         -- Calculate remaining hours needed for next payment

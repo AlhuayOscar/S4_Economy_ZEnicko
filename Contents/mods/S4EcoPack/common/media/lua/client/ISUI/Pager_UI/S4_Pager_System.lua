@@ -1,4 +1,12 @@
+require "ISUI/Safety_UI/S4_Safety_Scan"
+
 S4_Pager_System = S4_Pager_System or {}
+
+S4_Pager_System.RECURRING_CLEANUP_CHUNK_RADIUS = 2
+S4_Pager_System.RECURRING_CLEANUP_MIN_ZOMBIES = 6
+S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD = 5
+S4_Pager_System.RECURRING_CLEANUP_MIN_REWARD = 2500
+S4_Pager_System.RECURRING_CLEANUP_MAX_REWARD = 23500
 
 local function asText(value, fallback)
     if value == nil then
@@ -154,6 +162,81 @@ function S4_Pager_System.buildMissionByIndex(points, objectives, index)
         escapeFromY = point.escapeFromY,
         escapeMinDistance = point.escapeMinDistance
     }
+end
+
+function S4_Pager_System.calculateRecurringCleanupReward(zombieTotal)
+    local total = math.max(0, math.floor(tonumber(zombieTotal) or 0))
+    if total < S4_Pager_System.RECURRING_CLEANUP_MIN_ZOMBIES then
+        return 0
+    end
+    local reward = S4_Pager_System.RECURRING_CLEANUP_MIN_REWARD
+    local extraPairs = math.floor((total - S4_Pager_System.RECURRING_CLEANUP_MIN_ZOMBIES) / 2)
+    if extraPairs > 0 then
+        reward = reward + (extraPairs * S4_Pager_System.RECURRING_CLEANUP_MIN_REWARD)
+    end
+    if reward > S4_Pager_System.RECURRING_CLEANUP_MAX_REWARD then
+        reward = S4_Pager_System.RECURRING_CLEANUP_MAX_REWARD
+    end
+    return reward
+end
+
+local function buildChunkAreaBounds(centerChunkX, centerChunkY, radius)
+    local minChunkX = centerChunkX - radius
+    local maxChunkX = centerChunkX + radius
+    local minChunkY = centerChunkY - radius
+    local maxChunkY = centerChunkY + radius
+    return {
+        areaMinX = minChunkX * 10,
+        areaMaxX = ((maxChunkX + 1) * 10) - 1,
+        areaMinY = minChunkY * 10,
+        areaMaxY = ((maxChunkY + 1) * 10) - 1
+    }
+end
+
+function S4_Pager_System.buildRecurringCleanupMission(player)
+    if not player then
+        return nil, "Player not available."
+    end
+    if not S4_Safety_Scan.playerHasSafetyMonitorKit(player) then
+        return nil, "A Pager and a Walkie Talkie are required."
+    end
+
+    local radius = S4_Pager_System.RECURRING_CLEANUP_CHUNK_RADIUS
+    local scan = S4_Safety_Scan.scanAroundPlayer(player, radius)
+    if not scan or scan.error then
+        return nil, asText(scan and scan.error, "Unable to read the loaded sector.")
+    end
+
+    local total = math.max(0, math.floor(scan.visibleAlive or 0))
+    if total < S4_Pager_System.RECURRING_CLEANUP_MIN_ZOMBIES then
+        return nil, "No temporary cleanup contract is available here."
+    end
+
+    local bounds = buildChunkAreaBounds(scan.centerChunkX, scan.centerChunkY, radius)
+    return {
+        missionName = "Mercenary needed to clean the area",
+        durationHours = 4,
+        objective = string.format("Reduce the loaded sector to %d zombies or fewer.", S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD),
+        runtimeObjective = string.format("Reduce the loaded sector to %d zombies or fewer (%d remaining).",
+            S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD, total),
+        location = string.format("Loaded sector %d,%d", scan.centerChunkX, scan.centerChunkY),
+        targetX = scan.playerX,
+        targetY = scan.playerY,
+        targetZ = scan.playerZ or 0,
+        zombieCount = total,
+        initialAreaZombieTotal = total,
+        currentAreaZombieTotal = total,
+        clearThreshold = S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD,
+        rewardAmount = S4_Pager_System.calculateRecurringCleanupReward(total),
+        rewardRangeText = "2500$ - 23500$",
+        missionMode = "recurrent_cleanup",
+        contractTag = "TEMPORARY",
+        hiddenPadding = 6,
+        areaMinX = bounds.areaMinX,
+        areaMaxX = bounds.areaMaxX,
+        areaMinY = bounds.areaMinY,
+        areaMaxY = bounds.areaMaxY
+    }, nil
 end
 
 local function missionAreaBounds(mission)
@@ -983,6 +1066,37 @@ function S4_Pager_System.countAliveZombiesAround(x, y, radius)
     return count
 end
 
+function S4_Pager_System.countAliveZombiesInBounds(minX, maxX, minY, maxY, z)
+    local world = getWorld and getWorld() or nil
+    local cell = world and world:getCell() or nil
+    local zlist = cell and cell:getZombieList() or nil
+    if not zlist then
+        return 0
+    end
+    z = z and math.floor(z) or nil
+    local count = 0
+    for i = 0, zlist:size() - 1 do
+        local zombie = zlist:get(i)
+        if zombie and (not zombie:isDead()) then
+            local zx = zombie:getX()
+            local zy = zombie:getY()
+            local zz = zombie:getZ()
+            if zx >= minX and zx <= maxX and zy >= minY and zy <= maxY and (z == nil or zz == z) then
+                count = count + 1
+            end
+        end
+    end
+    return count
+end
+
+function S4_Pager_System.countAliveZombiesInMissionArea(mission)
+    local minX, maxX, minY, maxY = missionAreaBounds(mission)
+    if not minX or not maxX or not minY or not maxY then
+        return 0
+    end
+    return S4_Pager_System.countAliveZombiesInBounds(minX, maxX, minY, maxY, mission and mission.targetZ or 0)
+end
+
 function S4_Pager_System.findAnyWorkObjectCodeInInventory(player)
     if not player then
         return nil
@@ -1423,7 +1537,7 @@ function S4_Pager_System.completeMission(player, opts)
         return false
     end
     -- If evidence already dropped on a mission zombie corpse, don't duplicate on ground.
-    if (not mission.photoDropped) and (not mission.zombieInventoryDropDone) then
+    if mission.missionMode ~= "recurrent_cleanup" and (not mission.photoDropped) and (not mission.zombieInventoryDropDone) then
         local addPhotoFn = opts.addPhotoOnGroundFn
         if addPhotoFn and addPhotoFn(mission, player) then
             mission.photoDropped = true
@@ -1458,8 +1572,11 @@ function S4_Pager_System.completeMission(player, opts)
         end)
     end
 
-    local isSequenced = mission.missionPart and mission.missionPartTotal
-    local rewardAmount = isSequenced and ZombRand(10000, 53001) or ZombRand(4000, 23001)
+    local rewardAmount = tonumber(mission.rewardAmount)
+    if not rewardAmount then
+        local isSequenced = mission.missionPart and mission.missionPartTotal
+        rewardAmount = isSequenced and ZombRand(10000, 53001) or ZombRand(4000, 23001)
+    end
     
     local finalReward = rewardAmount
     local hasMask, hasVest, hasHalloweenMask = checkMissionGearRequirements(player, mission)
@@ -1683,8 +1800,26 @@ function S4_Pager_System.updateMissionState(player, opts)
         end
     end
 
+    if mission.missionMode == "recurrent_cleanup" then
+        local clearThreshold = math.max(0, math.floor(tonumber(mission.clearThreshold) or
+            S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD))
+        local areaAlive = S4_Pager_System.countAliveZombiesInMissionArea(mission)
+        local startTotal = math.max(0, math.floor(tonumber(mission.initialAreaZombieTotal) or areaAlive))
+        mission.currentAreaZombieTotal = areaAlive
+        mission.killGoal = math.max(0, startTotal - clearThreshold)
+        mission.killsDone = math.max(0, mission.killGoal - math.max(0, areaAlive - clearThreshold))
+        mission.runtimeObjective = string.format("Reduce the loaded sector to %d zombies or fewer (%d remaining).",
+            clearThreshold, areaAlive)
+        if areaAlive <= clearThreshold then
+            if opts.completeMissionFn then
+                opts.completeMissionFn(player, "Temporary cleanup contract complete", 80, 220, 80)
+            end
+            return
+        end
+    end
+
     local remaining = math.max(0, (mission.killGoal or 1) - (mission.killsDone or 0))
-    if mission.missionMode ~= "stash_money" and mission.missionMode ~= "escape_bank" and mission.missionMode ~= "drill_safe" and remaining > 0 and
+    if mission.missionMode ~= "stash_money" and mission.missionMode ~= "escape_bank" and mission.missionMode ~= "drill_safe" and mission.missionMode ~= "recurrent_cleanup" and remaining > 0 and
         (opts.isPlayerNearMissionFn and opts.isPlayerNearMissionFn(player, mission, 120)) then
         local alive = opts.countAliveZombiesAroundFn and
                           opts.countAliveZombiesAroundFn(mission.targetX or 0, mission.targetY or 0,
@@ -1740,6 +1875,34 @@ function S4_Pager_System.onZombieDead(zombie, player, opts)
         return
     end
     if mission.missionMode == "stash_money" then
+        return
+    end
+    if mission.missionMode == "recurrent_cleanup" then
+        local minX, maxX, minY, maxY = missionAreaBounds(mission)
+        local zz = math.floor(mission.targetZ or 0)
+        local zx = zombie:getX()
+        local zy = zombie:getY()
+        local zq = zombie:getZ()
+        if minX and (zx < minX or zx > maxX or zy < minY or zy > maxY or zq ~= zz) then
+            return
+        end
+        local clearThreshold = math.max(0, math.floor(tonumber(mission.clearThreshold) or
+            S4_Pager_System.RECURRING_CLEANUP_CLEAR_THRESHOLD))
+        local areaAlive = S4_Pager_System.countAliveZombiesInMissionArea(mission)
+        local startTotal = math.max(0, math.floor(tonumber(mission.initialAreaZombieTotal) or areaAlive))
+        mission.currentAreaZombieTotal = areaAlive
+        mission.killGoal = math.max(0, startTotal - clearThreshold)
+        mission.killsDone = math.max(0, mission.killGoal - math.max(0, areaAlive - clearThreshold))
+        if player.setHaloNote then
+            player:setHaloNote(string.format("Loaded sector threat: %d remaining", areaAlive), 80, 220, 80, 180)
+        end
+        if areaAlive <= clearThreshold then
+            if opts.completeMissionFn then
+                opts.completeMissionFn(player, "Temporary cleanup contract complete", 80, 220, 80)
+            end
+        elseif opts.onRefreshUiFn then
+            opts.onRefreshUiFn(player)
+        end
         return
     end
 
@@ -1844,6 +2007,10 @@ end
 local ROBBERY_SHOUT_LINES = {"Everybody to the floor!!!", "Don't make me repeat it!",
                              "Suckers, you'll gonna learn now...", "This isn't your mama, Get the F* Down", "Get Down!"}
 
+local function isRobberyAlarmMission(mission)
+    return mission and mission.missionMode == "drill_safe"
+end
+
 function S4_Pager_System.sayRobberyLine(player)
     if not player then
         return
@@ -1907,7 +2074,7 @@ function S4_Pager_System.stopMissionPersistentAudio(player)
 end
 
 function S4_Pager_System.triggerRobberyAlarm(player, mission)
-    if not player or not mission then
+    if not player or not isRobberyAlarmMission(mission) then
         return false
     end
     local md = player:getModData()
@@ -1981,6 +2148,9 @@ function S4_Pager_System.onWeaponNoise(player, weapon, opts)
     if not mission or mission.status ~= "active" then
         return
     end
+    if not isRobberyAlarmMission(mission) then
+        return
+    end
     local spotState = opts.getMissionSpotStateFn and opts.getMissionSpotStateFn(player, mission) or "far"
     if spotState ~= "on_spot" then
         return
@@ -2001,7 +2171,8 @@ function S4_Pager_System.updateRobberyAlarm(player, opts)
     local pData = player:getModData()
     local mission = pData and pData.S4PagerMission or nil
 
-    if mission and mission.status == "active" and mission.robberyIntroPlayed and (not mission.razormindStarted) then
+    if isRobberyAlarmMission(mission) and mission.status == "active" and mission.robberyIntroPlayed and
+        (not mission.razormindStarted) then
         local introFinished = false
         if md.S4PagerRobberyIntroPending then
             introFinished = true
@@ -2163,7 +2334,7 @@ function S4_Pager_System.OnShoutKeyPressed(key)
         if not player or player:isDead() then return end
         local md = player:getModData()
         local mission = md and md.S4PagerMission
-        if mission and mission.status == "active" then
+        if isRobberyAlarmMission(mission) and mission.status == "active" then
             local state = S4_Pager_System.getMissionSpotState(player, mission)
             if state == "on_spot" then
                 S4_Pager_System.sayRobberyLine(player)

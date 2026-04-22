@@ -14,7 +14,11 @@ end
 local nowWorldHours = S4_Pager_System.nowWorldHours
 local function sortMissions(points)
     local sorted = {}
-    for _, p in ipairs(points) do table.insert(sorted, p) end
+    for _, p in ipairs(points) do
+        if p and p.missionGroup then
+            table.insert(sorted, p)
+        end
+    end
     table.sort(sorted, function(a, b)
         local aProg = (a.missionGroup and 1) or 0
         local bProg = (b.missionGroup and 1) or 0
@@ -39,6 +43,23 @@ end
 
 local function buildMissionByIndex(index)
     return S4_Pager_System.buildMissionByIndex(MISSION_POINTS, MISSION_OBJECTIVES, index)
+end
+
+local function buildRecurringCleanupMission(player)
+    return S4_Pager_System.buildRecurringCleanupMission(player)
+end
+
+local function getMissionRewardDisplayText(mission)
+    if not mission then
+        return "Classified"
+    end
+    if mission.rewardRangeText then
+        return mission.rewardRangeText
+    end
+    if mission.rewardAmount then
+        return "$" .. tostring(mission.rewardAmount)
+    end
+    return "Classified"
 end
 
 local function randomStartLabel()
@@ -190,6 +211,7 @@ function S4_Pager_UI:new(player, x, y, width, height)
         o.texture = getTexture("media/textures/PagerUI.PNG")
     end
     o.pendingMission = nil
+    o.pendingMissionUnavailableReason = nil
     o.pendingMissionIndex = 1
     return o
 end
@@ -243,7 +265,7 @@ function S4_Pager_UI:refreshData()
         self.pendingMission = nil
         self.startBtn:setEnable(false)
         self.startBtn:setTitle("Start")
-        self.rollBtn:setEnable(true)
+        self.rollBtn:setEnable(false)
         self.completeBtn:setEnable(true)
         self.failBtn:setEnable(true)
         self.setPointBtn:setEnable(false)
@@ -252,13 +274,22 @@ function S4_Pager_UI:refreshData()
     end
 
     self.activeMission = nil
+    if self.pendingMission and self.pendingMission.missionMode == "recurrent_cleanup" then
+        self.pendingMission, self.pendingMissionUnavailableReason = buildRecurringCleanupMission(self.player)
+    end
     if not self.pendingMission then
-        self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
+        self.pendingMission, self.pendingMissionUnavailableReason = buildRecurringCleanupMission(self.player)
+        if not self.pendingMission then
+            self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
+        end
     end
     applyFixedPointToPending(self)
     self.startBtn:setTitle(randomStartLabel())
     
-    if self.pendingMission and self.pendingMission.missionGroup and self.pendingMission.missionPart then
+    if not self.pendingMission then
+        self.isLocked = true
+        self.lockReason = self.pendingMissionUnavailableReason or "No contracts available"
+    elseif self.pendingMission.missionGroup and self.pendingMission.missionPart then
         local group = self.pendingMission.missionGroup
         local part = tonumber(self.pendingMission.missionPart) or 1
         
@@ -279,7 +310,7 @@ function S4_Pager_UI:refreshData()
         end
     end
 
-    if not self.isLocked then
+    if self.pendingMission and not self.isLocked then
         self.startBtn:setEnable(true)
     else
         self.startBtn:setEnable(false)
@@ -303,8 +334,10 @@ function S4_Pager_UI:onRollMission()
         if self.pendingMissionIndex > total then
             self.pendingMissionIndex = 1
         end
+        self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
+    else
+        self.pendingMission, self.pendingMissionUnavailableReason = buildRecurringCleanupMission(self.player)
     end
-    self.pendingMission = buildMissionByIndex(self.pendingMissionIndex) or buildMission()
     applyFixedPointToPending(self)
     self:refreshData()
 end
@@ -312,6 +345,19 @@ end
 function S4_Pager_UI:onStartMission()
     if not self.pendingMission then
         return
+    end
+    if self.pendingMission.missionMode == "recurrent_cleanup" then
+        local refreshedMission, unavailableReason = buildRecurringCleanupMission(self.player)
+        if not refreshedMission then
+            self.pendingMission = nil
+            self.pendingMissionUnavailableReason = unavailableReason
+            if self.player and self.player.setHaloNote then
+                self.player:setHaloNote(unavailableReason or "Temporary cleanup contract unavailable", 220, 110, 90, 260)
+            end
+            self:refreshData()
+            return
+        end
+        self.pendingMission = refreshedMission
     end
     local startAt = nowWorldHours()
     local m = {
@@ -337,14 +383,22 @@ function S4_Pager_UI:onStartMission()
         missionGroup = self.pendingMission.missionGroup,
         missionPart = self.pendingMission.missionPart,
         missionPartTotal = self.pendingMission.missionPartTotal,
+        contractTag = self.pendingMission.contractTag,
         requiredBag = self.pendingMission.requiredBag,
         requiredItemType = self.pendingMission.requiredItemType,
         requiredItemCount = self.pendingMission.requiredItemCount,
         escapeFromX = self.pendingMission.escapeFromX,
         escapeFromY = self.pendingMission.escapeFromY,
         escapeMinDistance = self.pendingMission.escapeMinDistance,
+        rewardAmount = self.pendingMission.rewardAmount,
+        rewardRangeText = self.pendingMission.rewardRangeText,
+        initialAreaZombieTotal = self.pendingMission.initialAreaZombieTotal,
+        currentAreaZombieTotal = self.pendingMission.currentAreaZombieTotal,
+        clearThreshold = self.pendingMission.clearThreshold,
+        runtimeObjective = self.pendingMission.runtimeObjective,
         killGoal = (self.pendingMission.missionMode == "stash_money" or self.pendingMission.missionMode == "escape_bank") and 0 or
-            math.max(1, math.floor(self.pendingMission.zombieCount or 1)),
+            math.max(0, math.floor((self.pendingMission.initialAreaZombieTotal or self.pendingMission.zombieCount or 1) -
+            (self.pendingMission.clearThreshold or 0))),
         killsDone = 0,
         photoDropped = false
     }
@@ -355,7 +409,7 @@ function S4_Pager_UI:onStartMission()
 
     local markerOk = addMissionMapMarker(m.targetX, m.targetY)
     local spawnedCount = 0
-    if m.killGoal > 0 then
+    if m.killGoal > 0 and m.missionMode ~= "recurrent_cleanup" then
         spawnedCount = spawnMissionZombieAt(m.targetX, m.targetY, m.targetZ, m.killGoal)
     end
     local zombieOk = spawnedCount > 0
@@ -365,6 +419,9 @@ function S4_Pager_UI:onStartMission()
             self.player:setHaloNote("Mission started: reach area and secure dirty money", 80, 220, 80, 300)
         elseif m.missionMode == "escape_bank" then
             self.player:setHaloNote("Mission started: Escape at least 350 cells from Knox Bank", 80, 220, 80, 300)
+        elseif m.missionMode == "recurrent_cleanup" then
+            self.player:setHaloNote("Temporary contract started: reduce the loaded sector to 5 zombies or fewer", 80, 220,
+                80, 320)
         elseif markerOk and zombieOk then
             self.player:setHaloNote(string.format("Mission started: %d targets", m.killGoal), 80, 220, 80, 300)
         elseif markerOk then
@@ -469,14 +526,25 @@ function S4_Pager_UI:render()
         self:drawText("Time left: " .. string.format("%.1f", left) .. "h", 20, 104, 1, 1, 1, 1, UIFont.Small)
         local tag = "[SIDE]"
         local tagColorR, tagColorG, tagColorB = 0.7, 0.7, 0.7
-        if self.activeMission.missionGroup then
+        if self.activeMission.contractTag then
+            tag = "[" .. tostring(self.activeMission.contractTag) .. "]"
+            tagColorR, tagColorG, tagColorB = 0.55, 0.92, 1
+        elseif self.activeMission.missionGroup then
             tag = "[MAIN]"
             tagColorR, tagColorG, tagColorB = 1, 0.8, 0.2
         end
         self:drawText("Contract: " .. tag .. " " .. tostring(contractTitle), 20, 126, tagColorR, tagColorG, tagColorB, 1, UIFont.Small)
-        self:drawText("Objective: " .. tostring(self.activeMission.runtimeObjective or self.activeMission.objective), 20, 148, 1, 1, 1, 1, UIFont.Small)
+        self:drawText("Objective: " ..
+                          tostring(self.activeMission.missionMode == "recurrent_cleanup" and self.activeMission.objective or
+                              (self.activeMission.runtimeObjective or self.activeMission.objective)), 20, 148, 1, 1, 1, 1,
+            UIFont.Small)
         self:drawText("Location: " .. tostring(self.activeMission.location), 20, 170, 1, 1, 1, 1, UIFont.Small)
-        if (self.activeMission.killGoal or 0) > 0 then
+        if self.activeMission.missionMode == "recurrent_cleanup" then
+            self:drawText(
+                "Accepted sector threat: " .. tostring(self.activeMission.initialAreaZombieTotal or 0) ..
+                    " zombies | Clear to " .. tostring(self.activeMission.clearThreshold or 5), 20, 192, 1, 0.9, 0.8, 1,
+                UIFont.Small)
+        elseif (self.activeMission.killGoal or 0) > 0 then
             self:drawText("Targets: " .. tostring(self.activeMission.killsDone or 0) .. "/" ..
                               tostring(self.activeMission.killGoal or 1), 20, 192, 1, 0.9, 0.8, 1, UIFont.Small)
         elseif self.activeMission.missionMode == "stash_money" then
@@ -488,17 +556,19 @@ function S4_Pager_UI:render()
             self:drawText("Escape: " .. tostring(dist) .. "/" .. tostring(need) .. " cells", 20, 192, 1, 0.9, 0.8, 1,
                 UIFont.Small)
         end
-        self:drawText(coordsText, 20, 214, 1, 0.7, 0.7, 1, UIFont.Small)
+        self:drawText("Reward: " .. getMissionRewardDisplayText(self.activeMission), 20, 214, 0.6, 1, 0.7, 1,
+            UIFont.Small)
+        self:drawText(coordsText, 20, 236, 1, 0.7, 0.7, 1, UIFont.Small)
         if spotState == "on_spot" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
-            self:drawText("On Spot", 26 + w, 214, 0.2, 0.95, 0.2, 1, UIFont.Small)
+            self:drawText("On Spot", 26 + w, 236, 0.2, 0.95, 0.2, 1, UIFont.Small)
         elseif spotState == "near" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
-            self:drawText("You're near", 26 + w, 214, 0.95, 0.85, 0.2, 1, UIFont.Small)
+            self:drawText("You're near", 26 + w, 236, 0.95, 0.85, 0.2, 1, UIFont.Small)
         end
         if self.activeMission and self.activeMission.missionMode == "stash_money" and
             getDropTargetNearState(self.player, self.activeMission, 3) then
-            self:drawText("Destination nearby", 20, 228, 0.2, 0.95, 0.2, 1, UIFont.Small)
+            self:drawText("Destination nearby", 20, 250, 0.2, 0.95, 0.2, 1, UIFont.Small)
         end
     elseif self.pendingMission then
         local contractTitle = self.pendingMission.missionName or self.pendingMission.objective or "Mission"
@@ -509,14 +579,21 @@ function S4_Pager_UI:render()
             UIFont.Small)
         local tag = "[SIDE]"
         local tagColorR, tagColorG, tagColorB = 0.7, 0.7, 0.7
-        if self.pendingMission.missionGroup then
+        if self.pendingMission.contractTag then
+            tag = "[" .. tostring(self.pendingMission.contractTag) .. "]"
+            tagColorR, tagColorG, tagColorB = 0.55, 0.92, 1
+        elseif self.pendingMission.missionGroup then
             tag = "[MAIN]"
             tagColorR, tagColorG, tagColorB = 1, 0.8, 0.2
         end
         self:drawText("Contract: " .. tag .. " " .. tostring(contractTitle), 20, 104, tagColorR, tagColorG, tagColorB, 1, UIFont.Small)
         self:drawText("Objective: " .. tostring(self.pendingMission.objective), 20, 126, 1, 1, 1, 1, UIFont.Small)
         self:drawText("Location: " .. tostring(self.pendingMission.location), 20, 148, 1, 1, 1, 1, UIFont.Small)
-        if self.pendingMission.missionMode == "stash_money" then
+        if self.pendingMission.missionMode == "recurrent_cleanup" then
+            self:drawText("Area threat: " .. tostring(self.pendingMission.initialAreaZombieTotal or 0) ..
+                              " zombies | Clear to " .. tostring(self.pendingMission.clearThreshold or 5), 20, 170, 1,
+                0.9, 0.8, 1, UIFont.Small)
+        elseif self.pendingMission.missionMode == "stash_money" then
             local need = tonumber(self.pendingMission.requiredItemCount) or 10
             self:drawText("Requirement: Duffelbag + " .. tostring(need) .. " Money Bundle", 20, 170, 1, 0.9, 0.8, 1,
                 UIFont.Small)
@@ -528,16 +605,18 @@ function S4_Pager_UI:render()
             self:drawText("Targets: " .. tostring(self.pendingMission.zombieCount or 1), 20, 170, 1, 0.9, 0.8, 1,
                 UIFont.Small)
         end
-        self:drawText(coordsText, 20, 192, 1, 0.7, 0.7, 1, UIFont.Small)
+        self:drawText("Reward: " .. getMissionRewardDisplayText(self.pendingMission), 20, 192, 0.6, 1, 0.7, 1,
+            UIFont.Small)
+        self:drawText(coordsText, 20, 214, 1, 0.7, 0.7, 1, UIFont.Small)
         if self.isLocked then
-            self:drawText(self.lockReason or "Locked", 20, 214, 1, 0.3, 0.3, 1, UIFont.Small)
+            self:drawText(self.lockReason or "Locked", 20, 236, 1, 0.3, 0.3, 1, UIFont.Small)
         end
         if spotState == "on_spot" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
-            self:drawText("On Spot", 26 + w, 192, 0.2, 0.95, 0.2, 1, UIFont.Small)
+            self:drawText("On Spot", 26 + w, 214, 0.2, 0.95, 0.2, 1, UIFont.Small)
         elseif spotState == "near" then
             local w = getTextManager():MeasureStringX(UIFont.Small, coordsText)
-            self:drawText("You're near", 26 + w, 192, 0.95, 0.85, 0.2, 1, UIFont.Small)
+            self:drawText("You're near", 26 + w, 214, 0.95, 0.85, 0.2, 1, UIFont.Small)
         end
     end
 end

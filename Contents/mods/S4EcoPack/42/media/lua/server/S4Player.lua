@@ -3,6 +3,18 @@
 
 -- Module initialization
 S4Player = {}
+local OPPOSITE_TRAITS = {
+    AllThumbs = "Dextrous",
+    Brave = "Cowardly",
+    Cowardly = "Brave",
+    Dextrous = "AllThumbs",
+    FastLearner = "SlowLearner",
+    FastReader = "SlowReader",
+    SlowLearner = "FastLearner",
+    SlowReader = "FastReader",
+    SpeedDemon = "SundayDriver",
+    SundayDriver = "SpeedDemon"
+}
 
 local function resolveTraitEntry(traitId)
     if not traitId then
@@ -30,23 +42,111 @@ local function serverPlayerHasTrait(player, traitId)
         local ok, result = pcall(function()
             return player:HasTrait(traitId)
         end)
-        if ok and result ~= nil then
+        if ok and result then
             return result
         end
     end
 
-    local traits = player.getTraits and player:getTraits() or nil
-    local traitEntry = resolveTraitEntry(traitId)
-    if traits and traits.contains and traitEntry ~= nil then
-        local ok, result = pcall(function()
-            return traits:contains(traitEntry)
-        end)
-        if ok and result ~= nil then
-            return result
+    local descriptor = player.getDescriptor and player:getDescriptor() or nil
+    local traitLists = {
+        player.getTraits and player:getTraits() or nil,
+        descriptor and descriptor.getTraits and descriptor:getTraits() or nil
+    }
+    local attempts = {traitId, resolveTraitEntry(traitId)}
+
+    for _, traits in ipairs(traitLists) do
+        if traits and traits.contains then
+            for _, entry in ipairs(attempts) do
+                if entry ~= nil then
+                    local ok, result = pcall(function()
+                        return traits:contains(entry)
+                    end)
+                    if ok and result then
+                        return result
+                    end
+                end
+            end
         end
     end
 
     return false
+end
+
+local function getTraitAttemptValues(traitId)
+    local attempts = {}
+    local seen = {}
+
+    local function addAttempt(entry)
+        if entry == nil then
+            return
+        end
+
+        local key = tostring(entry)
+        if seen[key] then
+            return
+        end
+
+        seen[key] = true
+        table.insert(attempts, entry)
+    end
+
+    addAttempt(traitId)
+
+    local traitEntry = resolveTraitEntry(traitId)
+    addAttempt(traitEntry)
+
+    if traitEntry and traitEntry.getType then
+        local ok, traitType = pcall(function()
+            return traitEntry:getType()
+        end)
+        if ok and traitType then
+            addAttempt(traitType)
+        end
+    end
+
+    return attempts
+end
+
+local function getPlayerTraitLists(player)
+    local traitLists = {}
+
+    if player and player.getTraits then
+        local traits = player:getTraits()
+        if traits and traits.add then
+            table.insert(traitLists, traits)
+        end
+    end
+
+    local descriptor = player and player.getDescriptor and player:getDescriptor() or nil
+    if descriptor and descriptor.getTraits then
+        local descriptorTraits = descriptor:getTraits()
+        if descriptorTraits and descriptorTraits.add then
+            table.insert(traitLists, descriptorTraits)
+        end
+    end
+
+    return traitLists
+end
+
+local function removeTraitFromPlayer(player, traitId)
+    if not player or not traitId or not serverPlayerHasTrait(player, traitId) then
+        return true
+    end
+
+    local attempts = getTraitAttemptValues(traitId)
+    local traitLists = getPlayerTraitLists(player)
+
+    for _, traits in ipairs(traitLists) do
+        if traits.remove then
+            for _, entry in ipairs(attempts) do
+                pcall(function()
+                    traits:remove(entry)
+                end)
+            end
+        end
+    end
+
+    return not serverPlayerHasTrait(player, traitId)
 end
 
 -- Create player profile data
@@ -172,19 +272,28 @@ function S4Player.AddTeachingTrait(player, args)
         return
     end
 
-    local traits = player.getTraits and player:getTraits() or nil
-    if not traits or not traits.add then
+    local oppositeTrait = OPPOSITE_TRAITS[traitId]
+    if oppositeTrait then
+        removeTraitFromPlayer(player, oppositeTrait)
+    end
+
+    local attempts = getTraitAttemptValues(traitId)
+    local traitLists = getPlayerTraitLists(player)
+    if #traitLists == 0 then
         return
     end
 
-    local traitEntry = resolveTraitEntry(traitId)
-    local attempts = {traitEntry, traitId}
-    for _, entry in ipairs(attempts) do
-        if entry ~= nil then
+    for _, traits in ipairs(traitLists) do
+        for _, entry in ipairs(attempts) do
             local ok = pcall(function()
                 traits:add(entry)
             end)
             if ok and serverPlayerHasTrait(player, traitId) then
+                if player.resetModel then
+                    pcall(function()
+                        player:resetModel()
+                    end)
+                end
                 if player.transmitModData then
                     player:transmitModData()
                 end

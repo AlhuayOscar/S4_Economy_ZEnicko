@@ -9,6 +9,9 @@ S4_Safety_Monitor.DEFAULT_HEIGHT = 300
 S4_Safety_Monitor.COLLAPSED_HEIGHT = 30
 S4_Safety_Monitor.TITLE_HEIGHT = 28
 S4_Safety_Monitor.AUTO_COLLAPSE_DELAY_MS = 5000
+S4_Safety_Monitor.HEADER_BUTTON_SIZE = 20
+S4_Safety_Monitor.HEADER_BUTTON_Y = 4
+S4_Safety_Monitor.HEADER_PADDING = 8
 
 function S4_Safety_Monitor:showForPlayer(player)
     if not player then
@@ -32,6 +35,7 @@ function S4_Safety_Monitor:showForPlayer(player)
     S4_Safety_Monitor.instance.player = player
     S4_Safety_Monitor.instance:addToUIManager()
     S4_Safety_Monitor.instance:setVisible(true)
+    S4_Safety_Monitor.instance:ensureMonitorOnTop()
     S4_Safety_Monitor.instance:bumpExpandedVisibility()
     S4_Safety_Monitor.instance:refreshData(true)
     return S4_Safety_Monitor.instance
@@ -75,24 +79,6 @@ end
 function S4_Safety_Monitor:createChildren()
     ISPanel.createChildren(self)
 
-    self.RangeBtn = ISButton:new(8, 4, 92, 20, self:getRangeButtonLabel(), self, S4_Safety_Monitor.onCycleRange)
-    self.RangeBtn.backgroundColor = {r = 0.14, g = 0.22, b = 0.24, a = 1}
-    self.RangeBtn.textColor = {r = 0.92, g = 0.96, b = 1, a = 1}
-    self.RangeBtn:initialise()
-    self:addChild(self.RangeBtn)
-
-    self.CollapseBtn = ISButton:new(self:getWidth() - 50, 4, 20, 20, "A", self, S4_Safety_Monitor.onToggleAutoCollapse)
-    self.CollapseBtn.backgroundColor = {r = 0.16, g = 0.18, b = 0.20, a = 1}
-    self.CollapseBtn.textColor = {r = 1, g = 1, b = 1, a = 1}
-    self.CollapseBtn:initialise()
-    self:addChild(self.CollapseBtn)
-
-    self.CloseBtn = ISButton:new(self:getWidth() - 26, 4, 20, 20, "X", self, S4_Safety_Monitor.onCloseUI)
-    self.CloseBtn.backgroundColor = {r = 0.38, g = 0.16, b = 0.16, a = 1}
-    self.CloseBtn.textColor = {r = 1, g = 1, b = 1, a = 1}
-    self.CloseBtn:initialise()
-    self:addChild(self.CloseBtn)
-
     self.MapPanel = ISPanel:new(8, S4_Safety_Monitor.TITLE_HEIGHT + 8, math.floor(self:getWidth() * 0.62), self:getHeight() - S4_Safety_Monitor.TITLE_HEIGHT - 16)
     self.MapPanel.backgroundColor = {r = 0.03, g = 0.05, b = 0.06, a = 1}
     self.MapPanel.borderColor = {r = 0.18, g = 0.30, b = 0.33, a = 1}
@@ -130,6 +116,62 @@ function S4_Safety_Monitor:bumpExpandedVisibility()
     else
         self.expandedUntilMs = S4_Safety_Monitor.AUTO_COLLAPSE_DELAY_MS
     end
+end
+
+function S4_Safety_Monitor:bringHeaderToFront()
+end
+
+function S4_Safety_Monitor:getHeaderButtonLayout()
+    local btnSize = S4_Safety_Monitor.HEADER_BUTTON_SIZE
+    local btnY = S4_Safety_Monitor.HEADER_BUTTON_Y
+    local closeX = self:getWidth() - S4_Safety_Monitor.HEADER_PADDING - btnSize
+    local collapseX = closeX - btnSize - 4
+    local rangeW = 92
+    return {
+        range = {
+            x = S4_Safety_Monitor.HEADER_PADDING,
+            y = btnY,
+            w = rangeW,
+            h = btnSize
+        },
+        collapse = {
+            x = collapseX,
+            y = btnY,
+            w = btnSize,
+            h = btnSize
+        },
+        close = {
+            x = closeX,
+            y = btnY,
+            w = btnSize,
+            h = btnSize
+        }
+    }
+end
+
+local function pointInRect(x, y, rect)
+    return rect and x >= rect.x and x <= (rect.x + rect.w) and y >= rect.y and y <= (rect.y + rect.h)
+end
+
+function S4_Safety_Monitor:drawHeaderButton(rect, label, bgColor, textColor)
+    if not rect then
+        return
+    end
+    self:drawRect(rect.x, rect.y, rect.w, rect.h, 1, bgColor.r, bgColor.g, bgColor.b)
+    self:drawRectBorder(rect.x, rect.y, rect.w, rect.h, 1, 0.04, 0.08, 0.09)
+    local textW = getTextManager():MeasureStringX(UIFont.Small, label)
+    local textX = rect.x + math.floor((rect.w - textW) / 2)
+    self:drawText(label, textX, rect.y + 3, textColor.r, textColor.g, textColor.b, textColor.a or 1, UIFont.Small)
+end
+
+function S4_Safety_Monitor:ensureMonitorOnTop()
+    if self.setAlwaysOnTop then
+        self:setAlwaysOnTop(true)
+    end
+    if self.bringToTop then
+        self:bringToTop()
+    end
+    self:bringHeaderToFront()
 end
 
 function S4_Safety_Monitor:updateAutoCollapseState()
@@ -217,12 +259,9 @@ function S4_Safety_Monitor:applyCollapsedState(shouldSave)
     local collapsed = self.collapsed == true
     local targetHeight = collapsed and S4_Safety_Monitor.COLLAPSED_HEIGHT or S4_Safety_Monitor.DEFAULT_HEIGHT
     self:setHeight(targetHeight)
-    self.CollapseBtn:setTitle(self.autoCollapseEnabled and "A" or "P")
-    self.RangeBtn:setVisible(not collapsed)
     self.MapPanel:setVisible(not collapsed)
     self.InfoPanel:setVisible(not collapsed)
-    self.CollapseBtn:setX(self:getWidth() - 50)
-    self.CloseBtn:setX(self:getWidth() - 26)
+    self:bringHeaderToFront()
     if shouldSave ~= false then
         self:saveLayout()
     end
@@ -247,9 +286,6 @@ function S4_Safety_Monitor:refreshData(force)
             self.selectedChunkX = scan.centerChunkX
             self.selectedChunkY = scan.centerChunkY
         end
-    end
-    if self.RangeBtn then
-        self.RangeBtn:setTitle(self:getRangeButtonLabel())
     end
     self.lastRefreshMs = getTimestampMs and getTimestampMs() or 0
 end
@@ -338,11 +374,19 @@ end
 function S4_Safety_Monitor:render()
     ISPanel.render(self)
     self:updateAutoCollapseState()
+    local layout = self:getHeaderButtonLayout()
     local online = self.lastScan and not self.lastScan.error
     self:drawRect(0, 0, self:getWidth(), S4_Safety_Monitor.TITLE_HEIGHT, 1, 0.09, 0.20, 0.22)
     self:drawRectBorder(0, 0, self:getWidth(), self:getHeight(), 1, 0.18, 0.36, 0.40)
     self:drawText("Pager + Walkie :: Chunk Heatmap", 110, 6, 0.90, 0.98, 0.92, 1, UIFont.Small)
     self:drawText(online and "ONLINE" or "OFFLINE", self:getWidth() - 118, 6, online and 0.68 or 0.96, online and 0.94 or 0.50, online and 0.74 or 0.50, 1, UIFont.Small)
+    if not self.collapsed then
+        self:drawHeaderButton(layout.range, self:getRangeButtonLabel(), {r = 0.14, g = 0.22, b = 0.24},
+            {r = 0.92, g = 0.96, b = 1, a = 1})
+    end
+    self:drawHeaderButton(layout.collapse, self.autoCollapseEnabled and "A" or "P", {r = 0.16, g = 0.18, b = 0.20},
+        {r = 1, g = 1, b = 1, a = 1})
+    self:drawHeaderButton(layout.close, "X", {r = 0.38, g = 0.16, b = 0.16}, {r = 1, g = 1, b = 1, a = 1})
 
     if self.collapsed then
         local status = self.lastScan and not self.lastScan.error and string.format("Chunk %d,%d | %d visible", self.lastScan.centerChunkX, self.lastScan.centerChunkY, self.lastScan.visibleAlive) or "Carry Pager + Walkie Talkie to restore signal"
@@ -440,13 +484,28 @@ end
 
 function S4_Safety_Monitor:onMouseUp(x, y)
     ISPanel.onMouseUp(self, x, y)
+    self:ensureMonitorOnTop()
     self:bumpExpandedVisibility()
     self:saveLayout()
 end
 
 function S4_Safety_Monitor:onMouseDown(x, y)
-    ISPanel.onMouseDown(self, x, y)
+    self:ensureMonitorOnTop()
     self:bumpExpandedVisibility()
+    local layout = self:getHeaderButtonLayout()
+    if (not self.collapsed) and pointInRect(x, y, layout.range) then
+        self:onCycleRange()
+        return true
+    end
+    if pointInRect(x, y, layout.collapse) then
+        self:onToggleAutoCollapse()
+        return true
+    end
+    if pointInRect(x, y, layout.close) then
+        self:onCloseUI()
+        return true
+    end
+    ISPanel.onMouseDown(self, x, y)
 end
 
 function S4_Safety_Monitor:onMouseMove(dx, dy)
